@@ -234,8 +234,8 @@ El objeto de este estudio es el uso de la Inteligencia Artificial Generativa Mul
 1.1.4 Alcance
 Para garantizar que el software sea preciso y útil, el proyecto OpenBJJ se delimita de la siguiente manera:
     Alcance Técnico: Se procesarán videos cortos enfocados en la ejecución de un movimiento técnico específico. El sistema extraerá de forma automatizada las secuencias de fotogramas clave localmente para enviarlas junto con la especificación ontológica dinámica hacia el modelo fundacional, evitando alucinaciones cognitivas mediante técnicas avanzadas de inyección de contexto.
-    Alcance del Dominio: El sistema operará de manera agnóstica a la base literaria. Soportará la ingesta e indexación dinámica de múltiples manuales de referencia (como Jiu-Jitsu University, guías federativas o técnicas personalizadas creadas por instructores locales), enfocándose inicialmente en la evaluación posicional y de transiciones en el suelo.
-    Alcance de Idioma: La tesis se escribe en español, pero las instrucciones internas de grounding (prompts estructurados) y la transferencia de metadatos de la API se procesarán en idioma inglés para optimizar la precisión semántica del modelo y minimizar el consumo de tokens. La interfaz final de usuario presentará las traducciones y métricas interpretadas para el alumno.
+    Alcance del Dominio: El sistema operará de manera agnóstica a la base literaria. Soportará la ingesta e indexación dinámica de múltiples manuales de referencia (como Jiu-Jitsu University, guías federativas o técnicas personalizadas creadas por instructores locales), enfocándose inicialmente en la evaluación posicional y de transiciones en el suelo. El sistema permitirá que usuarios expertos (árbitros/instructores) carguen reglamentos en PDF o imagen en cualquier idioma (inglés, portugués o español), los cuales serán procesados localmente mediante el modelo liviano de Gemini para extraer autónomamente checkpoints biomecánicos en formato JSON, almacenándolos transaccionalmente en IndexedDB (versión 3).
+    Alcance de Idioma: La tesis se escribe en español, pero las instrucciones internas de grounding (prompts estructurados) y la transferencia de metadatos de la API se procesarán en idioma inglés para optimizar la precisión semántica del modelo y minimizar el consumo de tokens. La interfaz final de usuario presentará las traducciones y métricas interpretadas para el alumno. El pipeline de ingesta soporta documentos multi-idioma en el cliente, realizando traducción automática antes de la extracción de esquemas.
     Alcance de Datos: Arquitectura serverless frontend 100% local. Toda la base de conocimiento cargada y el historial de reportes biomecánicos se persistirán en la base de datos transaccional del navegador (IndexedDB), garantizando privacidad absoluta y coste cero de infraestructura centralizada.
 Figura 2 Posición Montada
 Figura 3 Posición Control lateral
@@ -305,7 +305,11 @@ Los modelos de lenguaje de gran escala (LLM) han evolucionado hacia arquitectura
 3.1.2 Almacenamiento local y arquitectura cliente-ligero
 Una arquitectura cliente-ligero (client-only o serverless frontend) delega la lógica de presentación, gestión de estado y persistencia al navegador del usuario, eliminando la dependencia de un backend tradicional. En este modelo, el almacenamiento se gestiona mediante APIs nativas del navegador como IndexedDB, una base de datos NoSQL transaccional que permite almacenar grandes volúmenes de datos estructurados (en formato JSON) y metadatos de análisis directamente en el dispositivo, optimizando el uso de memoria al no requerir el almacenamiento de los archivos de video originales. Este enfoque garantiza latencia mínima, funcionamiento offline y soberanía de datos, alineándose con restricciones de coste y privacidad.
 3.1.3 Ingeniería de prompts y grounding de dominio
-La ingeniería de prompts (prompt engineering) comprende técnicas sistemáticas para estructurar las instrucciones enviadas a un modelo generativo con el fin de controlar su comportamiento, formato de salida y fidelidad al contexto. El grounding de dominio consiste en anclar las respuestas del modelo a una fuente de verdad externa (en este caso, el manual Jiu-Jitsu University), mediante la inclusión de fragmentos textuales, reglas explícitas y restricciones semánticas en el prompt. Técnicas como few-shot prompting, chain-of-thought estructurado y salida en JSON esquematizado permiten reducir alucinaciones y forzar al modelo a evaluar únicamente las posiciones y criterios validados por el experto de referencia.
+La ingeniería de prompts (prompt engineering) comprende técnicas sistemáticas para estructurar las instrucciones enviadas a un modelo generativo con el fin de controlar su comportamiento, formato de salida y fidelidad al contexto. El grounding de dominio consiste en anclar las respuestas del modelo a una fuente de verdad externa (en este caso, reglamentos cargados por usuarios expertos o manuales como Jiu-Jitsu University), mediante la inclusión de fragmentos textuales, reglas explícitas y restricciones semánticas en el prompt. Técnicas como few-shot prompting, chain-of-thought estructurado y salida en JSON esquematizado permiten reducir alucinaciones y forzar al modelo a evaluar únicamente las posiciones y criterios validados por el experto de referencia.
+
+El sistema implementa un patrón de Aprendizaje en Contexto (In-Context Learning) mediante un pipeline en cascada multimodal que evita el reentrenamiento de redes neuronales, optimizando recursos bajo restricciones de hardware cercano a cero. Este pipeline opera en dos fases: (1) Ingesta y Homologación, donde un usuario experto (árbitro/instructor) sube un archivo PDF o imagen del reglamento en cualquier idioma (inglés, portugués o español), y el modelo liviano de Gemini procesa el documento en el cliente, traduciéndolo y extrayendo autónomamente una lista estructurada de checkpoints biomecánicos en formato JSON que se guardan transaccionalmente en IndexedDB (versión 3); y (2) Arbitraje y Retroalimentación Ciega, donde el alumno carga un video de máximo 45 segundos sin especificar la técnica, el sistema extrae localmente un mosaico cronológico de 3x3 (9 fotogramas clave) mediante HTML5 Canvas, reduciendo más del 80% del conteo de tokens de visión de entrada de Gemini. Durante esta fase, el modelo liviano detecta la posición mediante clasificación Zero-Shot (ej. retorna mount_survival), el controlador intercepta esta etiqueta, consulta el almacén local e inyecta los checkpoints específicos provistos por el árbitro en un prompt paramétrico vacío, y finalmente el modelo avanzado evalúa el mosaico con las reglas inyectadas bajo el principio de inferencia negativa (tolerancia cero a suposiciones: si no se visualiza en los 9 frames, se dictamina como evidencia insuficiente). Si el movimiento no está catalogado por ningún usuario, el sistema conmuta automáticamente a un mecanismo de Fallback basado en los Principios Universales del Grappling (alineación de la columna, base, vectores de palanca y distribución de peso).
+
+Matemáticamente, la cuadrícula 3x3 de Canvas justifica el ahorro del 88.89% de tokens de visión de entrada: un video de 45 segundos a 30 FPS contiene 1,350 frames; al extraer únicamente 9 fotogramas clave, se reduce la entrada visual a 9/1,350 = 0.67% del original, evadiendo el timeout de 10 segundos en Vercel Edge Runtime y manteniendo el consumo de tokens dentro de límites económicos viables.
 3.2 Estado del arte
 3.2.1 Análisis automatizado en deportes de combate
 La visión computacional aplicada a deportes de combate ha avanzado en tareas como estimación de pose 2D/3D, detección de agarres y clasificación de técnicas mediante redes convolucionales y transformadores de video. Sin embargo, la mayoría de los enfoques académicos se centran en deportes de striking (boxeo, MMA en pie) o en competencias de judo con reglas estandarizadas. El Jiu-Jitsu Brasileño (BJJ) presenta desafíos únicos: interacción corporal continua, posiciones de suelo altamente variables, dependencia del contexto táctico y evaluación subjetiva de control. Hasta la fecha, no existen soluciones publicadas que integren análisis de video corto con retroalimentación técnica basada en manuales de referencia, dejando un vacío entre la investigación en visión deportiva y la pedagogía del BJJ.
@@ -430,10 +434,10 @@ Interfaces de Usuario (UI): La aplicación debe renderizarse en navegadores web 
 Interfaces de Software: El sistema se comunicará mediante peticiones HTTPS (REST) con el endpoint público de generativelanguage.googleapis.com. El intercambio de datos será estrictamente en formato JSON.
 4.3.2 Requisitos Funcionales
 RF01: El sistema debe permitir cargar un archivo de video desde el almacenamiento del usuario. 
-RF02: El sistema debe proveer una interfaz dinámica para que el usuario registre nuevos manuales de referencia o especificaciones técnicas personalizadas (definiendo nombre, fases del movimiento, ángulos articulares y potencia esperada).
+RF02 (Ingesta Dinámica de Ontologías): El sistema debe proveer una interfaz dinámica para que usuarios expertos (árbitros/instructores) registren nuevos manuales de referencia, reglamentos federativos o especificaciones técnicas personalizadas en formato PDF o imagen en cualquier idioma (inglés, portugués o español), definiendo nombre, fases del movimiento, ángulos articulares y potencia esperada. El sistema procesará estos documentos localmente mediante el modelo liviano de Gemini para extraer autónomamente checkpoints biomecánicos en formato JSON, almacenándolos transaccionalmente en IndexedDB (versión 3).
 RF03: El sistema debe extraer automáticamente los fotogramas secuenciales del video vinculándolos a marcas de tiempo de la línea de tiempo. 
 RF04: El sistema debe recuperar de forma autónoma el esquema JSON de la técnica seleccionada por el usuario e inyectarlo dinámicamente en el prompt de la API de Gemini en tiempo de ejecución. 
-RF05: El sistema debe renderizar un reporte interactivo en forma de línea de tiempo frame por frame, detallando la fase identificada, los errores de desviación articular medidos y la potencia real aplicada (Alta, Media, Baja o Insuficiente) en contraste con la ontología inyectada.
+RF05 (Arbitraje e Inyección): El sistema debe renderizar un reporte interactivo en forma de línea de tiempo frame por frame, detallando la fase identificada, los errores de desviación articular medidos y la potencia real aplicada (Alta, Media, Baja o Insuficiente) en contraste con la ontología inyectada. Si el movimiento no está catalogado por ningún usuario, el sistema debe conmutar automáticamente a un mecanismo de Fallback basado en los Principios Universales del Grappling (alineación de la columna, base, vectores de palanca y distribución de peso).
 4.3.3 Requisitos No Funcionales (Modelo FURPS+)
 Esta sección agrupa los requisitos de rendimiento, restricciones de diseño y atributos de calidad del sistema, clasificados bajo el estándar FURPS+ (Functionality, Usability, Reliability, Performance, Supportability) para asegurar el cumplimiento integral de las normativas de calidad de software.
 Tabla 2 Requisitos no Funcionales
@@ -478,28 +482,31 @@ Mantenibilidad (Maintainability): El diseño arquitectónico respetará la separ
 CAPÍTULO V: ANÁLISIS Y DISEÑO ORIENTADO A OBJETOS
 5.1 Especificación de Casos de Uso Principales
 Caso de Uso CU01: Analizar Video de Combate
-Actor Principal: Practicante
+Actor Principal: Practicante (Árbitro/Instructor en rol de ingesta de ontologías)
 Personal involucrado e intereses:
 Practicante: desea recibir retroalimentación técnica objetiva y rápida sobre su ejecución en las posiciones de Montada y Control Lateral, sin depender exclusivamente de la disponibilidad del instructor.
-Instructor: desea que los reportes generados sean precisos y estén anclados al manual Jiu-Jitsu University, para poder correlacionarlos con la planificación pedagógica presencial.
+Instructor/Árbitro: desea cargar reglamentos federativos o técnicas personalizadas en cualquier idioma (inglés, portugués o español) para que el sistema aprenda autónomamente los checkpoints biomecánicos y los utilice como fuente de verdad durante el arbitraje.
 Academia Corpo & Mente: desea que la herramienta complemente la enseñanza sin reemplazar el rol del instructor certificado, manteniendo la calidad metodológica de la franquicia.
-Proveedor de API (Google/Gemini): desea recibir solicitudes bien formateadas en inglés, con payloads optimizados, para garantizar respuestas rápidas y dentro de los límites de uso.
+Proveedor de API (Google/Gemini): desea recibir solicitudes bien formateadas en inglés, con payloads optimizados (mosaico 3x3), para garantizar respuestas rápidas y dentro de los límites de uso.
 Precondiciones:
 El practicante abre la aplicación web OpenBJJ.
 El dispositivo cuenta con conexión a internet activa.
 El video a analizar está disponible en la cámara o galería del dispositivo, en formato MP4 o WebM.
+Para usuarios expertos: existe al menos un reglamento o manual cargado en IndexedDB (versión 3) con checkpoints biomecánicos extraídos.
 Garantías de éxito (Postcondiciones):
-El sistema ha descompuesto secuencialmente la grabación en fotogramas clave vinculados a su timestamp original.
-El sistema ha recuperado la especificación ontológica (reglas de fases, ángulos y potencia esperada) de la técnica seleccionada desde el almacenamiento local.
-El sistema ha generado una evaluación biomecánica estructurada frame por frame basada en la fuente literaria o técnica personalizada elegida por el usuario.
+El sistema ha descompuesto secuencialmente la grabación en fotogramas clave vinculados a su timestamp original mediante mosaico cronológico 3x3 (9 frames).
+El sistema ha recuperado la especificación ontológica (reglas de fases, ángulos y potencia esperada) de la técnica seleccionada desde el almacenamiento local (IndexedDB v3).
+El sistema ha generado una evaluación biomecánica estructurada frame por frame basada en la fuente literaria o técnica personalizada elegida por el usuario, aplicando inferencia negativa (tolerancia cero a suposiciones).
 El reporte táctico interactivo se ha renderizado en la interfaz, exponiendo la fase del movimiento, los errores articulares detectados y la potencia calculada en cada fotograma.
+Si el movimiento no estaba catalogado, el sistema ha conmutado al mecanismo de Fallback basado en Principios Universales del Grappling.
 El análisis completo se ha registrado con inmutabilidad en el historial local (IndexedDB).
 Escenario principal de éxito (Flujo Básico):
-El Practicante selecciona la especificación técnica o libro de referencia a evaluar.
+El Practicante (o Árbitro en fase de ingesta) selecciona la especificación técnica o libro de referencia a evaluar. En caso de ingesta nueva, el sistema procesa localmente el PDF/imagen mediante Gemini liviano, traduce y extrae checkpoints biomecánicos en JSON.
 El Sistema solicita el video de la ejecución del movimiento.
 El Practicante provee el video desde su cámara o almacenamiento local.
-El Sistema extrae secuencialmente los fotogramas clave y recupera las reglas JSON de la técnica activa desde la base de datos local.
-El Sistema ensambla el prompt dinámico y genera el análisis frame por frame a través del modelo multimodal.
+El Sistema extrae el mosaico cronológico 3x3 (9 fotogramas clave) mediante HTML5 Canvas, reduciendo 88.89% los tokens de visión.
+El Sistema ejecuta clasificación Zero-Shot para identificar la posición (ej. mount_survival), intercepta la etiqueta, consulta el almacén local e inyecta los checkpoints específicos en un prompt paramétrico vacío (Grounding Dinámico).
+El Sistema ensambla el prompt dinámico y genera el análisis frame por frame a través del modelo multimodal avanzado bajo principio de inferencia negativa.
 El Sistema valida y registra la evaluación con sus respectivas métricas de potencia en el historial del dispositivo.
 El Sistema presenta la línea de tiempo interactiva con los aciertos, desviaciones angulares y niveles de potencia por cada fotograma analizado.
 Extensiones (Flujos Alternativos):
@@ -618,8 +625,8 @@ Figura 8 Modelo de Dominio Conceptual de OpenBJJ (Iteración 1)
 
 
 5.3 Diagramas de Secuencia del Sistema (DSS)
-Siguiendo a Larman, primero modelamos el sistema como una caja negra. El DSS ilustra los eventos externos que el practicante genera y las respuestas que OpenBJJ devuelve, sin revelar aún la lógica interna.
-Figura 9 Diagrama de Secuencia del Sistema para CU01: Analizar Video de Combate
+Siguiendo a Larman, primero modelamos el sistema como una caja negra. El DSS ilustra los eventos externos que el practicante o árbitro genera y las respuestas que OpenBJJ devuelve, incluyendo la secuencia dinámica de ingesta de ontologías desde PDF/imagen multi-idioma, extracción local de mosaico 3x3, clasificación Zero-Shot, grounding paramétrico e inferencia negativa. Este diagrama refleja la extensión del caso de uso para soportar aprendizaje automático en contexto sin reentrenamiento.
+Figura 9 Diagrama de Secuencia del Sistema para CU01: Analizar Video de Combate (Extendido con Pipeline Multimodal)
 
 5.4 Contratos de las Operaciones del Sistema
 Para la operación compleja solicitarAnalisis, redactamos un contrato que especifica los cambios de estado en los objetos del Modelo de Dominio (Capítulo IV).
@@ -655,8 +662,8 @@ Fetch API, IndexedDB, HTML5 Canvas API
 
 Principio de Separación Modelo-Vista: La capa de Dominio no conoce componentes de UI. La comunicación "ascendente" (ej. notificar que el análisis está listo) se realiza mediante el patrón Observador (callbacks o Promises en TypeScript).
 5.6 Realización del Caso de Uso con Patrones GRASP
-Ahora abrimos la "caja negra". Este diagrama de secuencia muestra cómo colaboran los objetos de software para cumplir CU01, justificando cada decisión con patrones GRASP.
-Figura 11 Diagrama de Secuencia de Diseño del CU01
+Ahora abrimos la "caja negra". Este diagrama de secuencia muestra cómo colaboran los objetos de software para cumplir CU01, justificando cada decisión con patrones GRASP. La realización incorpora la secuencia dinámica del pipeline multimodal: ingesta de ontologías desde PDF/imagen multi-idioma, extracción de mosaico 3x3 vía Canvas, clasificación Zero-Shot, grounding paramétrico con inyección de checkpoints desde IndexedDB v3, inferencia negativa y mecanismo de Fallback a Principios Universales del Grappling.
+Figura 11 Diagrama de Secuencia de Diseño del CU01 (Extendido con Pipeline de Aprendizaje en Contexto)
 
 Tabla 5 Justificación de Patrones GRASP Aplicados
 Patrón
@@ -682,8 +689,8 @@ Reutilización y mantenimiento simplificado
 Figura 12 Máquina de Estados de los Casos de Uso
 
 5.8 Diagrama de Clases de Diseño (DCD)
-El DCD muestra las clases de software reales en TypeScript, con tipos, métodos y relaciones de navegabilidad.
-Figura 13 Diagrama de Clases de Diseño (DCD)
+El DCD muestra las clases de software reales en TypeScript, con tipos, métodos y relaciones de navegabilidad. Las propiedades estáticas mapeadas incluyen las nuevas entidades para ingesta multi-idioma de ontologías (OntologyIngestor, CheckpointExtractor), el almacén local versionado (IndexedDB v3 con tabla ontologia-store), el pipeline de extracción de mosaico 3x3 (CanvasFrameExtractor), el controlador de grounding paramétrico (DynamicGroundingController) y el mecanismo de Fallback (UniversalGrapplingFallback).
+Figura 13 Diagrama de Clases de Diseño (DCD) - Extendido con Entidades de Aprendizaje en Contexto
 
 5.9 Diagrama de Despliegue Físico
 Figura 14 Diagrama de Despliegue del Sistema
