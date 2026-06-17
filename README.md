@@ -628,6 +628,44 @@ Figura 8 Modelo de Dominio Conceptual de OpenBJJ (Iteración 1)
 Siguiendo a Larman, primero modelamos el sistema como una caja negra. El DSS ilustra los eventos externos que el practicante o árbitro genera y las respuestas que OpenBJJ devuelve, incluyendo la secuencia dinámica de ingesta de ontologías desde PDF/imagen multi-idioma, extracción local de mosaico 3x3, clasificación Zero-Shot, grounding paramétrico e inferencia negativa. Este diagrama refleja la extensión del caso de uso para soportar aprendizaje automático en contexto sin reentrenamiento.
 Figura 9 Diagrama de Secuencia del Sistema para CU01: Analizar Video de Combate (Extendido con Pipeline Multimodal)
 
+```mermaid
+sequenceDiagram
+    participant U as Usuario (Practicante/Árbitro)
+    participant UI as Interfaz PWA
+    participant DB as IndexedDB v3
+    participant Canvas as HTML5 Canvas
+    participant GM_Lite as Gemini Liviano
+    participant GM_Adv as Gemini Avanzado
+    participant Fallback as UniversalGrapplingFallback
+
+    Note over U,DB: Fase 1: Ingesta de Ontología (Árbitro)
+    U->>UI: Carga PDF/Imagen (multi-idioma)
+    UI->>GM_Lite: Procesa documento en cliente
+    GM_Lite-->>UI: Traduce + Extrae checkpoints JSON
+    UI->>DB: Guarda transaccionalmente en ontologia-store
+    DB-->>UI: Confirmación de almacenamiento
+
+    Note over U,Fallback: Fase 2: Arbitraje y Retroalimentación
+    U->>UI: Carga video (≤45 seg)
+    UI->>Canvas: Extrae mosaico 3x3 (9 frames)
+    Canvas-->>UI: Mosaico optimizado (88.89% menos tokens)
+    UI->>GM_Lite: Clasificación Zero-Shot
+    GM_Lite-->>UI: Retorna etiqueta (ej. mount_survival)
+    UI->>DB: Consulta checkpoints por etiqueta
+    DB-->>UI: Retorna JSON de ontología
+    UI->>GM_Adv: Prompt con grounding dinámico + mosaico
+    GM_Adv-->>UI: Análisis frame-a-frame (inferencia negativa)
+    
+    alt Movimiento catalogado
+        UI->>U: Reporte interactivo (ángulos, potencia, referencias)
+    else Movimiento no catalogado
+        UI->>Fallback: Conmuta a Principios Universales
+        Fallback-->>UI: Evaluación por principios base
+        UI->>U: Reporte con fallback activado
+    end
+    UI->>DB: Registra análisis en historial
+```
+
 5.4 Contratos de las Operaciones del Sistema
 Para la operación compleja solicitarAnalisis, redactamos un contrato que especifica los cambios de estado en los objetos del Modelo de Dominio (Capítulo IV).
 Contrato CO01: analyzeVideo
@@ -663,7 +701,52 @@ Fetch API, IndexedDB, HTML5 Canvas API
 Principio de Separación Modelo-Vista: La capa de Dominio no conoce componentes de UI. La comunicación "ascendente" (ej. notificar que el análisis está listo) se realiza mediante el patrón Observador (callbacks o Promises en TypeScript).
 5.6 Realización del Caso de Uso con Patrones GRASP
 Ahora abrimos la "caja negra". Este diagrama de secuencia muestra cómo colaboran los objetos de software para cumplir CU01, justificando cada decisión con patrones GRASP. La realización incorpora la secuencia dinámica del pipeline multimodal: ingesta de ontologías desde PDF/imagen multi-idioma, extracción de mosaico 3x3 vía Canvas, clasificación Zero-Shot, grounding paramétrico con inyección de checkpoints desde IndexedDB v3, inferencia negativa y mecanismo de Fallback a Principios Universales del Grappling.
+
 Figura 11 Diagrama de Secuencia de Diseño del CU01 (Extendido con Pipeline de Aprendizaje en Contexto)
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant UI as VideoAnalysisView
+    participant Ctrl as VideoAnalysisController
+    participant Onto as OntologyIngestor
+    participant DB as IndexedDBv3
+    participant Extractor as CanvasFrameExtractor
+    participant Grounding as DynamicGroundingController
+    participant Gemini as GeminiService
+    participant Fallback as UniversalGrapplingFallback
+    participant History as HistoryService
+
+    U->>UI: uploadVideo(videoFile)
+    UI->>Ctrl: analyzeVideo(videoFile, tecnicaId)
+    
+    Note over Ctrl,Extractor: Extracción de Mosaico 3x3
+    Ctrl->>Extractor: extractKeyframes(video, 9 frames)
+    Extractor-->>Ctrl: mosaicFrames[]
+    
+    Note over Ctrl,Gemini: Clasificación Zero-Shot
+    Ctrl->>Gemini: classifyPosition(mosaicFrames[])
+    Gemini-->>Ctrl: positionLabel (ej. mount_survival)
+    
+    Note over Ctrl,DB: Grounding Dinámico
+    Ctrl->>Grounding: injectCheckpoints(positionLabel)
+    Grounding->>DB: queryOntology(positionLabel)
+    DB-->>Grounding: checkpointsJSON
+    Grounding-->>Ctrl: enrichedPrompt
+    
+    alt Movimiento catalogado en ontología
+        Ctrl->>Gemini: analyzeWithGrounding(enrichedPrompt, mosaicFrames[])
+        Gemini-->>Ctrl: frameByFrameAnalysis{position, errors[], power[]}
+    else Movimiento no catalogado
+        Ctrl->>Fallback: analyzeWithUniversalPrinciples(mosaicFrames[])
+        Fallback-->>Ctrl: universalAnalysis{alignment, base, leverage, weightDistribution}
+    end
+    
+    Ctrl->>History: saveAnalysis(evalResult)
+    History-->>Ctrl: confirmation
+    Ctrl-->>UI: renderReport(analysisData)
+    UI-->>U: displayInteractiveTimeline()
+```
 
 Tabla 5 Justificación de Patrones GRASP Aplicados
 Patrón
@@ -690,7 +773,94 @@ Figura 12 Máquina de Estados de los Casos de Uso
 
 5.8 Diagrama de Clases de Diseño (DCD)
 El DCD muestra las clases de software reales en TypeScript, con tipos, métodos y relaciones de navegabilidad. Las propiedades estáticas mapeadas incluyen las nuevas entidades para ingesta multi-idioma de ontologías (OntologyIngestor, CheckpointExtractor), el almacén local versionado (IndexedDB v3 con tabla ontologia-store), el pipeline de extracción de mosaico 3x3 (CanvasFrameExtractor), el controlador de grounding paramétrico (DynamicGroundingController) y el mecanismo de Fallback (UniversalGrapplingFallback).
+
 Figura 13 Diagrama de Clases de Diseño (DCD) - Extendido con Entidades de Aprendizaje en Contexto
+
+```mermaid
+classDiagram
+    class VideoAnalysisView {
+        +uploadVideo(file: File): void
+        +displayReport(analysis: AnalysisResult): void
+        +showLoading(state: boolean): void
+    }
+
+    class VideoAnalysisController {
+        +analyzeVideo(video: File, tecnicaId: string): Promise~AnalysisResult~
+        +handleClassification(positionLabel: string): Promise~EnrichedPrompt~
+    }
+
+    class OntologyIngestor {
+        +ingestDocument(file: File, language: string): Promise~Ontology~
+        +translateDocument(content: Blob): Promise~string~
+    }
+
+    class CheckpointExtractor {
+        +extractCheckpoints(document: string): Promise~Checkpoint[]~
+        +validateSchema(json: object): boolean
+    }
+
+    class CanvasFrameExtractor {
+        +extractKeyframes(video: HTMLVideoElement, count: number): ImageData[]
+        +createMosaic(frames: ImageData[]): HTMLCanvasElement
+    }
+
+    class DynamicGroundingController {
+        +injectCheckpoints(positionLabel: string): Promise~EnrichedPrompt~
+        +queryOntology(storeName: string, key: string): Promise~Checkpoint[]~
+    }
+
+    class GeminiService {
+        +classifyPosition(frames: ImageData[]): Promise~string~
+        +analyzeWithGrounding(prompt: string, frames: ImageData[]): Promise~AnalysisResult~
+        +analyzeWithUniversalPrinciples(frames: ImageData[]): Promise~UniversalAnalysis~
+    }
+
+    class UniversalGrapplingFallback {
+        +analyzeAlignment(frames: ImageData[]): AlignmentScore
+        +analyzeBase(frames: ImageData[]): BaseScore
+        +analyzeLeverage(frames: ImageData[]): LeverageScore
+        +analyzeWeightDistribution(frames: ImageData[]): WeightDistributionScore
+    }
+
+    class HistoryService {
+        +saveAnalysis(result: AnalysisResult): Promise~void~
+        +getHistory(): Promise~AnalysisResult[]~
+        +deleteAnalysis(id: string): Promise~void~
+    }
+
+    class IndexedDBv3 {
+        +openDatabase(): Promise~IDBDatabase~
+        +transaction(storeNames: string[], mode: IDBTransactionMode): IDBTransaction
+    }
+
+    class AnalysisResult {
+        +position: string
+        +frames: FrameAnalysis[]
+        +errors: Error[]
+        +recommendations: string[]
+        +manualReferences: Reference[]
+        +timestamp: Date
+    }
+
+    class FrameAnalysis {
+        +frameIndex: number
+        +timestamp: number
+        +jointAngles: Angle[]
+        +powerLevel: PowerLevel
+    }
+
+    VideoAnalysisView --> VideoAnalysisController
+    VideoAnalysisController --> CanvasFrameExtractor
+    VideoAnalysisController --> DynamicGroundingController
+    VideoAnalysisController --> GeminiService
+    VideoAnalysisController --> HistoryService
+    OntologyIngestor --> CheckpointExtractor
+    DynamicGroundingController --> IndexedDBv3
+    GeminiService --> UniversalGrapplingFallback
+    HistoryService --> IndexedDBv3
+    VideoAnalysisController --> AnalysisResult
+    AnalysisResult --> FrameAnalysis
+```
 
 5.9 Diagrama de Despliegue Físico
 Figura 14 Diagrama de Despliegue del Sistema
