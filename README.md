@@ -382,26 +382,22 @@ classDiagram
         rangoMovilidadArticular
     }
     class Tecnica {
-        id
         nombre
         categoria
         cinturonRequerido
     }
     class FuenteConocimiento {
-        id
         titulo
         tipo
         estadoValidacion
         contenidoVectorial
     }
     class CheckpointTecnico {
-        id
         fase
         anguloArticularIdeal
         toleranciaGrados
     }
     class AnalisisBiomecanico {
-        id
         fecha
     }
     class MetricaCinematica {
@@ -411,7 +407,6 @@ classDiagram
         aceleracionMedida
     }
     class ErrorBiomecanico {
-        id
         severidad
         anguloDesviacion
         descripcionFallo
@@ -422,7 +417,6 @@ classDiagram
         estadoPedagogicoActual
     }
     class RecomendacionAdaptativa {
-        id
         tipoEstrategia
         contenidoExplicativo
     }
