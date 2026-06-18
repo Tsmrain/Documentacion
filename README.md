@@ -468,143 +468,148 @@ Mantenibilidad (Maintainability): El diseño arquitectónico respetará la separ
 # **CAPÍTULO V: ANÁLISIS Y DISEÑO ORIENTADO A OBJETOS**
 ## **5.1 Especificación de Casos de Uso Principales**
 ### **Caso de Uso CU01: Analizar Video de Combate**
-Actor Principal: Practicante (Árbitro/Instructor en rol de ingesta de ontologías)
-Personal involucrado e intereses:
-Practicante: desea recibir retroalimentación técnica objetiva y rápida sobre su ejecución en las posiciones de Montada y Control Lateral, sin depender exclusivamente de la disponibilidad del instructor.
-Instructor/Árbitro: desea cargar reglamentos federativos o técnicas personalizadas en cualquier idioma (inglés, portugués o español) para que el sistema aprenda autónomamente los checkpoints biomecánicos y los utilice como fuente de verdad durante el arbitraje.
-Academia Corpo & Mente: desea que la herramienta complemente la enseñanza sin reemplazar el rol del instructor certificado, manteniendo la calidad metodológica de la franquicia.
-Proveedor de API (Google/Gemini): desea recibir solicitudes bien formateadas en inglés, con payloads optimizados (mosaico 3x3), para garantizar respuestas rápidas y dentro de los límites de uso.
-Precondiciones:
-El practicante abre la aplicación web OpenBJJ.
-El dispositivo cuenta con conexión a internet activa.
-El video a analizar está disponible en la cámara o galería del dispositivo, en formato MP4 o WebM.
-Para usuarios expertos: existe al menos un reglamento o manual cargado en IndexedDB (versión 3) con checkpoints biomecánicos extraídos.
-Garantías de éxito (Postcondiciones):
-El sistema ha descompuesto secuencialmente la grabación en fotogramas clave vinculados a su timestamp original mediante mosaico cronológico 3x3 (9 frames).
-El sistema ha recuperado la especificación ontológica (reglas de fases, ángulos y potencia esperada) de la técnica seleccionada desde el almacenamiento local (IndexedDB v3).
-El sistema ha generado una evaluación biomecánica estructurada frame por frame basada en la fuente literaria o técnica personalizada elegida por el usuario, aplicando inferencia negativa (tolerancia cero a suposiciones).
-El reporte táctico interactivo se ha renderizado en la interfaz, exponiendo la fase del movimiento, los errores articulares detectados y la potencia calculada en cada fotograma.
-Si el movimiento no estaba catalogado, el sistema ha conmutado al mecanismo de Fallback basado en Principios Universales del Grappling.
-El análisis completo se ha registrado con inmutabilidad en el historial local (IndexedDB).
-Escenario principal de éxito (Flujo Básico):
-El Practicante (o Árbitro en fase de ingesta) selecciona la especificación técnica o libro de referencia a evaluar. En caso de ingesta nueva, el sistema procesa localmente el PDF/imagen mediante Gemini liviano, traduce y extrae checkpoints biomecánicos en JSON.
-El Sistema solicita el video de la ejecución del movimiento.
-El Practicante provee el video desde su cámara o almacenamiento local.
-El Sistema extrae el mosaico cronológico 3x3 (9 fotogramas clave) mediante HTML5 Canvas, reduciendo 88.89% los tokens de visión.
-El Sistema ejecuta clasificación Zero-Shot para identificar la posición (ej. mount_survival), intercepta la etiqueta, consulta el almacén local e inyecta los checkpoints específicos en un prompt paramétrico vacío (Grounding Dinámico).
-El Sistema ensambla el prompt dinámico y genera el análisis frame por frame a través del modelo multimodal avanzado bajo principio de inferencia negativa.
-El Sistema valida y registra la evaluación con sus respectivas métricas de potencia en el historial del dispositivo.
-El Sistema presenta la línea de tiempo interactiva con los aciertos, desviaciones angulares y niveles de potencia por cada fotograma analizado.
-Extensiones (Flujos Alternativos):
-4a. La técnica seleccionada no posee fases biomecánicas parametrizadas en la base de datos local:
-El Sistema notifica al usuario: "La técnica seleccionada no tiene reglas de evaluación. Por favor, registre las fases y ángulos de control antes de continuar."
-El Sistema redirige al Practicante al módulo de Ingesta y Modelado de Técnicas.
-5a. El reporte retornado por el modelo multimodal no cumple con el esquema analítico secuencial (Alucinación de la IA):
-El Sistema detecta mediante validación estricta que la IA omitió fotogramas o no calculó los niveles de potencia articulares.
-El Sistema descarta la respuesta inválida.
-El Sistema reenvía automáticamente la solicitud a la API utilizando un parámetro de temperatura de inferencia corregido.
-Si el error persiste tras tres reintentos, el Sistema notifica al Practicante: "El análisis secuencial no pudo procesarse. Asegúrese de que el video capture claramente los vectores del movimiento."
-Requisitos especiales:
-Interfaz de usuario minimalista y táctil, optimizada para uso en movimiento sobre el tatami.
-Tiempo de respuesta end-to-end entre 20 y 60 segundos para mantener la utilidad en tiempo real.
-Todos los prompts internos y respuestas estructuradas deben procesarse en inglés para optimizar precisión y costo de tokens.
-Los enlaces al manual Jiu-Jitsu University deben apuntar a páginas específicas (ej: "Page 142 - Mount Escape Drill 3").
-Los videos procesados nunca deben salir del dispositivo; solo los fotogramas extraídos se transmiten a la API.
-Lista de tecnología y variaciones de datos:
-2a. La captura de video puede realizarse mediante cámara trasera, frontal o selección desde galería, según la preferencia del usuario y la posición a analizar.
-3b. Los fotogramas se extraen a una resolución máxima de 720p y en intervalos de 2 segundos para balancear precisión y consumo de tokens.
-7c. La solicitud a la API utiliza el modelo multimodal de Gemini configurado con parámetros de temperatura baja (0.2) para reducir la variabilidad y alucinaciones en las respuestas.
-8b. El formato de evaluación exige los siguientes campos obligatorios: position_detected, errors[], improvements[], manual_references[], youtube_links[].
-Frecuencia: Variable; se estima un promedio de 3-5 análisis por practicante por semana durante períodos de preparación técnica.
-Temas abiertos:
-¿Cómo manejar la evaluación de posiciones de transición entre Mount y Side Control?
-¿Es necesario implementar un mecanismo de calibración inicial para adaptar el análisis al biotipo del practicante?
-¿Debería el sistema permitir que el instructor añada comentarios personalizados a los reportes generados?
+
+- **Actor Principal:** Practicante (Árbitro/Instructor en rol de ingesta de ontologías)
+- **Personal Involucrado e Intereses:**
+  - **Practicante:** Desea recibir retroalimentación técnica objetiva y rápida sobre su ejecución en las posiciones de Montada y Control Lateral, sin depender exclusivamente de la disponibilidad del instructor.
+  - **Instructor/Árbitro:** Desea cargar reglamentos federativos o técnicas personalizadas en cualquier idioma (inglés, portugués o español) para que el sistema aprenda autónomamente los checkpoints biomecánicos y los utilice como fuente de verdad durante el arbitraje.
+  - **Academia Corpo & Mente:** Desea que la herramienta complemente la enseñanza sin reemplazar el rol del instructor certificado, manteniendo la calidad metodológica de la franquicia.
+  - **Proveedor de API (Google/Gemini):** Desea recibir solicitudes bien formateadas en inglés, con payloads optimizados (mosaico 3x3), para garantizar respuestas rápidas y dentro de los límites de uso.
+- **Precondiciones:**
+  - El practicante abre la aplicación web OpenBJJ.
+  - El dispositivo cuenta con conexión a internet activa.
+  - El video a analizar está disponible en la cámara o galería del dispositivo, en formato MP4 o WebM.
+  - Para usuarios expertos: existe al menos un reglamento o manual cargado en IndexedDB (versión 3) con checkpoints biomecánicos extraídos.
+- **Garantías de Éxito (Postcondiciones):**
+  - El sistema ha descompuesto secuencialmente la grabación en fotogramas clave vinculados a su timestamp original mediante mosaico cronológico 3x3 (9 frames).
+  - El sistema ha recuperado la especificación ontológica (reglas de fases, ángulos y potencia esperada) de la técnica seleccionada desde el almacenamiento local (IndexedDB v3).
+  - El sistema ha generado una evaluación biomecánica estructurada frame por frame basada en la fuente literaria o técnica personalizada elegida por el usuario, aplicando inferencia negativa (tolerancia cero a suposiciones).
+  - El reporte táctico interactivo se ha renderizado en la interfaz, exponiendo la fase del movimiento, los errores articulares detectados y la potencia calculada en cada fotograma.
+  - Si el movimiento no estaba catalogado, el sistema ha conmutado al mecanismo de Fallback basado en Principios Universales del Grappling.
+  - El análisis completo se ha registrado con inmutabilidad en el historial local (IndexedDB).
+- **Escenario Principal de Éxito (Flujo Básico):**
+  1. El Practicante (o Árbitro en fase de ingesta) selecciona la especificación técnica o libro de referencia a evaluar. En caso de ingesta nueva, el sistema procesa localmente el PDF/imagen mediante Gemini liviano, traduce y extrae checkpoints biomecánicos en JSON.
+  2. El Sistema solicita el video de la ejecución del movimiento.
+  3. El Practicante provee el video desde su cámara o almacenamiento local.
+  4. El Sistema extrae el mosaico cronológico 3x3 (9 fotogramas clave) mediante HTML5 Canvas, reduciendo 88.89% los tokens de visión.
+  5. El Sistema ejecuta clasificación Zero-Shot para identificar la posición (ej. mount_survival), intercepta la etiqueta, consulta el almacén local e inyecta los checkpoints específicos en un prompt paramétrico vacío (Grounding Dinámico).
+  6. El Sistema ensambla el prompt dinámico y genera el análisis frame por frame a través del modelo multimodal avanzado bajo principio de inferencia negativa.
+  7. El Sistema valida y registra la evaluación con sus respectivas métricas de potencia en el historial del dispositivo.
+  8. El Sistema presenta la línea de tiempo interactiva con los aciertos, desviaciones angulares y niveles de potencia por cada fotograma analizado.
+- **Extensiones (Flujos Alternativos):**
+  - **4a. La técnica seleccionada no posee fases biomecánicas parametrizadas en la base de datos local:**
+    1. El Sistema notifica al usuario: "La técnica seleccionada no tiene reglas de evaluación. Por favor, registre las fases y ángulos de control antes de continuar."
+    2. El Sistema redirige al Practicante al módulo de Ingesta y Modelado de Técnicas.
+  - **5a. El reporte retornado por el modelo multimodal no cumple con el esquema analítico secuencial (Alucinación de la IA):**
+    1. El Sistema detecta mediante validación estricta que la IA omitió fotogramas o no calculó los niveles de potencia articulares.
+    2. El Sistema descarta la respuesta inválida.
+    3. El Sistema reenvía automáticamente la solicitud a la API utilizando un parámetro de temperatura de inferencia corregido.
+    4. Si el error persiste tras tres reintentos, el Sistema notifica al Practicante: "El análisis secuencial no pudo procesarse. Asegúrese de que el video capture claramente los vectores del movimiento."
+- **Requisitos Especiales:**
+  - Interfaz de usuario minimalista y táctil, optimizada para uso en movimiento sobre el tatami.
+  - Tiempo de respuesta end-to-end entre 20 y 60 segundos para mantener la utilidad en tiempo real.
+  - Todos los prompts internos y respuestas estructuradas deben procesarse en inglés para optimizar precisión y costo de tokens.
+  - Los enlaces al manual Jiu-Jitsu University deben apuntar a páginas específicas (ej: "Page 142 - Mount Escape Drill 3").
+  - Los videos procesados nunca deben salir del dispositivo; solo los fotogramas extraídos se transmiten a la API.
+- **Lista de Tecnología y Variaciones de Datos:**
+  - **2a.** La captura de video puede realizarse mediante cámara trasera, frontal o selección desde galería, según la preferencia del usuario y la posición a analizar.
+  - **3b.** Los fotogramas se extraen a una resolución máxima de 720p y en intervalos de 2 segundos para balancear precisión y consumo de tokens.
+  - **7c.** La solicitud a la API utiliza el modelo multimodal de Gemini configurado con parámetros de temperatura baja (0.2) para reducir la variabilidad y alucinaciones en las respuestas.
+  - **8b.** El formato de evaluación exige los siguientes campos obligatorios: position_detected, errors[], improvements[], manual_references[], youtube_links[].
+- **Frecuencia:** Variable; se estima un promedio de 3-5 análisis por practicante por semana durante períodos de preparación técnica.
+- **Temas Abiertos:**
+  - ¿Cómo manejar la evaluación de posiciones de transición entre Mount y Side Control?
+  - ¿Es necesario implementar un mecanismo de calibración inicial para adaptar el análisis al biotipo del practicante?
+  - ¿Debería el sistema permitir que el instructor deseado añada comentarios personalizados a los reportes generados?
+
 ### **Caso de Uso CU02: Consultar Historial Táctico**
-Actor Principal: Practicante
-Personal involucrado e intereses:
-Practicante: desea monitorear su progreso técnico a lo largo del tiempo, identificando patrones de error recurrentes y áreas de mejora consolidadas.
-Instructor: desea acceder (con consentimiento del alumno) a los reportes históricos para personalizar la planificación de entrenamientos.
-Academia Corpo & Mente: desea que el historial sirva como evidencia del progreso del alumno para evaluaciones de graduación.
-Precondiciones:
-El practicante ha realizado al menos un análisis de video previamente (CU01).
-El sistema cuenta con evaluaciones previas en el historial local.
-Garantías de éxito (Postcondiciones):
-El sistema ha recuperado y ordenado cronológicamente los reportes almacenados.
-El practicante puede visualizar un resumen de cada análisis (posición, fecha, errores principales).
-El practicante puede acceder al detalle completo de cualquier reporte histórico.
-El sistema mantiene la integridad de los datos ante cierres inesperados del navegador.
-Escenario principal de éxito (Flujo Básico):
-El Practicante indica que desea revisar sus evaluaciones históricas.
-El Sistema recupera el historial de evaluaciones del dispositivo.
-El Sistema ordena los reportes por fecha de análisis en orden descendente.
-El Sistema presenta un resumen de las evaluaciones históricas.
-El Practicante elige una evaluación táctica para revisar.
-El Sistema presenta el detalle completo del análisis seleccionado, incluyendo el reporte estructurado y enlaces de referencia.
-El Practicante examina diferentes reportes.
-Extensiones (Flujos Alternativos):
-2a. Historial local está vacío o no contiene reportes:
-El Sistema detecta que no hay registros históricos.
-El Sistema informa que no hay análisis previos con el mensaje: "No analysis history yet. Start your first tactical review!"
-El Sistema ofrece la opción de iniciar un nuevo análisis táctico.
-2b. Error al leer desde el historial local (corrupción o límite de almacenamiento):
-El Sistema intenta recuperar los reportes y encuentra un error de lectura.
-El Sistema notifica: "Could not load history. Please try again."
-Requisitos especiales:
-La carga del historial debe completarse en menos de 1 segundo incluso sin conexión a internet.
-El resumen de cada evaluación debe incluir un indicador visual del nivel de severidad de errores (bajo/medio/alto).
-El sistema debe permitir filtrar el historial por posición (Mount / Side Control) y por rango de fechas.
-Lista de tecnología y variaciones de datos:
-3a. El ordenamiento se realiza localmente mediante índices del historial local sobre el campo timestamp.
-4a. Las previsualizaciones utilizan lazy-loading para optimizar el rendimiento en dispositivos móviles.
-Frecuencia: Moderada; se estima que el practicante consulte su historial 1-2 veces por semana para autoevaluación.
-Temas abiertos:
-¿Debería implementarse una función de exportación de historial en formato PDF para compartir con el instructor?
-¿Es viable añadir métricas agregadas (ej: "errores más frecuentes por posición") sin comprometer la arquitectura local?
+
+- **Actor Principal:** Practicante
+- **Personal Involucrado e Intereses:**
+  - **Practicante:** Desea monitorear su progreso técnico a lo largo del tiempo, identificando patrones de error recurrentes y áreas de mejora consolidadas.
+  - **Instructor:** Desea acceder (con consentimiento del alumno) a los reportes históricos para personalizar la planificación de entrenamientos.
+  - **Academia Corpo & Mente:** Desea que el historial serva como evidencia del progreso del alumno para evaluaciones de graduación.
+- **Precondiciones:**
+  - El practicante ha realizado al menos un análisis de video previamente (CU01).
+  - El sistema cuenta con evaluaciones previas en el historial local.
+- **Garantías de Éxito (Postcondiciones):**
+  - El sistema ha recuperado y ordenado cronológicamente los reportes almacenados.
+  - El practicante puede visualizar un resumen de cada análisis (posición, fecha, errores principales).
+  - El practicante puede acceder al detalle completo de cualquier reporte histórico.
+  - El sistema mantiene la integridad de los datos ante cierres inesperados del navegador.
+- **Escenario Principal de Éxito (Flujo Básico):**
+  1. El Practicante indica que desea revisar sus evaluaciones históricas.
+  2. El Sistema recupera el historial de evaluaciones del dispositivo.
+  3. El Sistema ordena los reportes por fecha de análisis en orden descendente.
+  4. El Sistema presenta un resumen de las evaluaciones históricas.
+  5. El Practicante elige una evaluación táctica para revisar.
+  6. El Sistema presenta el detalle completo del análisis seleccionado, incluyendo el reporte estructurado y enlaces de referencia.
+  7. El Practicante examina diferentes reportes.
+- **Extensiones (Flujos Alternativos):**
+  - **2a. Historial local está vacío o no contiene reportes:**
+    1. El Sistema detecta que no hay registros históricos.
+    2. El Sistema informa que no hay análisis previos con el mensaje: "No analysis history yet. Start your first tactical review!"
+    3. El Sistema ofrece la opción de iniciar un nuevo análisis táctico.
+  - **2b. Error al leer desde el historial local (corrupción o límite de almacenamiento):**
+    1. El Sistema intenta recuperar los reportes y encuentra un error de lectura.
+    2. El Sistema notifica: "Could not load history. Please try again."
+- **Requisitos Especiales:**
+  - La carga del historial debe completarse en menos de 1 segundo incluso sin conexión a internet.
+  - El resumen de cada evaluación debe incluir un indicador visual del nivel de severidad de errores (bajo/medio/alto).
+  - El sistema debe permitir filtrar el historial por posición (Mount / Side Control) y por rango de fechas.
+- **Lista de Tecnología y Variaciones de Datos:**
+  - **3a.** El ordenamiento se realiza localmente mediante índices del historial local sobre el campo timestamp.
+  - **4a.** Las previsualizaciones utilizan lazy-loading para optimizar el rendimiento en dispositivos móviles.
+- **Frecuencia:** Moderada; se estima que el practicante consulte su historial 1-2 veces por semana para autoevaluación.
+- **Temas Abiertos:**
+  - ¿Debería el sistema permitir exportar el historial en formato PDF para compartirlo con el instructor?
+  - ¿Es viable añadir métricas agregadas (ej: "errores más frecuentes por posición") sin comprometer la arquitectura local?
+
 ### **Caso de Uso CU03: Gestionar Registros Locales**
-Actor Principal: Practicante
-Personal involucrado e intereses:
-Practicante: desea controlar el espacio de almacenamiento de su dispositivo y eliminar análisis que ya no considera relevantes.
-Academia Corpo & Mente: desea que los usuarios gestionen responsablemente sus datos locales para evitar saturación del navegador.
-Precondiciones:
-Existen uno o más reportes almacenados en el historial.
-El practicante indica su intención de gestionar el espacio de almacenamiento.
-Garantías de éxito (Postcondiciones):
-Las evaluaciones seleccionadas para eliminación han sido removidas del historial.
-El espacio de almacenamiento liberado se actualiza y es visible para el practicante.
-No se eliminan reportes por error; el sistema solicita confirmación explícita.
-Escenario principal de éxito (Flujo Básico):
-El Practicante indica que desea gestionar sus datos locales.
-El Sistema accede al almacenamiento del dispositivo.
-El Sistema presenta un resumen del historial y el almacenamiento disponible.
-El Practicante selecciona uno o más reportes para eliminar.
-El Sistema solicita confirmación: "Delete selected analyses? This action cannot be undone."
-El Practicante confirma la eliminación.
-El Sistema elimina las evaluaciones indicadas y libera el espacio correspondiente.
-El Sistema confirma la liberación de espacio y el éxito de la operación.
-Extensiones (Flujos Alternativos):
-4a. El Practicante intenta eliminar todos los reportes simultáneamente:
-El Sistema detecta una selección masiva.
-El Sistema muestra una advertencia adicional: "You are about to delete all your tactical history. This will remove your progress tracking data."
-El Practicante debe confirmar explícitamente con una acción de doble verificación.
-El flujo continúa desde el paso 6 del escenario principal.
-7a. Error al eliminar registros del historial:
-El Sistema detecta un problema al intentar eliminar las evaluaciones.
-El Sistema reintenta la operación internamente.
-Si persiste el error, el Sistema notifica: "Could not complete deletion. Please restart the app and try again."
-El Sistema mantiene los reportes marcados para eliminación en el próximo inicio.
-Requisitos especiales:
-La interfaz de gestión debe mostrar claramente el espacio utilizado vs. disponible en el almacenamiento local.
-La eliminación debe ser atómica: si falla, no se debe eliminar parcialmente ningún registro.
-El sistema debe prevenir la eliminación accidental mediante confirmaciones contextuales.
-Lista de tecnología y variaciones de datos:
-2a. El cálculo de espacio utiliza la API StorageManager si está disponible, o una estimación del tamaño de los strings JSON almacenados.
-7a. Las transacciones de IndexedDB se ejecutan en modo readwrite con manejo explícito de abort y complete.
-7b. Los reintentos de eliminación en caso de fallo (Extensión 7a) se manejan con un algoritmo de backoff exponencial.
-Frecuencia: Baja; se estima que el practicante gestione sus registros 1 vez al mes o cuando el dispositivo reporte espacio bajo.
-Temas abiertos:
-¿Debería implementarse una función de "archivar" en lugar de eliminar, para permitir recuperación futura?
-¿Es factible implementar un mecanismo de exportación de datos P2P (Peer-to-Peer) o mediante códigos QR temporales para compartir reportes con el instructor sin depender de servidores centralizados?
+
+- **Actor Principal:** Practicante
+- **Personal Involucrado e Intereses:**
+  - **Practicante:** Desea controlar el espacio de almacenamiento de su dispositivo y eliminar análisis que ya no considera relevantes.
+  - **Academia Corpo & Mente:** Desea que los usuarios gestionen responsablemente sus datos locales para evitar saturación del navegador.
+- **Precondiciones:**
+  - Existen uno o más reportes almacenados en el historial.
+  - El practicante indica su intención de gestionar el espacio de almacenamiento.
+- **Garantías de Éxito (Postcondiciones):**
+  - Las evaluaciones seleccionadas para eliminación han sido removidas del historial.
+  - El espacio de almacenamiento liberado se actualiza y es visible para el practicante.
+  - No se eliminan reportes por error; el sistema solicita confirmación explícita.
+- **Escenario Principal de Éxito (Flujo Básico):**
+  1. El Practicante indica que desea gestionar sus datos locales.
+  2. El Sistema accede al almacenamiento del dispositivo.
+  3. El Sistema presenta un resumen del historial y el almacenamiento disponible.
+  4. El Practicante selecciona uno o más reportes para eliminar.
+  5. El Sistema solicita confirmación: "Delete selected analyses? This action cannot be undone."
+  6. El Practicante confirma la eliminación.
+  7. El Sistema elimina las evaluaciones indicadas y libera el espacio correspondiente.
+  8. El Sistema confirma la liberación de espacio y el éxito de la operación.
+- **Extensiones (Flujos Alternativos):**
+  - **4a. El Practicante intenta eliminar todos los reportes simultáneamente:**
+    1. El Sistema detecta una selección masiva.
+    2. El Sistema muestra una advertencia adicional: "You are about to delete all your tactical history. This will remove your progress tracking data."
+    3. El Practicante debe confirmar explícitamente con una acción de doble verificación.
+    4. El flujo continúa desde el paso 6 del escenario principal.
+  - **7a. Error al eliminar registros del historial:**
+    1. El Sistema detecta un problema al intentar eliminar las evaluaciones.
+    2. El Sistema reintenta la operación internamente.
+    3. Si persiste el error, el Sistema notifica: "Could not complete deletion. Please restart the app and try again."
+    4. El Sistema mantiene los reportes marcados para eliminación en el próximo inicio.
+- **Requisitos Especiales:**
+  - La interfaz de gestión debe mostrar claramente el espacio utilizado vs. disponible en el almacenamiento local.
+  - La eliminación debe ser atómica: si falla, no se debe eliminar parcialmente ningún registro.
+  - El sistema debe prevenir la eliminación accidental mediante confirmaciones contextuales.
+- **Lista de Tecnología y Variaciones de Datos:**
+  - **2a.** El cálculo de espacio utiliza la API StorageManager si está disponible, o una estimación del tamaño de los strings JSON almacenados.
+  - **7a.** Las transacciones de IndexedDB se ejecutan en modo readwrite con manejo explícito de abort y complete.
+  - **7b.** Los reintentos de eliminación en caso de fallo (Extensión 7a) se manejan con un algoritmo de backoff exponencial.
+- **Frecuencia:** Baja; se estima que el practicante gestione sus registros 1 vez al mes o cuando el dispositivo reporte espacio bajo.
+- **Temas Obtenidos / Abiertos:**
+  - ¿Debería implementarse una función de "archivar" en lugar de eliminar, para permitir recuperación futura?
+  - ¿Es factible implementar un mecanismo de exportación de datos P2P (Peer-to-Peer) o mediante códigos QR temporales para compartir reportes con el instructor sin depender de servidores centralizados?
 ## **5.2 Modelo de Dominio Conceptual**
 El modelo de dominio representa los conceptos fundamentales del entrenamiento y la evaluación técnica en Corpo & Mente, mostrando sus relaciones semánticas. Este modelo es independiente de las decisiones de implementación de software (Larman, 2003).
 <a id="figura-8"></a>
