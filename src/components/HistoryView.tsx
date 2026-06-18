@@ -1,0 +1,133 @@
+import React, { useEffect, useState } from 'react';
+import { Trash2, Calendar, Target, Award, AlertCircle } from 'lucide-react';
+import { useApp } from '../context/AppContext';
+import { AnalisisBiomecanico } from '../models/types';
+
+export function HistoryView() {
+  const { historial, loadHistory, deleteAnalysis } = useApp();
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
+
+  const handleDelete = async (id: number) => {
+    if (confirmDelete === id) {
+      await deleteAnalysis(id);
+      setConfirmDelete(null);
+    } else {
+      setConfirmDelete(id);
+      // Auto-cancel after 3 seconds
+      setTimeout(() => setConfirmDelete(null), 3000);
+    }
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'score-excellent';
+    if (score >= 60) return 'score-good';
+    if (score >= 40) return 'score-moderate';
+    return 'score-poor';
+  };
+
+  // CP04: Historial vacío
+  if (historial.length === 0) {
+    return (
+      <div className="history-view">
+        <div className="glass-card empty-state">
+          <div className="empty-content">
+            <span className="empty-emoji">🥋</span>
+            <h2>¡Tu historial está vacío!</h2>
+            <p>Realiza tu primer análisis biomecánico para empezar a rastrear tu progreso.</p>
+            <p className="empty-motivation">
+              <em>"Un cinturón negro fue un cinturón blanco que no se rindió."</em>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="history-view">
+      <div className="history-header">
+        <h2 className="section-title">
+          <Calendar size={22} />
+          Historial de Análisis
+        </h2>
+        <span className="history-count">{historial.length} registros</span>
+      </div>
+
+      <div className="history-list">
+        {historial.map((analisis) => (
+          <div key={analisis.id} className="glass-card history-card">
+            <div className="history-card-header">
+              <div className="history-score-container">
+                <div className={`history-score ${getScoreColor(analisis.puntuacionGeneral)}`}>
+                  {analisis.puntuacionGeneral}
+                </div>
+              </div>
+              <div className="history-info">
+                <h3 className="history-tecnica">{analisis.tecnicaNombre}</h3>
+                <p className="history-date">
+                  {new Date(analisis.fecha).toLocaleDateString('es-BO', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </p>
+              </div>
+              <button
+                className={`btn-icon ${confirmDelete === analisis.id ? 'btn-danger' : ''}`}
+                onClick={() => handleDelete(analisis.id!)}
+                title={confirmDelete === analisis.id ? 'Confirmar eliminación' : 'Eliminar'}
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
+
+            <div className="history-card-body">
+              {/* Errores resumen */}
+              <div className="history-errors-summary">
+                {analisis.errores.length > 0 ? (
+                  <>
+                    <Target size={14} />
+                    <span>{analisis.errores.length} error{analisis.errores.length !== 1 ? 'es' : ''} detectado{analisis.errores.length !== 1 ? 's' : ''}</span>
+                  </>
+                ) : (
+                  <>
+                    <Award size={14} />
+                    <span className="text-green">Sin errores detectados</span>
+                  </>
+                )}
+              </div>
+
+              {/* Tags de errores */}
+              {analisis.errores.length > 0 && (
+                <div className="history-error-tags">
+                  {analisis.errores.slice(0, 3).map((e, i) => (
+                    <span key={i} className={`error-tag severity-${e.severidad}`}>
+                      {e.articulacion}
+                    </span>
+                  ))}
+                  {analisis.errores.length > 3 && (
+                    <span className="error-tag more">+{analisis.errores.length - 3}</span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Confirm delete banner */}
+            {confirmDelete === analisis.id && (
+              <div className="confirm-delete-banner">
+                <AlertCircle size={14} />
+                <span>Toca de nuevo para confirmar la eliminación</span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
