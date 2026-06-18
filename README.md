@@ -372,7 +372,6 @@ classDiagram
     class Usuario {
         nombre
         cinturon
-        historialErrores
     }
     class PerfilBiomecanico {
         altura
