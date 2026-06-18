@@ -820,7 +820,7 @@ classDiagram
     }
     class ILLMProvider {
         <<interface>>
-        +generateEvaluation(prompt: string, kinematics: KinematicData): Promise~EvaluationResult~
+        +evaluateInference(prompts: string[], landmarks: Landmark3D[]): Promise~string~
     }
 
     class MediaPipePoseAdapter {
@@ -831,34 +831,49 @@ classDiagram
         +similarityQuery(queryVector: float[], topK: int): Promise~Chunk[]~
     }
     class GeminiServiceAdapter {
-        +generateEvaluation(prompt: string, kinematics: KinematicData): Promise~EvaluationResult~
+        +evaluateInference(prompts: string[], landmarks: Landmark3D[]): Promise~string~
     }
 
     IPoseEstimator <|.. MediaPipePoseAdapter
     IVectorStore <|.. SupabaseVectorDBAdapter
     ILLMProvider <|.. GeminiServiceAdapter
 
+    class RetrievalAugmentedController {
+        -vectorStore: IVectorStore
+        +getContextPrompts(tecnicaId: string): Promise~string[]~
+    }
+
     class SesionEntrenamientoController {
         -poseEstimator: IPoseEstimator
         -vectorStore: IVectorStore
         -llmProvider: ILLMProvider
+        -ragController: RetrievalAugmentedController
         +subirVideo(videoBlob: Blob, tecnicaId: string): Promise~AnalisisBiomecanico~
         +actualizarPerfilUsuario(usuarioId: string, perfil: PerfilBiomecanico): Promise~void~
     }
 
-    class IngestaConocimientoController {
-        -vectorStore: IVectorStore
-        +cargarFuente(fuente: File): Promise~void~
-        +validarFuente(fuenteId: string, aprobado: boolean): Promise~void~
+    class AnalisisBiomecanico {
+        +fecha: Date
+        +kinematicsData: KinematicData
+        +calculateKinematics(): void
     }
 
-    SesionEntrenamientoController --> IPoseEstimator : utiliza
-    SesionEntrenamientoController --> IVectorStore : utiliza
-    SesionEntrenamientoController --> ILLMProvider : utiliza
-    IngestaConocimientoController --> IVectorStore : utiliza
-```
+    class RutaAprendizaje {
+        +progresoGeneral: float
+        +estadoPedagogicoActual: string
+        +updateRouting(analisis: AnalisisBiomecanico): void
+    }
 
----
+    SesionEntrenamientoController --> IPoseEstimator : posee
+    SesionEntrenamientoController --> IVectorStore : posee
+    SesionEntrenamientoController --> ILLMProvider : posee
+    SesionEntrenamientoController --> RetrievalAugmentedController : posee
+    RetrievalAugmentedController --> IVectorStore : posee
+
+    SesionEntrenamientoController ..> AnalisisBiomecanico : crea / usa
+    SesionEntrenamientoController ..> RutaAprendizaje : actualiza
+    RutaAprendizaje ..> AnalisisBiomecanico : lee
+```
 
 ## **5.9 Diagrama de Despliegue Físico**
 <a id="figura-14"></a>
