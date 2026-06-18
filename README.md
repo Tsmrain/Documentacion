@@ -434,7 +434,9 @@ En concordancia con los principios del desarrollo iterativo e incremental del Pr
 ## **5.1 Modelo de Dominio Conceptual**
 El modelo de dominio representa los conceptos significativos del negocio de OpenBJJ. Siguiendo las directrices de Larman, se modelan las abstracciones cinemáticas, de RAG y adaptación instruccional sin acoplar detalles de bases de datos.
 
-La clase **ErrorBiomecanico** (o *DesviacionTecnica*) actúa como entidad puente fundamental. Registra la diferencia entre la ejecución real medida por la **MetricaCinematica** y el patrón extraído de la **FuenteConocimiento** (adaptado por el **PerfilBiomecanico** del **Usuario**). Esta entidad permite al motor de **RecomendacionAdaptativa** evaluar el historial persistente de fallas y seleccionar la estrategia pedagógica idónea para la **RutaAprendizaje** del practicante.
+La clase **PerfilBiomecanico** está asociada mediante una relación estricta 1-a-1 con **Usuario**. Esta entidad captura los datos antropométricos del usuario (como altura, peso y longitudes segmentarias) junto con sus rangos de movilidad articular. Esta clase influye directamente en el cálculo del **ErrorBiomecanico**: en lugar de aplicar un umbral estático universal de tolerancia, el sistema evalúa la movilidad del practicante para flexibilizar dinámicamente los límites de desviación angular permitida (conforme a la regla de negocio `RD-02`). 
+
+De este modo, la clase **ErrorBiomecanico** (o *DesviacionTecnica*) actúa como entidad puente fundamental. Registra la diferencia entre la ejecución real medida por la **MetricaCinematica** y el patrón ideal extraído de la **FuenteConocimiento** (ajustado según el **PerfilBiomecanico** del **Usuario**). Esta información permite a la **RecomendacionAdaptativa** evaluar el historial de fallas y actualizar de forma personalizada la **RutaAprendizaje** del practicante.
 
 ```mermaid
 classDiagram
@@ -878,9 +880,46 @@ La asignación de responsabilidades de diseño se justifica a través de la apli
 ---
 
 ## **5.7 Diagrama de Estados para el Controlador**
+
+El siguiente diagrama de estados de UML describe el comportamiento dinámico de `SesionEntrenamientoController`, ilustrando cómo cambia el estado del sistema en respuesta a eventos de análisis y cómo conmuta adaptativamente su estrategia pedagógica ante errores recurrentes:
+
 <a id="figura-12"></a>
 **Figura 12**
 *Máquina de Estados de los Casos de Uso*
+
+```mermaid
+stateDiagram-v2
+    [*] --> EsperandoInput : Inicio del Sistema
+    
+    EsperandoInput --> ProcesandoLocal : subirVideo(videoBlob, tecnicaId)
+    
+    state ProcesandoLocal {
+        [*] --> ExtrayendoLandmarks : invocar MediaPipe Pose
+        ExtrayendoLandmarks --> CalculandoCinematica : landmarks extraídos
+        CalculandoCinematica --> [*] : métricas calculadas
+    }
+    
+    ProcesandoLocal --> ConsultandoRAG : landmarks y métricas listos
+    
+    ConsultandoRAG --> EsperandoIA : prompts y grounding listos
+    
+    EsperandoIA --> GenerandoRecomendacion : respuesta de inferencia recibida (JSON)
+    
+    state GenerandoRecomendacion {
+        [*] --> EvaluandoHistorial : parsear JSON y registrar errores
+        
+        EvaluandoHistorial --> AdaptandoEstrategia : [ErrorBiomecanico.esRecurrente == true]
+        EvaluandoHistorial --> RutaEstandar : [ErrorBiomecanico.esRecurrente == false]
+        
+        AdaptandoEstrategia --> [*] : conmutar estrategia pedagógica
+        RutaEstandar --> [*] : mantener ruta estándar
+    }
+    
+    GenerandoRecomendacion --> EsperandoInput : mostrar reporte y retornar analisisInstance
+    
+    ProcesandoLocal --> EsperandoInput : error en video / oclusión (abortar)
+    EsperandoIA --> EsperandoInput : timeout de API / error de red
+```
 
 ---
 
@@ -907,16 +946,18 @@ classDiagram
     class MediaPipePoseAdapter {
         +extract3DLandmarks(videoBlob: Blob): Promise~Landmark3D[]~
     }
-    class SupabaseVectorDBAdapter {
+    class SupabaseVectorAdapter {
+        -supabaseClient: any
         +saveEmbeddings(chunks: Chunk[], metadata: Metadata): Promise~void~
         +similarityQuery(queryVector: float[], topK: int): Promise~Chunk[]~
     }
     class GeminiServiceAdapter {
+        -apiKey: string
         +evaluateInference(prompts: string[], landmarks: Landmark3D[]): Promise~string~
     }
 
     IPoseEstimator <|.. MediaPipePoseAdapter
-    IVectorStore <|.. SupabaseVectorDBAdapter
+    IVectorStore <|.. SupabaseVectorAdapter
     ILLMProvider <|.. GeminiServiceAdapter
 
     class RetrievalAugmentedController {
@@ -935,8 +976,31 @@ classDiagram
 
     class AnalisisBiomecanico {
         +fecha: Date
-        +kinematicsData: KinematicData
-        +calculateKinematics(): void
+        +metricas: MetricaCinematica[]
+        +errores: ErrorBiomecanico[]
+        +calculateKinematics(landmarks: Landmark3D[], perfil: PerfilBiomecanico): void
+    }
+
+    class MetricaCinematica {
+        +frameIndex: int
+        +anguloMedido: float
+        +velocidadMedida: float
+        +aceleracionMedida: float
+    }
+
+    class ErrorBiomecanico {
+        +severidad: string
+        +anguloDesviacion: float
+        +descripcionFallo: string
+        +esRecurrente: boolean
+    }
+
+    class PerfilBiomecanico {
+        +altura: float
+        +peso: float
+        +longitudBrazos: float
+        +longitudPiernas: float
+        +rangoMovilidadArticular: string
     }
 
     class RutaAprendizaje {
@@ -954,12 +1018,54 @@ classDiagram
     SesionEntrenamientoController ..> AnalisisBiomecanico : crea / usa
     SesionEntrenamientoController ..> RutaAprendizaje : actualiza
     RutaAprendizaje ..> AnalisisBiomecanico : lee
+    AnalisisBiomecanico "1" *--> "*" MetricaCinematica : contiene
+    AnalisisBiomecanico "1" *--> "*" ErrorBiomecanico : contiene
+    SesionEntrenamientoController ..> PerfilBiomecanico : lee
+    AnalisisBiomecanico ..> PerfilBiomecanico : usa para umbrales
 ```
 
 ## **5.9 Diagrama de Despliegue Físico**
+
+El siguiente diagrama de despliegue físico de UML ilustra la topología de red y los nodos de hardware/software de la arquitectura de OpenBJJ, justificando la ejecución client-side para la supresión de costos operativos de GPU en el servidor y garantizando que el video bruto original permanezca privado en el cliente:
+
 <a id="figura-14"></a>
 **Figura 14**
 *Diagrama de Despliegue del Sistema*
+
+```mermaid
+graph TD
+    subgraph Cliente ["Dispositivo Cliente (Móvil / PC)"]
+        direction TB
+        Browser["Navegador Web (WebGL enabled)"]
+        subgraph PWA ["OpenBJJ PWA Component"]
+            direction TB
+            UI["Capa Presentación (React/TS)"]
+            Ctrl["SesionEntrenamientoController"]
+            IndexedDB["Almacenamiento Local (IndexedDB)"]
+        end
+        MediaPipe["MediaPipe Pose Engine (Local Vision)"]
+        
+        Browser --- PWA
+        Ctrl --- MediaPipe
+    end
+
+    subgraph ServidorCloud ["Servicios en la Nube (Serverless)"]
+        direction TB
+        Supabase["Supabase Vector DB (RAG index)"]
+        Gemini["Google Gemini API (LLM Engine)"]
+    end
+
+    Ctrl -- "HTTPS/REST: JSON Payload (Metrics + Context)" --> Gemini
+    Ctrl -- "HTTPS/REST: Similarity Queries" --> Supabase
+    
+    %% Notes and constraints
+    style Cliente fill:#f5f5f7,stroke:#333,stroke-width:2px;
+    style ServidorCloud fill:#e8f4fd,stroke:#0277bd,stroke-width:2px;
+    
+    classDef note fill:#fff9c4,stroke:#fbc02d,stroke-width:1px;
+    Note["NOTA: El video original NUNCA sale del Cliente. Solo viajan métricas cinemáticas y prompts."]:::note
+    Cliente -.-> Note
+```
 
 <a id="tabla-6"></a>
 **Tabla 6**  
