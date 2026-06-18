@@ -49,11 +49,6 @@ un cinturon negro fue un cinturon blanco que no se rindio.
 | TÍTULO | APLICACIÓN WEB CON INTELIGENCIA ARTIFICIAL PARA ANALIZAR VIDEOS DE ENTRENAMIENTO DE ARTES MARCIALES EN BRAZILIAN JIU-JITSU PARA PRINCIPIANTES DE CINTURÓN BLANCO |
 | :--- | :--- |
 | **AUTOR** | SANTIAGO BORDA ZAMBRANA |
-**Carrera:** Ingeniería de Sistemas  
-**Guía:** Jose Antonio Benavente Blacutt  
-**Email:** santiagobordazambrana@gmail.com  
-**Fecha:** Santa Cruz de la Sierra, 2026  
-**Descriptores:** Inteligencia Artificial Generativa, Inferencia Multimodal, Arquitectura Cliente-Ligero, PWA, Brazilian Jiu-Jitsu, IndexedDB.  
 
 ### **Problemática**
 En el aprendizaje del Brazilian Jiu-Jitsu (BJJ), los practicantes principiantes enfrentan dificultades para evaluar su rendimiento técnico de manera objetiva. Actualmente, el progreso depende casi en su totalidad de la observación directa del instructor en tiempo real, lo que genera problemas críticos: falta de atención individualizada en clases numerosas, criterios de evaluación variables según el profesor, y una retroalimentación diferida o nula si el error no es detectado en el momento.
@@ -63,6 +58,13 @@ Desarrollar e implementar la aplicación web progresiva (PWA) "OpenBJJ" para ana
 
 ### **Contenido**
 El presente trabajo de investigación se ha desarrollado bajo la metodología del Proceso Unificado (UP) que maneja IA y consta de los siguientes capítulos:
+
+| CARRERA | Ingeniería de Sistemas |
+| :--- | :--- |
+| **GUÍA** | Jose Antonio Benavente Blacutt |
+| **DESCRIPTORES** | Inteligencia Artificial Generativa, Inferencia Multimodal, Arquitectura Cliente-Ligero, PWA, Brazilian Jiu-Jitsu, IndexedDB. |
+| **EMAIL** | santiagobordazambrana@gmail.com |
+| **FECHA** | Santa Cruz de la Sierra, 2026 |
 
 # **Resumen**
 
