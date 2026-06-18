@@ -4,8 +4,14 @@
 
 <div align="center">
 
+<img src="logo-upsa.png" alt="Logo UPSA" width="350">
+
+<br>
+<br>
+
 **Santiago Borda Zambrana**  
 *Registro: 2021210057*  
+
 
 <br>
 
