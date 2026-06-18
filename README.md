@@ -110,21 +110,23 @@ El sistema realiza el seguimiento del progreso histórico del alumno y altera la
   - [3.2 Tabla Comparativa de Soluciones](#32-tabla-comparativa-de-soluciones)
 - [**Capítulo IV: Definición de Requisitos (SRS)**](#capítulo-iv-definición-de-requisitos-srs)
   - [4.1 Introducción](#41-introducción)
+    - [4.1.1 Propósito](#411-propósito)
+    - [4.1.2 Ámbito del Sistema](#412-ámbito-del-sistema)
+    - [4.1.3 Definiciones, Acrónimos y Abreviaturas](#413-definiciones-acrónimos-y-abreviaturas)
+    - [4.1.4 Referencias](#414-referencias)
+    - [4.1.5 Perspectiva General](#415-perspectiva-general)
   - [4.2 Descripción General](#42-descripción-general)
     - [4.2.1 Perspectiva del Producto](#421-perspectiva-del-producto)
     - [4.2.2 Funciones del Producto](#422-funciones-del-producto)
-    - [4.2.3 Características de los Usuarios y Gestión de Roles Local](#423-características-de-los-usuarios-y-gestión-de-roles-local)
+    - [4.2.3 Características de los Usuarios](#423-características-de-los-usuarios)
     - [4.2.4 Restricciones](#424-restricciones)
     - [4.2.5 Suposiciones y Dependencias](#425-suposiciones-y-dependencias)
-    - [4.2.6 Riesgos del Proyecto y Plan de Gestión de Riesgos (Risk List)](#426-riesgos-del-proyecto-y-plan-de-gestión-de-riesgos-risk-list)
   - [4.3 Requisitos Específicos](#43-requisitos-específicos)
     - [4.3.1 Interfaces Externas](#431-interfaces-externas)
-    - [4.3.2 Requisitos Funcionales (RF)](#432-requisitos-funcionales-rf)
-    - [4.3.3 Requisitos No Funcionales (RNF)](#433-requisitos-no-funcionales-rnf)
-    - [4.3.4 Reglas de Dominio (Reglas de Negocio)](#434-reglas-de-dominio-reglas-de-negocio)
-  - [4.4 Glosario y Diccionario de Datos](#44-glosario-y-diccionario-de-datos)
-    - [4.4.1 Glosario de Términos](#441-glosario-de-términos)
-    - [4.4.2 Diccionario de Datos (Especificaciones de Atributos)](#442-diccionario-de-datos-especificaciones-de-atributos)
+    - [4.3.2 Requisitos Funcionales](#432-requisitos-funcionales)
+    - [4.3.3 Requisitos No Funcionales (Modelo FURPS+)](#433-requisitos-no-funcionales-modelo-furps)
+    - [4.3.4 Restricciones de Diseño](#434-restricciones-de-diseño)
+    - [4.3.5 Atributos del Sistema de Software](#435-atributos-del-sistema-de-software)
 - [**Capítulo V: Análisis y Diseño Orientado a Objetos**](#capítulo-v-análisis-y-diseño-orientado-a-objetos)
   - [5.1 Modelo de Dominio Conceptual](#51-modelo-de-dominio-conceptual)
   - [5.2 Especificación de Casos de Uso Principales (Formato Larman)](#52-especificación-de-casos-de-uso-principales-formato-larman)
@@ -334,6 +336,45 @@ El siguiente cuadro analiza comparativamente las soluciones del mercado respecto
 ## **4.1 Introducción**
 El presente pliego de condiciones técnicas establece la especificación de requisitos del sistema (SRS) para la plataforma OpenBJJ bajo el modelo de calidad FURPS+. Bajo la taxonomía metodológica del Proceso Unificado (UP), la descripción general y los objetivos de alto nivel del sistema corresponden al **Documento de Visión** (Vision Document), mientras que los requisitos no funcionales, reglas de negocio y restricciones técnicas descritas en este capítulo conforman la **Especificación Suplementaria** (Supplementary Specification).
 
+### **4.1.1 Propósito**
+El propósito de este documento es definir detalladamente los requisitos funcionales, no funcionales y las restricciones de diseño de la plataforma OpenBJJ. Está dirigido a los desarrolladores del sistema, tutores de grado, evaluadores académicos y stakeholders interesados en comprender el alcance técnico y operativo del software. Este documento sirve como la línea base para las fases de diseño, implementación y pruebas del proyecto, asegurando que todos los componentes (estimación biomecánica, procesamiento RAG y motor de recomendación adaptativa) estén alineados con las expectativas de calidad e interactividad.
+
+### **4.1.2 Ámbito del Sistema**
+El sistema en desarrollo, OpenBJJ, es una Plataforma Web Progresiva (PWA) inteligente orientada a la tutoría adaptativa y al análisis biomecánico en 3D para practicantes de Brazilian Jiu-Jitsu (BJJ), abarcando desde cinturones blancos hasta cinturones negros. 
+El software permitirá a los usuarios:
+1. Cargar videos monoculares en 2D de sus ejecuciones técnicas o sparrings.
+2. Procesar y extraer localmente (client-side) los landmarks 3D del cuerpo humano usando modelos de visión artificial (MediaPipe y TensorFlow.js), calculando de manera local variables cinemáticas clave (ángulos articulares, velocidad y aceleración).
+3. Indexar y buscar semánticamente de forma local (mediante Transformers.js e IndexedDB) en manuales técnicos de BJJ en formato PDF y transcripciones de videos de YouTube previamente validados por instructores.
+4. Generar reportes interactivos de corrección táctica y retroalimentación personalizada mediante la API de Gemini (Grounding RAG), adaptando de forma dinámica la estrategia pedagógica en función de los errores biomecánicos detectados y del historial del alumno.
+
+El ámbito excluye explícitamente el procesamiento de video en servidores basados en GPU y el almacenamiento centralizado en la nube de archivos de video para preservar la privacidad de los usuarios y suprimir costes de infraestructura.
+
+### **4.1.3 Definiciones, Acrónimos y Abreviaturas**
+Para facilitar la comprensión uniforme de este documento, se definen los siguientes términos claves:
+- **Landmark 3D:** Coordenada espacial tridimensional $(x,y,z)$ estimada para un punto de referencia anatómico clave (hombro, codo, muñeca, cadera, rodilla, tobillo) respecto a la cadera del sujeto.
+- **RAG (Retrieval-Augmented Generation):** Técnica de IA que inyecta contexto semántico de fuentes externas (como libros en PDF o transcripciones de video) en el prompt de un LLM para fundamentar sus respuestas en datos de dominio confiables y mitigar alucinaciones.
+- **Embedding Vectorial:** Representación numérica multidimensional de un fragmento de texto (chunk) que captura su significado semántico y permite realizar búsquedas de similitud en bases de datos vectoriales.
+- **Desviación Técnica (o Error Biomecánico):** Diferencia angular o cinemática medida entre la ejecución del practicante y los umbrales ideales definidos para un movimiento.
+- **PWA (Progressive Web App):** Aplicación web instalable y responsiva que ofrece una experiencia similar a una app nativa, con soporte para almacenamiento local y funcionamiento parcial sin conexión.
+- **LLM (Large Language Model):** Modelo de inteligencia artificial entrenado con grandes volúmenes de texto capaz de comprender y generar lenguaje natural de forma contextualizada.
+- **UP (Proceso Unificado):** Metodología iterativa e incremental de desarrollo de software guiada por casos de uso y centrada en la arquitectura.
+- **GRASP (General Responsibility Assignment Software Patterns):** Conjunto de directrices de diseño orientadas a objetos formuladas por Craig Larman para asignar responsabilidades a las clases del sistema.
+- **IndexedDB:** Base de datos relacional/vectorial integrada localmente en el navegador web del cliente.
+- **WebGL:** API de JavaScript que permite renderizar gráficos y procesamiento matemático 3D acelerado por hardware (GPU) directamente en navegadores web.
+
+### **4.1.4 Referencias**
+A continuación, se listan los documentos de referencia utilizados para la elaboración de este SRS:
+1. **IEEE Std 830-1998:** *IEEE Recommended Practice for Software Requirements Specifications*. Estándar internacional utilizado para estructurar este pliego de condiciones.
+2. **Larman, C. (2003):** *Applying UML and Patterns: An Introduction to Object-Oriented Analysis and Design and Iterative Development*. Rige la metodología de diseño, contratos y asignación de responsabilidades.
+3. **Google MediaPipe Pose documentation:** Especificación técnica del modelo monocular de estimación de pose en 3D utilizado en el navegador (https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker).
+4. **Google Gemini API documentation:** Manual de integración del SDK de Gemini para tareas de inferencia de lenguaje estructurado en formato JSON (https://ai.google.dev/gemini-api/docs).
+5. **Reglamento Oficial de la IBJJF (International Brazilian Jiu-Jitsu Federation):** Documento base para el establecimiento de la jerarquía de cinturones, posiciones reglamentarias y restricciones técnicas del deporte.
+
+### **4.1.5 Perspectiva General**
+El resto de esta especificación de requisitos se organiza en dos secciones principales:
+- **Sección 4.2 (Descripción General):** Describe los factores generales que afectan al producto y sus requisitos, proporcionando la perspectiva del producto, funciones esenciales, características de los diferentes tipos de usuarios (Practicante, Instructor, Administrador), restricciones de diseño y riesgos prioritarios de desarrollo.
+- **Sección 4.3 (Requisitos Específicos):** Detalla los requisitos de comportamiento técnico y de calidad del sistema, subdividiéndose en interfaces externas (usuario, software, hardware y comunicación), requisitos funcionales (casos de uso clave), requisitos no funcionales (clasificados bajo el estándar FURPS+), restricciones específicas de diseño técnico y los atributos de calidad/especificaciones de datos del sistema.
+
 ## **4.2 Descripción General**
 
 ### **4.2.1 Perspectiva del Producto**
@@ -346,25 +387,21 @@ OpenBJJ opera bajo una topología de arquitectura híbrida. El motor de visión 
 - **Recomendación Pedagógica Adaptativa:** Generación de rutas personalizadas basadas en fallos acumulativos.
 - **Validación de Datos:** Flujo para asegurar que las fuentes inyectadas por la comunidad cumplan con el criterio del instructor.
 
-### **4.2.3 Características de los Usuarios y Gestión de Roles Local**
+### **4.2.3 Características de los Usuarios**
+El sistema contempla tres perfiles de usuarios principales:
 1. **Practicante:** Alumno de cualquier cinturón (desde blanco hasta negro) que busca autoevaluarse y configurar su perfil biomecánico.
 2. **Instructor:** Experto certificado de la academia que gestiona, sube e indexa las fuentes de conocimiento, además de validar los recursos del RAG.
 3. **Administrador:** Soporte técnico del sistema local.
 
-**Nota sobre la Gestión de Acceso y Roles:** Dado el principio de soberanía de datos y funcionamiento offline sin cuentas centralizadas, la plataforma carece de un servidor de autenticación de login tradicional. Los perfiles de usuario se persisten localmente en IndexedDB. Para habilitar los flujos de "Instructor" (ingesta y validación de fuentes), el usuario puede conmutar localmente al "Modo Instructor" ingresando un PIN de acceso o clave maestra almacenada en el `localStorage` del navegador. De esta manera, el control de acceso a la moderación se realiza 100% en el dispositivo del cliente.
+**Gestión de Acceso y Roles Local:** Dado el principio de soberanía de datos y funcionamiento offline sin cuentas centralizadas, la plataforma carece de un servidor de autenticación de login tradicional. Los perfiles de usuario se persisten localmente en IndexedDB. Para habilitar los flujos de "Instructor" (ingesta y validación de fuentes), el usuario puede conmutar localmente al "Modo Instructor" ingresando un PIN de acceso o clave maestra almacenada en el `localStorage` del navegador. De esta manera, el control de acceso a la moderación se realiza 100% en el dispositivo del cliente.
 
 ### **4.2.4 Restricciones**
 - La API de MediaPipe client-side exige soporte WebGL activo en el navegador para acelerar el procesamiento de fotogramas.
 - El video monocular de entrada debe capturar el cuerpo entero del practicante sin oclusiones severas para garantizar la consistencia temporal de landmarks.
 - **Restricción de Tránsito de Datos (Ancho de Banda):** No se permite la transmisión de coordenadas 3D crudas por cada frame de video hacia la API del LLM, para evitar el desbordamiento de tokens y problemas de red. Las coordenadas de landmarks se deben resumir en métricas cinemáticas locales (ángulos críticos y velocidad articular) en el cliente antes de su transmisión hacia la nube.
 
-### **4.2.5 Suposiciones y Dependencias**
-- El cliente posee conexión a internet para interactuar con la API del LLM (Gemini) y recuperar fragmentos vectoriales de RAG, aunque el análisis biomecánico inicial es local.
-
-### **4.2.6 Riesgos del Proyecto y Plan de Gestión de Riesgos (Risk List)**
-
-Siguiendo las directrices del UP, se identifican y priorizan los riesgos técnicos críticos al inicio de la fase de Elaboración, definiendo planes de mitigación concretos que se ejecutan en las iteraciones tempranas:
-
+**Gestión de Riesgos del Proyecto (Risk List):**
+Siguiendo las directrices del UP, se identifican y priorizan los riesgos técnicos críticos que restringen el diseño y desarrollo:
 - **R-01 (Riesgo Técnico - Carga de Memoria y CPU en el Cliente):** El análisis biomecánico continuo en el navegador mediante MediaPipe puede causar congelamiento de la pestaña o fatiga de la CPU en dispositivos móviles de gama media/baja si los videos son extensos.
   - *Mitigación:* Se implementa un límite estricto de duración de video a 45 segundos en el cliente y se realiza un submuestreo de fotogramas clave en lugar de procesar los 30 fps continuos.
 - **R-02 (Riesgo Técnico - Alucinaciones y Desviación del LLM):** El modelo de lenguaje generativo (Gemini) puede inventar detalles biomecánicos erróneos o alucinar técnicas no presentes en el Jiu-Jitsu.
@@ -374,20 +411,26 @@ Siguiendo las directrices del UP, se identifican y priorizan los riesgos técnic
 - **R-04 (Riesgo de Usabilidad - Operación en Tatami):** Dificultad para interactuar con la pantalla del móvil estando sudado, con kimonos gruesos o con dedos vendados.
   - *Mitigación:* Se define el soporte para interacción remota "Hands-free" mediante reconocimiento de gestos corporales de parada/inicio o comandos de voz.
 
+### **4.2.5 Suposiciones y Dependencias**
+- El cliente posee conexión a internet para interactuar con la API del LLM (Gemini) y recuperar fragmentos vectoriales de RAG, aunque el análisis biomecánico inicial es local.
+
 ## **4.3 Requisitos Específicos**
 
 ### **4.3.1 Interfaces Externas**
 - **Interfaz de Usuario (UI):** Responsiva, con soporte móvil táctil (Mobile-First) y principios visuales de Glassmorphic Dark UI.
-- **Interfaz de Software (API):** Consumo de base de datos vectorial (REST JSON) y SDK de Google Gemini.
+- **Interfaz de Hardware:** Cámara integrada del dispositivo del usuario (móvil, tablet o laptop) para capturar videos en 2D de sparring o técnicas, y procesador local (CPU/GPU) con soporte WebGL para estimación de pose en tiempo real.
+- **Interfaz de Software (API):** Consumo de SDK de Google Gemini y peticiones HTTPS para la ingesta externa si fuera aplicable, junto con persistencia IndexedDB a través de las APIs locales de almacenamiento del navegador HTML5.
+- **Interfaz de Comunicaciones:** Protocolo HTTPS para llamadas seguras al LLM (Gemini SDK).
 
-### **4.3.2 Requisitos Funcionales (RF)**
+### **4.3.2 Requisitos Funcionales**
 - **RF-Ingesta:** El sistema debe permitir al Instructor cargar archivos PDF y enlaces de videos de YouTube, extrayendo el contenido técnico mediante embeddings para su almacenamiento en una base de datos vectorial.
 - **RF-Biomecánica:** El sistema debe procesar localmente el video en el navegador mediante MediaPipe, extrayendo landmarks 3D corporales y calculando las métricas cinemáticas.
 - **RF-Adaptación:** El sistema debe registrar las desviaciones técnicas detectadas en una base de datos local e individual para conmutar la estrategia de corrección didáctica ante fallos recurrentes.
 - **RF-Perfil:** El sistema debe permitir al Practicante ingresar sus datos antropométricos (altura, peso, longitud de extremidades) y realizar un test de movilidad inicial para adaptar los rangos angulares ideales según su biotipo.
 - **RF-Validación:** El sistema debe permitir al Instructor revisar y validar las fuentes de conocimiento cargadas por la comunidad antes de indexarlas formalmente en la base vectorial del RAG.
 
-### **4.3.3 Requisitos No Funcionales (RNF)**
+### **4.3.3 Requisitos No Funcionales (Modelo FURPS+)**
+Los requisitos no funcionales se categorizan bajo el modelo FURPS+, clasificándose en Funcionalidad (F), Usabilidad (U), Confiabilidad (R), Rendimiento (P) y Soporte (S), además de las restricciones adicionales (+).
 
 <a id="tabla-2"></a>
 **Tabla 2**  
@@ -395,32 +438,37 @@ Siguiendo las directrices del UP, se identifican y priorizan los riesgos técnic
 
 | ID | Categoría (FURPS+) | Descripción del Requisito No Funcional |
 | :--- | :--- | :--- |
-| **RNF01** | Usabilidad | La interfaz gráfica debe adaptarse responsivamente a pantallas móviles táctiles, asegurando operabilidad dentro del tatami con guantes o vendajes. |
-| **RNF02** | Fiabilidad | El sistema debe validar el formato de las coordenadas vectoriales devueltas por MediaPipe antes de enviarlas al LLM, evitando excepciones de formato en tiempo de ejecución. |
-| **RNF03** | Rendimiento (Precisión) | **Consistencia Temporal:** El algoritmo debe ser capaz de identificar desviaciones angulares mayores a 15 grados respecto al patrón ideal de la técnica, manteniendo una tasa de falsos positivos inferior al 10% bajo kimonos deportivos. |
-| **RNF04** | Rendimiento (Latencia) | El tiempo transcurrido entre la finalización de la extracción de landmarks y la visualización de la retroalimentación adaptativa estructurada debe ser menor a 3 segundos. |
-| **RNF05** | Seguridad (Privacidad) | **Principio de Confidencialidad:** El archivo de video original en formato bruto nunca debe transmitirse a través de la red; el análisis espacial e inferencia de coordenadas ocurre estrictamente en memoria volátil local. |
-| **RNF06** | Mantenibilidad | El motor de análisis y la lógica de recomendación pedagógica deben estar desacoplados de los servicios tecnológicos de estimación de pose mediante interfaces y patrones de Fabricación Pura. |
-| **RNF07** | Usabilidad (Hands-free) | **Interacción sin contacto:** El sistema debe soportar el inicio y detención del análisis mediante comandos de voz simples ("Grabar", "Detener") o gestos visibles sostenidos (ej. brazo levantado por 3 segundos), permitiendo operar el software a distancia en el tatami sin tocar la pantalla con sudor o vendajes. |
+| **RNF01** | Usabilidad (U) | La interfaz gráfica debe adaptarse responsivamente a pantallas móviles táctiles, asegurando operabilidad dentro del tatami con guantes o vendajes. |
+| **RNF02** | Confiabilidad (R) | El sistema debe validar el formato de las coordenadas vectoriales devueltas por MediaPipe antes de enviarlas al LLM, evitando excepciones de formato en tiempo de ejecución. |
+| **RNF03** | Confiabilidad / Precisión (R) | **Consistencia Temporal:** El algoritmo debe ser capaz de identificar desviaciones angulares mayores a 15 grados respecto al patrón ideal de la técnica, manteniendo una tasa de falsos positivos inferior al 10% bajo kimonos deportivos. |
+| **RNF04** | Rendimiento (P) | El tiempo transcurrido entre la finalización de la extracción de landmarks y la visualización de la retroalimentación adaptativa estructurada debe ser menor a 3 segundos. |
+| **RNF05** | Seguridad / Privacidad (+) | **Principio de Confidencialidad:** El archivo de video original en formato bruto nunca debe transmitirse a través de la red; el análisis espacial e inferencia de coordenadas ocurre estrictamente en memoria volátil local. |
+| **RNF06** | Mantenibilidad / Soporte (S) | El motor de análisis y la lógica de recomendación pedagógica deben estar desacoplados de los servicios tecnológicos de estimación de pose mediante interfaces y patrones de Fabricación Pura. |
+| **RNF07** | Usabilidad / Operabilidad (U) | **Interacción sin contacto (Hands-free):** El sistema debe soportar el inicio y detención del análisis mediante comandos de voz simples ("Grabar", "Detener") o gestos visibles sostenidos (ej. brazo levantado por 3 segundos), permitiendo operar el software a distancia en el tatami sin tocar la pantalla con sudor o vendajes. |
 
-### **4.3.4 Reglas de Dominio (Reglas de Negocio)**
+### **4.3.4 Restricciones de Diseño**
+Las restricciones de diseño imponen limitaciones técnicas específicas en la construcción lógica y física de la plataforma:
+1. **Tecnología del Cliente (Front-End):** El sistema debe desarrollarse como una PWA usando React y TypeScript, compatible con navegadores web móviles modernos que implementen la especificación HTML5.
+2. **Motor de Estimación de Pose:** Obligatoriedad de utilizar MediaPipe Pose de Google integrado vía WebGL para ejecución client-side en tiempo real.
+3. **Base de Datos y Motor RAG Local:** La persistencia de datos cinemáticos y la vectorización semántica deben operar en IndexedDB del navegador, utilizando Transformers.js para la generación de embeddings locales. No se deben emplear bases de datos vectoriales en la nube (como Pinecone o Supabase Vector) para garantizar el funcionamiento sin costes del lado del servidor.
+4. **Inferencia Externa del LLM:** La generación del reporte adaptativo se restringe al uso de la API de Google Gemini (modelo Gemini 1.5 Flash o superior), enviando prompts en español y exigiendo respuestas en formato JSON estructurado.
+5. **Control de Acceso Local:** La conmutación de roles de usuario (Instructor/Practicante) debe controlarse mediante una contraseña o PIN maestro almacenado de forma cifrada en el `localStorage` del cliente.
 
-De acuerdo con Craig Larman, las reglas de dominio dictan cómo opera el negocio fuera de los límites del software y deben registrarse formalmente en la Especificación Suplementaria. Para el dominio de BJJ y tutoría inteligente, se establecen las siguientes directrices:
+### **4.3.5 Atributos del Sistema de Software**
+Esta sección define las propiedades de calidad del software y las estructuras de datos que rigen el dominio del negocio de OpenBJJ.
+
+#### **4.3.5.1 Confiabilidad, Disponibilidad y Portabilidad**
+- **Disponibilidad Offline:** El cálculo cinemático básico y la base de datos de perfiles locales de IndexedDB deben estar disponibles de forma local en el navegador, incluso sin conexión a internet.
+- **Portabilidad:** Ejecución multiplataforma (Android, iOS, Windows, macOS) a través de navegadores con soporte WebGL 2.0 y aceleración por hardware local.
+
+#### **4.3.5.2 Reglas de Dominio (Reglas de Negocio)**
+De acuerdo con la metodología UP de Larman, las reglas de dominio rigen las operaciones lógicas de negocio independientemente del software:
 - **RD-01 (Jerarquía de Graduación):** Un practicante solo puede recibir tutoría de técnicas correspondientes a su cinturón actual o inferior, salvo autorización explícita del instructor.
 - **RD-02 (Tolerancia de Biotipo):** El umbral de error para ángulos articulares ideales (establecido inicialmente en $\pm 15^{\circ}$) se flexibiliza hasta en un $20\%$ si el perfil biomecánico del usuario reporta limitaciones de movilidad articular o proporciones físicas extremas validadas en el test de movilidad.
 - **RD-03 (Calidad del Grounding RAG):** Ningún chunk semántico proveniente de manuales o videos subidos colaborativamente por alumnos puede ser indexado ni utilizado en prompts de inferencia de IA si no cuenta con el estado de "Validado" firmado por un Instructor certificado.
 
-## **4.4 Glosario y Diccionario de Datos**
-
-Este artefacto, clave en la fase de Elaboración del Proceso Unificado, define la terminología de dominio y las especificaciones de formato y rangos de los atributos del sistema:
-
-### **4.4.1 Glosario de Términos**
-- **Landmark 3D:** Coordenada espacial tridimensional $(x,y,z)$ estimada para un punto de referencia anatómico clave (hombro, codo, muñeca, cadera, rodilla, tobillo) respecto a la cadera del sujeto.
-- **Retrieval-Augmented Generation (RAG):** Técnica de IA que inyecta contexto textual de fuentes externas (como libros en PDF o transcripciones de video) en el prompt de un LLM para fundamentar sus respuestas en datos de dominio confiables y evitar alucinaciones.
-- **Embedding Vectorial:** Representación numérica multidimensional de un fragmento de texto (chunk) que captura su significado semántico y permite realizar búsquedas de similitud coseno en bases de datos vectoriales.
-- **Desviación Técnica (o Error Biomecánico):** Diferencia angular o cinemática medida entre la ejecución del practicante y los umbrales ideales definidos para un movimiento.
-
-### **4.4.2 Diccionario de Datos (Especificaciones de Atributos)**
+#### **4.3.5.3 Diccionario de Datos (Especificaciones de Atributos)**
+El siguiente diccionario de datos detalla la tipificación y validación de los atributos clave del sistema:
 
 | Entidad | Atributo | Tipo de Dato | Formato / Rango | Reglas de Validación |
 | :--- | :--- | :--- | :--- | :--- |
