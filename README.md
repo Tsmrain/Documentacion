@@ -93,7 +93,8 @@ El sistema realiza el seguimiento del progreso histórico del alumno y altera la
     - [1.2.2 Objetivos Específicos](#122-objetivos-específicos)
   - [1.3 Metodología](#13-metodología)
     - [1.3.1 Ingeniería de Software (Proceso Unificado)](#131-ingeniería-de-software-proceso-unificado)
-    - [1.3.2 Gestión del Proyecto (Scrum)](#132-gestión-del-proyecto-scrum)
+    - [1.3.2 Gestión del Proyecto (Scrum adaptado)](#132-gestión-del-proyecto-scrum-adaptado)
+    - [1.3.3 Planificación Iterativa y Fases del Proyecto (Enfoque Adaptativo)](#133-planificación-iterativa-y-fases-del-proyecto-enfoque-adaptativo)
 - [**Capítulo II: Marco Teórico**](#capítulo-ii-marco-teórico)
   - [2.1 Visión por Computadora en Deportes: Estimación de Pose 3D](#21-visión-por-computadora-en-deportes-estimación-de-pose-3d)
   - [2.2 Generación Aumentada por Recuperación (RAG) en Deportes](#22-generación-aumentada-por-recuperación-rag-en-deportes)
@@ -109,6 +110,7 @@ El sistema realiza el seguimiento del progreso histórico del alumno y altera la
     - [4.2.3 Características de los Usuarios](#423-características-de-los-usuarios)
     - [4.2.4 Restricciones](#424-restricciones)
     - [4.2.5 Suposiciones y Dependencias](#425-suposiciones-y-dependencias)
+    - [4.2.6 Riesgos del Proyecto y Plan de Gestión de Riesgos (Risk List)](#426-riesgos-del-proyecto-y-plan-de-gestión-de-riesgos-risk-list)
   - [4.3 Requisitos Específicos](#43-requisitos-específicos)
     - [4.3.1 Interfaces Externas](#431-interfaces-externas)
     - [4.3.2 Requisitos Funcionales (RF)](#432-requisitos-funcionales-rf)
@@ -153,6 +155,9 @@ El sistema realiza el seguimiento del progreso histórico del alumno y altera la
 - [**Tabla 14** *Caso de Prueba 04: Historial Vacío*](#tabla-14)
 - [**Tabla 15** *Caso de Prueba 05: Eliminación de Registros Locales*](#tabla-15)
 - [**Tabla 16** *Evaluación de Rendimiento y Estabilidad*](#tabla-16)
+- [**Tabla 17** *Caso de Prueba 06: Precisión de Grounding RAG (Calidad de Datos)*](#tabla-17)
+- [**Tabla 18** *Caso de Prueba 07: Adaptabilidad Biomecánica del Perfil (Regla RD-02)*](#tabla-18)
+- [**Tabla 19** *Caso de Prueba 08: Mitigación de Alucinaciones con Fuentes Invalidadas*](#tabla-19)
 
 # **Índice de Figuras**
 
@@ -227,7 +232,25 @@ Desarrollar una plataforma PWA inteligente que combine análisis biomecánico 3D
 4. Modelar el dominio y comportamiento del sistema utilizando diagramas UML y aplicando los patrones GRASP de Craig Larman para aislar la lógica biomecánica, RAG y adaptativa en componentes reutilizables y de bajo acoplamiento.
 
 ## **1.3 Metodología**
-Se adopta un marco de desarrollo ágil híbrido. El Proceso Unificado (UP) rige la arquitectura técnica y la documentación de diseño en cuatro fases (Inicio, Elaboración, Construcción y Transición), mientras que Scrum gestiona el esfuerzo temporal a través de Sprints iterativos y control de Backlog.
+
+Se adopta un marco de desarrollo ágil híbrido para estructurar el avance técnico del proyecto de grado.
+
+### **1.3.1 Ingeniería de Software (Proceso Unificado)**
+El Proceso Unificado (UP) rige la arquitectura técnica, el modelado y la documentación de diseño del sistema, estructurado en cuatro fases clave:
+1. **Inicio (Inception):** Definición de la visión del producto, análisis preliminar de la viabilidad y establecimiento de la Lista de Riesgos inicial.
+2. **Elaboración (Elaboración):** Diseño y estabilización de la arquitectura ejecutable (mitigando los riesgos principales), desarrollo del pipeline MediaPipe-RAG-Gemini e iteración de los diagramas de clases y de secuencia.
+3. **Construcción (Construcción):** Programación iterativa de las características restantes (interfaces React, almacenamiento IndexedDB) y refino de las clases.
+4. **Transición (Transición):** Despliegue de la PWA, pruebas de campo en el tatami, y optimizaciones de rendimiento y latencia.
+
+### **1.3.2 Gestión del Proyecto (Scrum adaptado)**
+Se utiliza Scrum para organizar el esfuerzo temporal y el backlog del proyecto a través de iteraciones fijas (*Sprints*) de 3 semanas, facilitando la inspección y adaptación constante ante impedimentos técnicos o cambios de API.
+
+### **1.3.3 Planificación Iterativa y Fases del Proyecto (Enfoque Adaptativo)**
+Frente a la rigidez de una planificación predictiva en cascada, este proyecto implementa la planificación iterativa y adaptativa de Larman. Se establece un **Plan de Fases** con hitos macro de evaluación de riesgos, y un **Plan de Iteración** en el cual el desarrollo se organiza en base a prioridades de *Riesgo*, *Cobertura* y *Criticidad*:
+- **Iteración 1 (Fase de Elaboración):** Desarrollo de la prueba de concepto del pipeline principal. Mitigación del riesgo de latencia de red y fatiga de CPU en el navegador cliente durante la extracción de pose. Integración básica MediaPipe-Gemini.
+- **Iteración 2 (Fase de Elaboración):** Implementación del RAG vectorial local y consolidación del grounding dinámico. Configuración del perfil de usuario y ajuste biomecánico por biotipo.
+- **Iteración 3 (Fase de Construcción):** Diseño de la interfaz de usuario con Tailwind (Glassmorphic React components), almacenamiento local en IndexedDB y persistencia del historial.
+- **Iteración 4 (Fase de Transición):** Despliegue y pruebas de usabilidad "hands-free" en tatami, calibración final y optimización de tokens en la API de Gemini.
 
 ---
 
@@ -328,9 +351,23 @@ OpenBJJ opera bajo una topología de arquitectura híbrida. El motor de visión 
 ### **4.2.4 Restricciones**
 - La API de MediaPipe client-side exige soporte WebGL activo en el navegador para acelerar el procesamiento de fotogramas.
 - El video monocular de entrada debe capturar el cuerpo entero del practicante sin oclusiones severas para garantizar la consistencia temporal de landmarks.
+- **Restricción de Tránsito de Datos (Ancho de Banda):** No se permite la transmisión de coordenadas 3D crudas por cada frame de video hacia la API del LLM, para evitar el desbordamiento de tokens y problemas de red. Las coordenadas de landmarks se deben resumir en métricas cinemáticas locales (ángulos críticos y velocidad articular) en el cliente antes de su transmisión hacia la nube.
 
 ### **4.2.5 Suposiciones y Dependencias**
 - El cliente posee conexión a internet para interactuar con la API del LLM (Gemini) y recuperar fragmentos vectoriales de RAG, aunque el análisis biomecánico inicial es local.
+
+### **4.2.6 Riesgos del Proyecto y Plan de Gestión de Riesgos (Risk List)**
+
+Siguiendo las directrices del UP, se identifican y priorizan los riesgos técnicos críticos al inicio de la fase de Elaboración, definiendo planes de mitigación concretos que se ejecutan en las iteraciones tempranas:
+
+- **R-01 (Riesgo Técnico - Carga de Memoria y CPU en el Cliente):** El análisis biomecánico continuo en el navegador mediante MediaPipe puede causar congelamiento de la pestaña o fatiga de la CPU en dispositivos móviles de gama media/baja si los videos son extensos.
+  - *Mitigación:* Se implementa un límite estricto de duración de video a 45 segundos en el cliente y se realiza un submuestreo de fotogramas clave en lugar de procesar los 30 fps continuos.
+- **R-02 (Riesgo Técnico - Alucinaciones y Desviación del LLM):** El modelo de lenguaje generativo (Gemini) puede inventar detalles biomecánicos erróneos o alucinar técnicas no presentes en el Jiu-Jitsu.
+  - *Mitigación:* Se implementa un prompt de grounding rígido con inyección RAG de manuales validados (calidad de datos) y se restringe la respuesta a un esquema JSON estricto mediante la configuración de la API de Gemini.
+- **R-03 (Riesgo Técnico - Latencia de Payload en Inferencia):** El envío de coordenadas tridimensionales crudas para 1,350 fotogramas satura el canal de red y excede el límite de tokens de la ventana de contexto.
+  - *Mitigación:* La lógica de negocio pre-procesa y filtra los datos cinemáticos en el cliente, extrayendo únicamente los valores angulares y de velocidad críticos (resumen cinemático) para ser inyectados en formato de texto breve (JSON de 3KB).
+- **R-04 (Riesgo de Usabilidad - Operación en Tatami):** Dificultad para interactuar con la pantalla del móvil estando sudado, con kimonos gruesos o con dedos vendados.
+  - *Mitigación:* Se define el soporte para interacción remota "Hands-free" mediante reconocimiento de gestos corporales de parada/inicio o comandos de voz.
 
 ## **4.3 Requisitos Específicos**
 
@@ -359,6 +396,7 @@ OpenBJJ opera bajo una topología de arquitectura híbrida. El motor de visión 
 | **RNF04** | Rendimiento (Latencia) | El tiempo transcurrido entre la finalización de la extracción de landmarks y la visualización de la retroalimentación adaptativa estructurada debe ser menor a 3 segundos. |
 | **RNF05** | Seguridad (Privacidad) | **Principio de Confidencialidad:** El archivo de video original en formato bruto nunca debe transmitirse a través de la red; el análisis espacial e inferencia de coordenadas ocurre estrictamente en memoria volátil local. |
 | **RNF06** | Mantenibilidad | El motor de análisis y la lógica de recomendación pedagógica deben estar desacoplados de los servicios tecnológicos de estimación de pose mediante interfaces y patrones de Fabricación Pura. |
+| **RNF07** | Usabilidad (Hands-free) | **Interacción sin contacto:** El sistema debe soportar el inicio y detención del análisis mediante comandos de voz simples ("Grabar", "Detener") o gestos visibles sostenidos (ej. brazo levantado por 3 segundos), permitiendo operar el software a distancia en el tatami sin tocar la pantalla con sudor o vendajes. |
 
 ### **4.3.4 Reglas de Dominio (Reglas de Negocio)**
 
@@ -803,6 +841,7 @@ sequenceDiagram
     
     Note over Ctrl,LLM: Inferencia delegada al Adaptador
     Ctrl->>LLM: evaluateInference(prompts, landmarkVectors)
+    Note over LLM,LLM: El Adaptador filtra los landmarks y envía a Gemini solo un resumen cinemático (ángulos clave y velocidades)
     LLM-->>Ctrl: evaluationPayloadJSON
     
     Note over Ctrl,Eval: Creator: El controlador ordena la creación
@@ -1123,6 +1162,43 @@ Esta sección evalúa el cumplimiento de los atributos FURPS+ para garantizar qu
 | **Rendimiento (Performance)** | Procesar la extracción de fotogramas de un video de 45 segundos. | Aprobado. La extracción se completa en menos de 3 segundos en dispositivos promedio, al ejecutarse mediante la API del navegador sin depender de un servidor externo. |
 | **Confiabilidad (Reliability)** | Respuesta del sistema si la API de Gemini retorna una estructura JSON malformada. | Aprobado. La aplicación intercepta el error de parseo, evita el cierre abrupto de la interfaz y solicita al usuario un reintento. |
 | **Disponibilidad (Offline)** | Acceder a los reportes del historial con el dispositivo en "Modo Avión". | Aprobado. El historial se renderiza de forma instantánea al recuperarse directamente de la base de datos local del dispositivo, garantizando privacidad y disponibilidad. |
+
+### **8.5 Casos de Prueba de Calidad de Inteligencia Artificial (IA y RAG)**
+
+Para verificar formalmente el correcto funcionamiento cognitivo, la ausencia de alucinaciones y la adaptabilidad cinemática, se establecen los siguientes casos de prueba:
+
+<a id="tabla-17"></a>
+**Tabla 17**  
+*Caso de Prueba 06: Precisión de Grounding RAG (Calidad de Datos)*
+
+| Elemento | Descripción |
+| :--- | :--- |
+| **Objetivo** | Validar que el motor de IA fundamenta su evaluación táctica estrictamente en el contenido de la fuente RAG indexada y no en conocimiento general del LLM (evitando alucinaciones). |
+| **Condición Inicial** | Se ha indexado una fuente técnica específica (ej. manual PDF de la academia) con un checkpoint inventado ad-hoc (ej. "el ángulo de la rodilla debe ser exactamente 72 grados en la montada"). |
+| **Pasos** | 1. Iniciar análisis de video para la técnica de montada.<br>2. Enviar la solicitud de inferencia.<br>3. Examinar la respuesta JSON del LLM. |
+| **Resultado Esperado** | El reporte devuelto por Gemini debe citar textualmente la recomendación de los "72 grados" y hacer referencia directa a la fuente RAG inyectada, demostrando grounding correcto. |
+
+<a id="tabla-18"></a>
+**Tabla 18**  
+*Caso de Prueba 07: Adaptabilidad Biomecánica del Perfil (Regla RD-02)*
+
+| Elemento | Descripción |
+| :--- | :--- |
+| **Objetivo** | Comprobar que el sistema adapta los umbrales de tolerancia angular basándose en las restricciones físicas del usuario registradas en su perfil. |
+| **Condición Inicial** | El usuario tiene en su perfil biomecánico un rango de movilidad de rodilla restringido a un máximo de 100 grados (en lugar del estándar de 120 grados), validado en su test de movilidad. |
+| **Pasos** | 1. Cargar un video donde la rodilla del usuario alcanza 105 grados durante la guardia.<br>2. Ejecutar el análisis biomecánico. |
+| **Resultado Esperado** | El sistema no debe instanciar un `ErrorBiomecanico` crítico de flexibilidad para el usuario, dado que la regla de negocio `RD-02` flexibilizó automáticamente el umbral angular basándose en su perfil cinemático. |
+
+<a id="tabla-19"></a>
+**Tabla 19**  
+*Caso de Prueba 08: Mitigación de Alucinaciones con Fuentes Invalidadas*
+
+| Elemento | Descripción |
+| :--- | :--- |
+| **Objetivo** | Verificar que las fuentes de conocimiento que no han sido aprobadas por el instructor (estado "Pendiente") no participan en la recuperación del RAG. |
+| **Condición Inicial** | Existe un documento PDF cargado en el sistema con estado "Pendiente de Validación" que contradice una regla de la federación. |
+| **Pasos** | 1. Un alumno realiza la consulta RAG y el análisis de la técnica correspondiente al documento pendiente.<br>2. Auditar el prompt enviado a la API de Gemini. |
+| **Resultado Esperado** | El prompt no debe contener ningún fragmento de texto o embedding asociado al documento pendiente de validación (estado no-aprobado), de acuerdo con la regla `RD-03`. |
 
 <a id="figura-19"></a>
 **Figura 19**
