@@ -670,32 +670,25 @@ El DSS actualizado ilustra los flujos de calibración biomecánica del usuario, 
 
 ```mermaid
 sequenceDiagram
-    participant Practicante as Alumno / Practicante
-    participant Instructor as Instructor / Validador
-    participant PWA as OpenBJJ PWA (Client)
-    participant VectorDB as Base de Datos Vectorial
-    participant LLM as API Gemini
+    actor Practicante as Practicante
+    actor Instructor as Instructor
+    participant Sistema as Sistema (Caja Negra)
 
-    Note over Practicante,PWA: CU04: Gestión de Perfil Biomecánico
-    Practicante->>PWA: Ingresa datos antropométricos y test de movilidad
-    PWA->>PWA: Almacena PerfilBiomecanico localmente
+    Note over Practicante,Sistema: CU04: Gestión de Perfil Biomecánico
+    Practicante->>Sistema: configurarPerfilBiomecanico(altura, peso, longitudExtremidades, testMovilidad)
+    Sistema-->>Practicante: confirmacionCalibracion()
 
-    Note over Instructor,VectorDB: CU02 y CU05: Ingesta y Validación de Fuentes
-    Instructor->>PWA: Sube manual (PDF/YouTube)
-    PWA->>VectorDB: Guarda embeddings temporales ("Pendiente")
-    Instructor->>PWA: Revisa cola y aprueba la fuente de conocimiento
-    PWA->>VectorDB: Cambia estado a "Validado" e indexa en almacén principal
+    Note over Instructor,Sistema: CU02 y CU05: Ingesta y Validación de Fuentes
+    Instructor->>Sistema: subirNuevaFuente(archivoPDF_o_URL, tecnicaId)
+    Sistema-->>Instructor: fuenteRegistradaPendiente(fuenteId)
+    Instructor->>Sistema: revisarColaFuentes()
+    Sistema-->>Instructor: colaFuentesPendientes[]
+    Instructor->>Sistema: aprobarFuente(fuenteId)
+    Sistema-->>Instructor: fuenteValidadaEIndexada()
 
-    Note over Practicante,LLM: CU01: Análisis e Inferencia Técnica
-    Practicante->>PWA: Sube video de ejecución técnica
-    PWA->>PWA: Invocación de MediaPipe local (Landmarks 3D)
-    PWA->>PWA: Ajusta Checkpoints ideales según PerfilBiomecanico
-    PWA->>VectorDB: Consulta RAG (grounding técnico validado)
-    VectorDB-->>PWA: Fragmentos e indicaciones ideales
-    PWA->>LLM: Prompt inyectado (kinematics + contexto de manual)
-    LLM-->>PWA: Diagnóstico estructurado (JSON)
-    PWA->>PWA: Registra ErrorBiomecanico e historial adaptativo
-    PWA-->>Practicante: Muestra línea de tiempo, desviaciones y ruta
+    Note over Practicante,Sistema: CU01: Realizar Análisis Biomecánico y Táctico Adaptativo
+    Practicante->>Sistema: solicitarAnalisis(videoBlob, tecnicaId)
+    Sistema-->>Practicante: reporteTacticoBiomecanico(timeline, esqueleto3D, recomendaciones)
 ```
 
 ## **5.4 Contratos de las Operaciones del Sistema**
