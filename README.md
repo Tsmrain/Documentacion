@@ -107,7 +107,7 @@ El sistema realiza el seguimiento del progreso histórico del alumno y altera la
   - [4.2 Descripción General](#42-descripción-general)
     - [4.2.1 Perspectiva del Producto](#421-perspectiva-del-producto)
     - [4.2.2 Funciones del Producto](#422-funciones-del-producto)
-    - [4.2.3 Características de los Usuarios](#423-características-de-los-usuarios)
+    - [4.2.3 Características de los Usuarios y Gestión de Roles Local](#423-características-de-los-usuarios-y-gestión-de-roles-local)
     - [4.2.4 Restricciones](#424-restricciones)
     - [4.2.5 Suposiciones y Dependencias](#425-suposiciones-y-dependencias)
     - [4.2.6 Riesgos del Proyecto y Plan de Gestión de Riesgos (Risk List)](#426-riesgos-del-proyecto-y-plan-de-gestión-de-riesgos-risk-list)
@@ -117,6 +117,8 @@ El sistema realiza el seguimiento del progreso histórico del alumno y altera la
     - [4.3.3 Requisitos No Funcionales (RNF)](#433-requisitos-no-funcionales-rnf)
     - [4.3.4 Reglas de Dominio (Reglas de Negocio)](#434-reglas-de-dominio-reglas-de-negocio)
   - [4.4 Glosario y Diccionario de Datos](#44-glosario-y-diccionario-de-datos)
+    - [4.4.1 Glosario de Términos](#441-glosario-de-términos)
+    - [4.4.2 Diccionario de Datos (Especificaciones de Atributos)](#442-diccionario-de-datos-especificaciones-de-atributos)
 - [**Capítulo V: Análisis y Diseño Orientado a Objetos**](#capítulo-v-análisis-y-diseño-orientado-a-objetos)
   - [5.1 Modelo de Dominio Conceptual](#51-modelo-de-dominio-conceptual)
   - [5.2 Especificación de Casos de Uso Principales (Formato Larman)](#52-especificación-de-casos-de-uso-principales-formato-larman)
@@ -127,6 +129,8 @@ El sistema realiza el seguimiento del progreso histórico del alumno y altera la
     - [Caso de Uso CU05: Validar Fuente de Conocimiento](#caso-de-uso-cu05-validar-fuente-de-conocimiento)
   - [5.3 Diagrama de Secuencia del Sistema (DSS)](#53-diagrama-de-secuencia-del-sistema-dss)
   - [5.4 Contratos de las Operaciones del Sistema](#54-contratos-de-las-operaciones-del-sistema)
+    - [Contrato CO01: procesarAnalisisVideo](#contrato-co01-procesaranalisisvideo)
+    - [Contrato CO02: actualizarPerfilBiomecanico](#contrato-co02-actualizarperfilbiomecanico)
   - [5.5 Diseño de la Arquitectura Lógica (Patrón Capas)](#55-diseño-de-la-arquitectura-lógica-patrón-capas)
   - [5.6 Realización del Caso de Uso con Patrones GRASP](#56-realización-del-caso-de-uso-con-patrones-grasp)
   - [5.7 Diagrama de Estados para el Controlador](#57-diagrama-de-estados-para-el-controlador)
@@ -134,9 +138,27 @@ El sistema realiza el seguimiento del progreso histórico del alumno y altera la
   - [5.9 Diagrama de Despliegue Físico](#59-diagrama-de-despliegue-físico)
   - [5.10 Diseño de Interfaces de Usuario (UI)](#510-diseño-de-interfaces-de-usuario-ui)
 - [**Capítulo VI: Implementación**](#capítulo-vi-implementación)
+  - [6.1 Introducción al Modelo de Implementación](#61-introducción-al-modelo-de-implementación)
+  - [6.2 Entorno Tecnológico y Herramientas](#62-entorno-tecnológico-y-herramientas)
+  - [6.3 Correspondencia de Paquetes y Estructura de Directorios](#63-correspondencia-de-paquetes-y-estructura-de-directorios)
+  - [6.4 Materialización del Diseño Orientado a Objetos](#64-materialización-del-diseño-orientado-a-objetos)
+  - [6.5 Implementación del Flujo Principal (CU01)](#65-implementación-del-flujo-principal-cu01)
+    - [6.5.1 Ingesta y Extracción de YouTube Client-Side](#651-ingesta-y-extracción-de-youtube-client-side)
+  - [6.6 Orden de Implementación](#66-orden-de-implementación)
 - [**Capítulo VII: Seguridad**](#capítulo-vii-seguridad)
+  - [7.1 Introducción a la Seguridad de la Arquitectura](#71-introducción-a-la-seguridad-de-la-arquitectura)
+  - [7.2 Confidencialidad](#72-confidencialidad)
+  - [7.3 Integridad](#73-integridad)
+  - [7.4 Disponibilidad](#74-disponibilidad)
 - [**Capítulo VIII: Pruebas**](#capítulo-viii-pruebas)
+  - [8.1 Introducción a las Pruebas](#81-introducción-a-las-pruebas)
+  - [8.2 Estrategia de Evaluación](#82-estrategia-de-evaluación)
+  - [8.3 Casos de Prueba Funcionales](#83-casos-de-prueba-funcionales)
+  - [8.4 Pruebas de Calidad del Sistema](#84-pruebas-de-calidad-del-sistema)
+    - [8.5 Casos de Prueba de Calidad de Inteligencia Artificial (IA y RAG)](#85-casos-de-prueba-de-calidad-de-inteligencia-artificial-ia-y-rag)
 - [**Capítulo IX: Conclusiones y Recomendaciones**](#capítulo-ix-conclusiones-y-recomendaciones)
+  - [9.1 Conclusiones](#91-conclusiones)
+  - [9.2 Recomendaciones](#92-recomendaciones)
 - [**Referencias**](#referencias)
 
 # **Índice de Tablas**
@@ -161,25 +183,12 @@ El sistema realiza el seguimiento del progreso histórico del alumno y altera la
 
 # **Índice de Figuras**
 
-- [**Figura 1** *Interacción del Practicante con OpenBJJ*](#figura-1)
-- [**Figura 2** *Estimación de Landmarks Corporales 3D*](#figura-2)
-- [**Figura 3** *Arquitectura RAG para Grounding Técnico de IA*](#figura-3)
-- [**Figura 4** *Estructura Organizacional de Corpo & Mente Bolivia*](#figura-4)
-- [**Figura 5** *Sistema de Cinturones de Jiu-Jitsu Brasileño*](#figura-5)
-- [**Figura 6** *Flujo del Negocio Actual y Detección de Cuellos de Botella*](#figura-6)
-- [**Figura 7** *Fases del Proceso Unificado*](#figura-7)
-- [**Figura 8** *Modelo de Dominio Conceptual de OpenBJJ*](#figura-8)
-- [**Figura 9** *Diagrama de Secuencia del Sistema General para Inferencia 3D y Grounding RAG*](#figura-9)
-- [**Figura 10** *Diseño de la Arquitectura Lógica*](#figura-10)
-- [**Figura 11** *Diagrama de Secuencia de Diseño del CU01*](#figura-11)
-- [**Figura 12** *Máquina de Estados de los Casos de Uso*](#figura-12)
-- [**Figura 13** *Diagrama de Clases de Diseño (DCD)*](#figura-13)
-- [**Figura 14** *Diagrama de Despliegue del Sistema*](#figura-14)
-- [**Figura 15** *Pantalla de Ingesta de Video*](#figura-15)
-- [**Figura 16** *Pantalla de Carga y Procesamiento de Video*](#figura-16)
-- [**Figura 17** *Pantalla de Reporte Táctico*](#figura-17)
-- [**Figura 18** *Pantalla de Historial Local*](#figura-18)
-- [**Figura 19** *Métricas de OpenBJJ*](#figura-19)
+- [**Figura 1** *Modelo de Dominio Conceptual de OpenBJJ*](#figura-1)
+- [**Figura 2** *Diagrama de Secuencia del Sistema General para Inferencia 3D y Grounding RAG*](#figura-2)
+- [**Figura 3** *Diagrama de Secuencia de Diseño del CU01*](#figura-3)
+- [**Figura 4** *Máquina de Estados de los Casos de Uso*](#figura-4)
+- [**Figura 5** *Diagrama de Clases de Diseño (DCD)*](#figura-5)
+- [**Figura 6** *Diagrama de Despliegue del Sistema*](#figura-6)
 
 
 # **CAPÍTULO I: DEFINICIÓN DEL PROYECTO DE INVESTIGACIÓN**
@@ -200,10 +209,6 @@ Se busca desarrollar una plataforma web progresiva (PWA) inteligente que actúe 
 El sistema procesará el video localmente en el dispositivo del usuario utilizando visión por computadora en el cliente para estimar landmarks biomecánicos en 3D sin requerir sensores físicos. Un motor de Inteligencia Artificial (IA) contrastará esta cinemática en tiempo real con especificaciones técnicas recuperadas dinámicamente desde una base de datos vectorial inyectada por el usuario (motor RAG de manuales en PDF y transcripciones de YouTube).
 
 Si el alumno falla repetidamente en corregir una desviación técnica detectada, un motor de tutoría adaptativa modificará automáticamente la estrategia pedagógica (conmutando, por ejemplo, de recomendaciones en video de YouTube a drills de flexibilidad específicos o explicaciones anatómicas textuales), adaptando de forma dinámica la ruta de aprendizaje. Todo esto bajo una arquitectura cliente-servidor ligera que ejecute la estimación visual en el navegador del usuario para preservar la confidencialidad absoluta del video y suprimir costos operativos de GPU en el servidor.
-
-<a id="figura-1"></a>
-**Figura 1**
-*Interacción del Practicante con OpenBJJ*
 
 ### **1.1.3 Objeto de investigación**
 El objeto de este estudio es el modelado y diseño de una arquitectura de software orientada a objetos que combine la estimación de pose 3D client-side (sin sensores) y el procesamiento semántico RAG (Retrieval-Augmented Generation) para la tutoría adaptativa y multi-nivel de artes marciales en tiempo de ejecución.
@@ -261,10 +266,6 @@ La visión artificial en el ámbito deportivo ha evolucionado de la simple clasi
 
 Estos modelos estiman las coordenadas de hasta 33 puntos de referencia corporales clave (landmarks), entregando coordenadas tridimensionales relativas $(x, y, z)$. El eje $z$ representa la profundidad respecto a la cadera del sujeto, permitiendo reconstruir un esqueleto 3D a partir de una única cámara monocular (2D) convencional.
 
-<a id="figura-2"></a>
-**Figura 2**
-*Estimación de Landmarks Corporales 3D*
-
 A partir de estas coordenadas, la física cinemática permite derivar métricas fundamentales del movimiento deportivo sin sensores inerciales corporales:
 - **Ángulos articulares ($\theta$):** Calculados mediante el coseno del ángulo entre los vectores formados por tres landmarks adyacentes (ej. hombro-codo-muñeca para el codo):
   $$\cos(\theta) = \frac{\vec{u} \cdot \vec{v}}{\|\vec{u}\| \|\vec{v}\|}$$
@@ -284,10 +285,6 @@ Para subsanar esto, el patrón de arquitectura RAG contextualiza al modelo gener
 3. **Indexación y Almacenamiento Vectorial:** Los vectores se persisten en una base de datos vectorial local construida sobre la API de IndexedDB (Vector DB Local).
 4. **Recuperación y Grounding:** Cuando el usuario selecciona una técnica, el sistema realiza una consulta vectorial mediante similitud coseno directamente en IndexedDB, recupera los fragmentos y checkpoints técnicos correspondientes, y los concatena al prompt del LLM junto con las métricas biomecánicas calculadas. De esta forma, el modelo de IA evalúa el movimiento basándose estrictamente en datos oficiales. La única comunicación externa a la nube es el prompt final enviado a la API de Gemini.
 
-<a id="figura-3"></a>
-**Figura 3**
-*Arquitectura RAG para Grounding Técnico de IA*
-
 ## **2.3 Metodología de Diseño UP y Patrones GRASP de Craig Larman**
 Para garantizar la solidez arquitectónica en sistemas complejos, el Proceso Unificado (UP) promueve el desarrollo iterativo guiado por riesgos y centrado en la arquitectura lógica. 
 
@@ -299,7 +296,7 @@ El análisis y diseño se fundamenta en la asignación de responsabilidades a lo
 
 ---
 
-# **CAPÍTULO III: ESTADO DEL ARTE AND ANÁLISIS COMPARATIVO**
+# **CAPÍTULO III: ESTADO DEL ARTE Y ANÁLISIS COMPARATIVO**
 
 ## **3.1 Análisis de Soluciones Existentes**
 El análisis cinemático y la tutoría técnica en el deporte disponen de diversos enfoques tecnológicos en el mercado, los cuales presentan claras brechas con las necesidades pedagógicas del Jiu-Jitsu Brasileño:
@@ -441,6 +438,10 @@ La clase **PerfilBiomecanico** está asociada mediante una relación estricta 1-
 De este modo, la clase **ErrorBiomecanico** (o *DesviacionTecnica*) actúa como entidad puente fundamental. Registra la diferencia entre la ejecución real medida por la **MetricaCinematica** y el patrón ideal extraído de la **FuenteConocimiento** (ajustado según el **PerfilBiomecanico** del **Usuario**). Esta información permite a la **RecomendacionAdaptativa** evaluar el historial de fallas y actualizar de forma personalizada la **RutaAprendizaje** del practicante. 
 
 Cabe destacar que las recomendaciones pedagógicas y drills correctivos no se encuentran hardcodeados en el software. Cada chunk textual indexado en la base de datos vectorial local se asocia con un metadato estructurado denominado `tipoRecurso` (con valores `{tecnica, drill, explicacion_anatomica}`). Cuando el sistema detecta que un `ErrorBiomecanico` es recurrente (`esRecurrente == true`), el `RetrievalAugmentedController` aplica un filtro por este metadato en la búsqueda vectorial local (IndexedDB). Esto fuerza la recuperación de chunks clasificados como `drill` o `explicacion_anatomica` para inyectarlos en el prompt de Gemini, modificando de forma dinámica la estrategia instruccional hacia ejercicios de movilidad o explicaciones conceptuales profundas.
+
+<a id="figura-1"></a>
+**Figura 1**
+*Modelo de Dominio Conceptual de OpenBJJ*
 
 ```mermaid
 classDiagram
@@ -758,6 +759,10 @@ A continuación se detallan los casos de uso principales utilizando el formato "
 
 El DSS actualizado ilustra los flujos de calibración biomecánica del usuario, ingesta colaborativa con validación del instructor y el arbitraje técnico asistido por MediaPipe y RAG:
 
+<a id="figura-2"></a>
+**Figura 2**
+*Diagrama de Secuencia del Sistema General para Inferencia 3D y Grounding RAG*
+
 ```mermaid
 sequenceDiagram
     actor Practicante as Practicante
@@ -811,10 +816,6 @@ sequenceDiagram
 
 Se aplica el patrón de arquitectura de 3 capas lógicas independientes para asegurar el desacoplamiento tecnológico:
 
-<a id="figura-10"></a>
-**Figura 10**
-*Diseño de la Arquitectura Lógica*
-
 <a id="tabla-4"></a>
 **Tabla 4**  
 *Responsabilidades por Capa de la Arquitectura*
@@ -828,6 +829,10 @@ Se aplica el patrón de arquitectura de 3 capas lógicas independientes para ase
 ## **5.6 Realización del Caso de Uso con Patrones GRASP**
 
 El siguiente diagrama ilustra la interacción detallada de objetos de diseño para el flujo principal del CU01, demostrando la asignación lógica de responsabilidades:
+
+<a id="figura-3"></a>
+**Figura 3**
+*Diagrama de Secuencia de Diseño del CU01*
 
 ```mermaid
 sequenceDiagram
@@ -892,8 +897,8 @@ La asignación de responsabilidades de diseño se justifica a través de la apli
 
 El siguiente diagrama de estados de UML describe el comportamiento dinámico de `SesionEntrenamientoController`, ilustrando cómo cambia el estado del sistema en respuesta a eventos de análisis y cómo conmuta adaptativamente su estrategia pedagógica ante errores recurrentes:
 
-<a id="figura-12"></a>
-**Figura 12**
+<a id="figura-4"></a>
+**Figura 4**
 *Máquina de Estados de los Casos de Uso*
 
 ```mermaid
@@ -935,6 +940,10 @@ stateDiagram-v2
 ## **5.8 Diagrama de Clases de Diseño (DCD)**
 
 El siguiente DCD ilustra las clases de diseño de software reales en TypeScript, detallando tipos, interfaces, adaptadores y el controlador GRASP que orquesta las colaboraciones técnicas:
+
+<a id="figura-5"></a>
+**Figura 5**
+*Diagrama de Clases de Diseño (DCD)*
 
 ```mermaid
 classDiagram
@@ -1037,8 +1046,8 @@ classDiagram
 
 El siguiente diagrama de despliegue físico de UML ilustra la topología de red y los nodos de hardware/software de la arquitectura de OpenBJJ, justificando la ejecución client-side para la supresión de costos operativos de GPU en el servidor y garantizando que el video bruto original permanezca privado en el cliente:
 
-<a id="figura-14"></a>
-**Figura 14**
+<a id="figura-6"></a>
+**Figura 6**
 *Diagrama de Despliegue del Sistema*
 
 ```mermaid
@@ -1105,26 +1114,9 @@ El diseño visual se implementó bajo el enfoque Mobile-First, considerando que 
 
 Las interfaces principales del sistema son:
 - **Pantalla de Ingesta (VideoUploader):** Interfaz inicial que presenta opciones claras para "Grabar" o "Seleccionar" un archivo.
-<a id="figura-15"></a>
-**Figura 15**
-*Pantalla de Ingesta de Video*
-	
 - **Pantalla de Carga y Procesamiento:** Proporciona retroalimentación visual del estado del sistema. Modela los estados de "Extrayendo fotogramas" y "Consultando a Gemini", bloqueando interacciones adicionales para evitar solicitudes duplicadas.
-<a id="figura-16"></a>
-**Figura 16**
-*Pantalla de Carga y Procesamiento de Video*
-
 - **Pantalla de Reporte Táctico (AnalisisBiomecanico):** Interfaz central que renderiza el objeto AnalisisBiomecanico. Se divide en bloques modulares que muestran: la postura detectada, una lista de errores con niveles de severidad codificados por color, recomendaciones de mejora y enlaces directos en formato de botones hacia las páginas del manual y material de YouTube.
-<a id="figura-17"></a>
-**Figura 17**
-*Pantalla de Reporte Táctico*
-
 - **Pantalla de Historial Local:** Un listado de tarjetas de acceso rápido que recupera la información desde IndexedDB. Muestra un resumen de las evaluaciones previas (fecha y posición) y permite la eliminación de registros para gestionar el almacenamiento local.
-<a id="figura-18"></a>
-**Figura 18**
-*Pantalla de Historial Local*
-
-
 # **CAPÍTULO VI: IMPLEMENTACIÓN**
 ## **6.1 Introducción al Modelo de Implementación**
 En el marco del Proceso Unificado (UP), el Modelo de Implementación es el resultado de transformar los artefactos de diseño creados en la fase de Elaboración en código fuente ejecutable. Durante esta fase, las decisiones arquitectónicas, el Diagrama de Clases de Diseño (DCD) y los Diagramas de Interacción se traducen a un lenguaje de programación orientado a objetos.
@@ -1323,10 +1315,6 @@ Para verificar formalmente el correcto funcionamiento cognitivo, la ausencia de 
 | **Condición Inicial** | Existe un documento PDF cargado en el sistema con estado "Pendiente de Validación" que contradice una regla de la federación. |
 | **Pasos** | 1. Un alumno realiza la consulta RAG y el análisis de la técnica correspondiente al documento pendiente.<br>2. Auditar el prompt enviado a la API de Gemini. |
 | **Resultado Esperado** | El prompt no debe contener ningún fragmento de texto o embedding asociado al documento pendiente de validación (estado no-aprobado), de acuerdo con la regla `RD-03`. |
-
-<a id="figura-19"></a>
-**Figura 19**
-*Métricas de OpenBJJ*
 
 # **CAPÍTULO IX: CONCLUSIONES Y RECOMENDACIONES**
 
