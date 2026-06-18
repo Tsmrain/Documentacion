@@ -113,6 +113,8 @@ El sistema realiza el seguimiento del progreso histórico del alumno y altera la
     - [4.3.1 Interfaces Externas](#431-interfaces-externas)
     - [4.3.2 Requisitos Funcionales (RF)](#432-requisitos-funcionales-rf)
     - [4.3.3 Requisitos No Funcionales (RNF)](#433-requisitos-no-funcionales-rnf)
+    - [4.3.4 Reglas de Dominio (Reglas de Negocio)](#434-reglas-de-dominio-reglas-de-negocio)
+  - [4.4 Glosario y Diccionario de Datos](#44-glosario-y-diccionario-de-datos)
 - [**Capítulo V: Análisis y Diseño Orientado a Objetos**](#capítulo-v-análisis-y-diseño-orientado-a-objetos)
   - [5.1 Modelo de Dominio Conceptual](#51-modelo-de-dominio-conceptual)
   - [5.2 Especificación de Casos de Uso Principales (Formato Larman)](#52-especificación-de-casos-de-uso-principales-formato-larman)
@@ -304,7 +306,7 @@ El siguiente cuadro analiza comparativamente las soluciones del mercado respecto
 # **CAPÍTULO IV: DEFINICIÓN DE REQUISITOS (SRS)**
 
 ## **4.1 Introducción**
-El presente pliego de condiciones técnicas establece la especificación de requisitos del sistema (SRS) para la plataforma OpenBJJ bajo el modelo de calidad FURPS+.
+El presente pliego de condiciones técnicas establece la especificación de requisitos del sistema (SRS) para la plataforma OpenBJJ bajo el modelo de calidad FURPS+. Bajo la taxonomía metodológica del Proceso Unificado (UP), la descripción general y los objetivos de alto nivel del sistema corresponden al **Documento de Visión** (Vision Document), mientras que los requisitos no funcionales, reglas de negocio y restricciones técnicas descritas en este capítulo conforman la **Especificación Suplementaria** (Supplementary Specification).
 
 ## **4.2 Descripción General**
 
@@ -358,9 +360,38 @@ OpenBJJ opera bajo una topología de arquitectura híbrida. El motor de visión 
 | **RNF05** | Seguridad (Privacidad) | **Principio de Confidencialidad:** El archivo de video original en formato bruto nunca debe transmitirse a través de la red; el análisis espacial e inferencia de coordenadas ocurre estrictamente en memoria volátil local. |
 | **RNF06** | Mantenibilidad | El motor de análisis y la lógica de recomendación pedagógica deben estar desacoplados de los servicios tecnológicos de estimación de pose mediante interfaces y patrones de Fabricación Pura. |
 
+### **4.3.4 Reglas de Dominio (Reglas de Negocio)**
+
+De acuerdo con Craig Larman, las reglas de dominio dictan cómo opera el negocio fuera de los límites del software y deben registrarse formalmente en la Especificación Suplementaria. Para el dominio de BJJ y tutoría inteligente, se establecen las siguientes directrices:
+- **RD-01 (Jerarquía de Graduación):** Un practicante solo puede recibir tutoría de técnicas correspondientes a su cinturón actual o inferior, salvo autorización explícita del instructor.
+- **RD-02 (Tolerancia de Biotipo):** El umbral de error para ángulos articulares ideales (establecido inicialmente en $\pm 15^{\circ}$) se flexibiliza hasta en un $20\%$ si el perfil biomecánico del usuario reporta limitaciones de movilidad articular o proporciones físicas extremas validadas en el test de movilidad.
+- **RD-03 (Calidad del Grounding RAG):** Ningún chunk semántico proveniente de manuales o videos subidos colaborativamente por alumnos puede ser indexado ni utilizado en prompts de inferencia de IA si no cuenta con el estado de "Validado" firmado por un Instructor certificado.
+
+## **4.4 Glosario y Diccionario de Datos**
+
+Este artefacto, clave en la fase de Elaboración del Proceso Unificado, define la terminología de dominio y las especificaciones de formato y rangos de los atributos del sistema:
+
+### **4.4.1 Glosario de Términos**
+- **Landmark 3D:** Coordenada espacial tridimensional $(x,y,z)$ estimada para un punto de referencia anatómico clave (hombro, codo, muñeca, cadera, rodilla, tobillo) respecto a la cadera del sujeto.
+- **Retrieval-Augmented Generation (RAG):** Técnica de IA que inyecta contexto textual de fuentes externas (como libros en PDF o transcripciones de video) en el prompt de un LLM para fundamentar sus respuestas en datos de dominio confiables y evitar alucinaciones.
+- **Embedding Vectorial:** Representación numérica multidimensional de un fragmento de texto (chunk) que captura su significado semántico y permite realizar búsquedas de similitud coseno en bases de datos vectoriales.
+- **Desviación Técnica (o Error Biomecánico):** Diferencia angular o cinemática medida entre la ejecución del practicante y los umbrales ideales definidos para un movimiento.
+
+### **4.4.2 Diccionario de Datos (Especificaciones de Atributos)**
+
+| Entidad | Atributo | Tipo de Dato | Formato / Rango | Reglas de Validación |
+| :--- | :--- | :--- | :--- | :--- |
+| **Usuario** | `cinturon` | Enumerado | `{Blanco, Azul, Morado, Marrón, Negro}` | Obligatorio. Rige el catálogo de técnicas visible. |
+| **PerfilBiomecanico** | `altura` | Decimal | `[0.50, 2.50]` metros | Mayor que cero. Usado para normalizar las longitudes relativas de landmarks. |
+| **MetricaCinematica** | `anguloMedido` | Decimal | `[0.00, 360.00]` grados | Calculado por la fórmula de coseno entre tres landmarks de la articulación. |
+| **ErrorBiomecanico** | `severidad` | Enumerado | `{Leve, Moderado, Crítico}` | Leve: desv. $\le 15^{\circ}$; Moderado: desv. entre $15^{\circ}$ y $30^{\circ}$; Crítico: desv. $> 30^{\circ}$ o error recurrente. |
+| **FuenteConocimiento** | `estadoValidacion` | Enumerado | `{Pendiente, Validado, Rechazado}` | Por defecto se crea en "Pendiente". Solo "Validado" pasa al RAG activo. |
+
 ---
 
 # **CAPÍTULO V: ANÁLISIS Y DISEÑO ORIENTADO A OBJETOS**
+
+En concordancia con los principios del desarrollo iterativo e incremental del Proceso Unificado (UP), los diagramas y modelos presentados en este capítulo no representan un diseño estático realizado de forma anticipada (enfoque en cascada o *waterfall*). Por el contrario, son el producto acumulativo y evolutivo de múltiples ciclos de desarrollo (sprints con límites de tiempo o *timeboxed*) de la fase de Elaboración. Las abstracciones y realizaciones se definieron y adaptaron de manera continua basándose en el aprendizaje y la retroalimentación inmediata obtenidos durante la programación de las primeras iteraciones del núcleo arquitectónico ejecutable del sistema.
 
 ## **5.1 Modelo de Dominio Conceptual**
 El modelo de dominio representa los conceptos significativos del negocio de OpenBJJ. Siguiendo las directrices de Larman, se modelan las abstracciones cinemáticas, de RAG y adaptación instruccional sin acoplar detalles de bases de datos.
@@ -386,10 +417,19 @@ classDiagram
         cinturonRequerido
     }
     class FuenteConocimiento {
+        <<abstract>>
         titulo
         tipo
         estadoValidacion
         contenidoVectorial
+    }
+    class ManualPDF {
+        numeroPaginas
+        isbn
+    }
+    class VideoYouTube {
+        duracionSegundos
+        canalAutor
     }
     class CheckpointTecnico {
         fase
@@ -419,6 +459,9 @@ classDiagram
         tipoEstrategia
         contenidoExplicativo
     }
+
+    FuenteConocimiento <|-- ManualPDF
+    FuenteConocimiento <|-- VideoYouTube
 
     Usuario "1" -- "1" RutaAprendizaje : posee
     Usuario "1" -- "1" PerfilBiomecanico : define
