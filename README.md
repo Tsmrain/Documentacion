@@ -544,6 +544,10 @@ A continuación se detallan los casos de uso principales utilizando el formato "
     2.  El Sistema alerta: "Contenido demasiado breve para ser útil técnicamente."
     3.  Cancela la indexación.
 
+**Requisitos Especiales:**
+*   La extracción de texto e indexación vectorial (RAG) debe completarse en menos de 10 segundos para documentos de hasta 20 páginas.
+*   El sistema debe admitir archivos PDF con codificación estándar de texto y URLs de YouTube públicas sin restricciones de geobloqueo.
+
 ---
 
 #### Caso de Uso CU03: Consultar Progreso y Recibir Tutoría Adaptativa
@@ -578,6 +582,10 @@ A continuación se detallan los casos de uso principales utilizando el formato "
     1.  El Sistema detecta < 3 análisis.
     2.  Muestra mensaje motivacional: "¡Sigue entrenando! Necesitamos más datos para personalizar tu ruta."
     3.  Oculta la sección de recomendaciones adaptativas.
+
+**Requisitos Especiales:**
+*   La consulta del historial y generación de recomendaciones adaptativas locales en el dashboard debe completarse en menos de 2 segundos.
+*   La interfaz gráfica debe presentar las recomendaciones con niveles de severidad técnica claramente identificables mediante código de colores estándar (rojo, amarillo, verde).
 
 ---
 
