@@ -1,4 +1,4 @@
-# **SISTEMA ADAPTATIVO DE ANÁLISIS BIOMECÁNICO 3D Y TUTORÍA INTELIGENTE MULTI-NIVEL PARA BRAZILIAN JIU-JITSU MEDIANTE ARQUITECTURA HÍBRIDA CLIENTE-LIGERO Y RAG**
+# **OpenBJJ: Plataforma Inteligente de Tutoría Adaptativa y Análisis Biomecánico 3D para Brazilian Jiu-Jitsu mediante Arquitectura Híbrida y RAG**
 
 <br>
 
@@ -45,7 +45,7 @@ Al jiujitsu brasileno, por enseñarme a afrontar los miedos, seguir incluso cuan
 
 # **Abstract**
 
-| TÍTULO | SISTEMA ADAPTATIVO DE ANÁLISIS BIOMECÁNICO 3D Y TUTORÍA INTELIGENTE MULTI-NIVEL PARA BRAZILIAN JIU-JITSU MEDIANTE ARQUITECTURA HÍBRIDA CLIENTE-LIGERO Y RAG |
+| TÍTULO | OpenBJJ: Plataforma Inteligente de Tutoría Adaptativa y Análisis Biomecánico 3D para Brazilian Jiu-Jitsu mediante Arquitectura Híbrida y RAG |
 | :--- | :--- |
 | **AUTOR** | SANTIAGO BORDA ZAMBRANA |
 
@@ -525,9 +525,9 @@ A continuación se detallan los casos de uso principales utilizando el formato "
 
 **Actor Principal:** Practicante (Alumno de BJJ).
 **Intereses de las Partes Involucradas:**
-*   **Practicante:** Desea recibir retroalimentación objetiva, instantánea y adaptada a su nivel (Blanco a Negro) sobre su ejecución técnica, identificando errores biomecánicos específicos (ángulos, velocidad) sin depender exclusivamente del instructor.
-*   **Instructor:** Desea que el sistema sirva como herramienta de apoyo para corregir errores recurrentes fuera del horario de clase, optimizando el tiempo presencial.
-*   **Sistema de IA (Gemini):** Desea recibir entradas estructuradas (landmarks + contexto RAG) para minimizar alucinaciones y costos de tokens.
+*   **Practicante:** Desea recibir retroalimentación objetiva e instantánea sobre su ejecución técnica, identificando errores biomecánicos específicos (ángulos, velocidad) sin depender exclusivamente del instructor.
+*   **Instructor:** Desea que el sistema sirva como herramienta de apoyo para corregir errores recurrentes fuera del horario de clase.
+*   **Sistema de IA (Gemini):** Desea recibir entradas estructuradas (landmarks + contexto RAG) para minimizar alucinaciones.
 
 **Precondiciones:**
 1.  El practicante ha iniciado sesión o está usando la aplicación localmente.
@@ -546,12 +546,12 @@ A continuación se detallan los casos de uso principales utilizando el formato "
 1.  El Practicante selecciona la técnica a evaluar (ej. "Guardia Cerrada") y el nivel de cinturón.
 2.  El Practicante carga o graba un video de su ejecución (máx. 45 seg).
 3.  El Sistema valida el formato y duración del video.
-4.  El Sistema invoca al motor local **MediaPipePoseAdapter** para extraer los landmarks 3D $(x,y,z)$ de cada fotograma clave.
-5.  El **SesionEntrenamientoController** calcula las métricas cinemáticas (ángulos articulares, velocidades) basándose en los landmarks.
-6.  El Sistema consulta al **RetrievalAugmentedController** pasando el ID de la técnica.
-7.  El **RetrievalAugmentedController** busca en la **VectorDBAdapter** los fragmentos de manuales/videos relevantes (Grounding).
+4.  El Sistema invoca al motor local `MediaPipePoseAdapter` para extraer los landmarks 3D $(x,y,z)$ de cada fotograma clave.
+5.  El `SesionEntrenamientoController` calcula las métricas cinemáticas (ángulos articulares, velocidades) basándose en los landmarks.
+6.  El Sistema consulta al `RetrievalAugmentedController` pasando el ID de la técnica.
+7.  El `RetrievalAugmentedController` busca en la `VectorDBAdapter` los fragmentos de manuales/videos relevantes (Grounding).
 8.  El Sistema ensambla un prompt estructurado que incluye: métricas calculadas + contexto RAG + instrucción de evaluación.
-9.  El Sistema envía el prompt a la **GeminiServiceAdapter**.
+9.  El Sistema envía el prompt a la `GeminiServiceAdapter`.
 10. La IA retorna un JSON con la evaluación táctica, detección de errores y puntuación biomecánica.
 11. El Sistema parsea la respuesta, identifica instancias de `ErrorBiomecanico` si las desviaciones superan el umbral (ej. >15°).
 12. El Sistema verifica el historial del usuario. Si el error es recurrente, el motor adaptativo selecciona una estrategia pedagógica alternativa (ej. drill de movilidad en lugar de video técnico).
@@ -565,7 +565,7 @@ A continuación se detallan los casos de uso principales utilizando el formato "
     3.  El Sistema aborta el proceso y retorna al paso 1.
 *   **4a. Fallo en la estimación de Pose (Oclusión severa):**
     1.  MediaPipe reporta confianza baja (<0.5) en más del 30% de los landmarks.
-    2.  El Sistema alerta: "No se pudo rastrear el esqueleto correctamente. Verifique iluminación y ropa."
+    2.  El Sistema alerta: "No se pudo rastrear el esqueleto correctamente. Verifique iluminación y encuadre."
     3.  El Sistema aborta el análisis biomecánico pero permite guardar el video como referencia manual.
 *   **7a. No se encuentra contexto RAG:**
     1.  La Base de Datos Vectorial no retorna fragmentos relevantes para la técnica seleccionada.
@@ -575,6 +575,10 @@ A continuación se detallan los casos de uso principales utilizando el formato "
     1.  La petición a Gemini falla por timeout o error de red.
     2.  El Sistema reintenta automáticamente hasta 3 veces.
     3.  Si falla nuevamente, muestra: "Error de servicio. Intente más tarde." y guarda los datos crudos (landmarks) para procesamiento diferido si es posible.
+*   **12a. Error Recurrente Detectado (Adaptabilidad Pedagógica):**
+    1.  El Sistema identifica que el `ErrorBiomecanico` "Codo Abierto" ha ocurrido en >70% de los últimos 5 análisis.
+    2.  El Motor Adaptativo cambia la estrategia: En lugar de mostrar otro video de la técnica, sugiere un "Drill de Fortalecimiento de Tríceps".
+    3.  El Sistema actualiza la `RutaAprendizaje` del usuario.
 
 **Requisitos Especiales:**
 *   Latencia total del análisis < 5 segundos.
