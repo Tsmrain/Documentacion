@@ -266,12 +266,12 @@ Estos modelos estiman las coordenadas de hasta 33 puntos de referencia corporale
 *Estimación de Landmarks Corporales 3D*
 
 A partir de estas coordenadas, la física cinemática permite derivar métricas fundamentales del movimiento deportivo sin sensores inerciales corporales:
-- **Ángulos articulares ($	heta$):** Calculados mediante el coseno del ángulo entre los vectores formados por tres landmarks adyacentes (ej. hombro-codo-muñeca para el codo):
-  $$\cos(	heta) = rac{ec{u} \cdot ec{v}}{\|ec{u}\| \|ec{v}\|}$$
-- **Velocidad articular ($ec{v}$):** Derivada temporal de la posición de los landmarks entre fotogramas sucesivos:
-  $$ec{v}(t) = rac{ec{p}(t) - ec{p}(t-\Delta t)}{\Delta t}$$
-- **Aceleración articular ($ec{a}$):** Tasa de cambio de la velocidad en el tiempo:
-  $$ec{a}(t) = rac{ec{v}(t) - ec{v}(t-\Delta t)}{\Delta t}$$
+- **Ángulos articulares ($\theta$):** Calculados mediante el coseno del ángulo entre los vectores formados por tres landmarks adyacentes (ej. hombro-codo-muñeca para el codo):
+  $$\cos(\theta) = \frac{\vec{u} \cdot \vec{v}}{\|\vec{u}\| \|\vec{v}\|}$$
+- **Velocidad articular ($\vec{v}$):** Derivada temporal de la posición de los landmarks entre fotogramas sucesivos:
+  $$\vec{v}(t) = \frac{\vec{p}(t) - \vec{p}(t-\Delta t)}{\Delta t}$$
+- **Aceleración articular ($\vec{a}$):** Tasa de cambio de la velocidad en el tiempo:
+  $$\vec{a}(t) = \frac{\vec{v}(t) - \vec{v}(t-\Delta t)}{\Delta t}$$
 
 La ejecución de este pipeline en el navegador del cliente elimina la necesidad de transmitir flujos de video masivos a la nube, reduciendo la latencia de procesamiento, eliminando costos de infraestructura de GPU en el servidor y garantizando que los datos visuales brutos permanezcan seguros en el dispositivo del usuario.
 
