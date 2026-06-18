@@ -745,35 +745,38 @@ sequenceDiagram
     participant Ctrl as SesionEntrenamientoController
     participant MP as MediaPipePoseAdapter
     participant RAG as RetrievalAugmentedController
-    participant DB as VectorDBAdapter
     participant LLM as GeminiServiceAdapter
     participant Eval as AnalisisBiomecanico
+    participant Ruta as RutaAprendizaje
 
     UI->>Ctrl: subirVideo(videoBlob, tecnicaId)
-    Note over Ctrl,MP: Fabricación Pura y Bajo Acoplamiento
+    
+    Note over Ctrl,MP: Adapter protege contra variaciones externas
     Ctrl->>MP: extract3DLandmarks(videoBlob)
-    MP-->>Ctrl: landmarkVectors[]
+    MP-->>Ctrl: landmarkVectors
     
-    Note over Ctrl,Ctrl: Experto en Información: calcula cinemática
-    Ctrl->>Ctrl: calculateKinematics(landmarkVectors[])
+    Note over Ctrl,RAG: Controlador delega (No hace el trabajo pesado)
+    Ctrl->>RAG: getContextPrompts(tecnicaId)
+    RAG-->>Ctrl: prompts[]
     
-    Note over Ctrl,DB: Grounding Técnico vía RAG
-    Ctrl->>RAG: queryCheckpoints(tecnicaId)
-    RAG->>DB: searchVectors(tecnicaId)
-    DB-->>RAG: retrievedContextChunks[]
-    RAG-->>Ctrl: formattedTechnicalPrompts
-    
-    Note over Ctrl,LLM: Inferencia y Creación de Entidades
-    Ctrl->>LLM: evaluateInference(formattedTechnicalPrompts, kinematicsData)
+    Note over Ctrl,LLM: Inferencia delegada al Adaptador
+    Ctrl->>LLM: evaluateInference(prompts, landmarkVectors)
     LLM-->>Ctrl: evaluationPayloadJSON
     
+    Note over Ctrl,Eval: Creator: El controlador ordena la creación
     Ctrl->>Eval: create(evaluationPayloadJSON)
     activate Eval
+    
+    Note over Eval,Eval: Experto en Información: El análisis calcula la cinemática
+    Eval->>Eval: calculateKinematics()
     Eval-->>Ctrl: analisisInstance
     deactivate Eval
     
-    Ctrl->>Ctrl: updatePedagogicalRouting(analisisInstance)
-    Ctrl-->>UI: displayInteractiveTimeline(analisisInstance)
+    Note over Ctrl,Ruta: Experto en Información para la pedagogía
+    Ctrl->>Ruta: updateRouting(analisisInstance)
+    
+    Note over Ctrl,UI: Separación Modelo-Vista (Retorna datos, no comandos de UI)
+    Ctrl-->>UI: analisisInstance
 ```
 
 La asignación de responsabilidades de diseño se justifica a través de la aplicación formal de los principios de Craig Larman:
@@ -785,7 +788,7 @@ La asignación de responsabilidades de diseño se justifica a través de la apli
 | Patrón GRASP Aplicado | Aplicación en el Diseño de OpenBJJ | Beneficio de Ingeniería de Software |
 | :--- | :--- | :--- |
 | **Controlador** | `SesionEntrenamientoController` coordina todos los eventos del sistema disparados por la subida de videos de combate, abstrayendo la vista del flujo lógico. | **Alta Cohesión:** La interfaz de usuario no asume lógica de negocio; el acoplamiento modelo-vista es nulo. |
-| **Experto en Información** | La clase `SesionEntrenamientoController` calcula los ángulos articulares, velocidades y aceleraciones, ya que contiene el array de coordenadas corporales extraídas. | **Encapsulamiento de Datos:** El cálculo de métricas cinemáticas se agrupa junto a los datos que las originan, minimizando la propagación de datos crudos. |
+| **Experto en Información** | La clase `AnalisisBiomecanico` calcula los ángulos articulares, velocidades y desviaciones técnicas, encapsulando las coordenadas espaciales y la lógica de negocio cinemática. | **Alta Cohesión y Acoplamiento Débil:** Evita sobrecargar el controlador con lógica física matemática, manteniendo el dominio auto-contenido. |
 | **Creador** | La clase `SesionEntrenamientoController` instancia los objetos `AnalisisBiomecanico` y `ErrorBiomecanico` tras la recepción y parseo del payload JSON de evaluación. | **Trazabilidad:** Asigna la creación al objeto que registra y almacena directamente los reportes en el historial local. |
 | **Bajo Acoplamiento** | Las APIs complejas de estimación visual e inferencia RAG se aíslan mediante adaptadores (`MediaPipePoseAdapter` y `GeminiServiceAdapter`) implementando interfaces abstractas. | **Variaciones Protegidas:** La migración de MediaPipe a TensorFlow.js o de Gemini a OpenAI se realiza cambiando los adaptadores, sin alterar el código de dominio. |
 | **Polimorfismo** | Uso de las interfaces abstractas `IPoseEstimator`, `IVectorStore` y `ILLMProvider` para definir los contratos técnicos del sistema. | **Flexibilidad e Intercambiabilidad:** Las implementaciones concretas (MediaPipe, Supabase, Gemini) se pueden intercambiar sin reescribir la lógica de dominio. |
