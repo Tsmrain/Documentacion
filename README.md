@@ -370,75 +370,75 @@ La clase **ErrorBiomecanico** (o *DesviacionTecnica*) actúa como entidad puente
 ```mermaid
 classDiagram
     class Usuario {
-        +nombre: String
-        +cinturon: NivelCinturon
-        +historialErrores: List
+        nombre
+        cinturon
+        historialErrores
     }
     class PerfilBiomecanico {
-        +altura: float
-        +peso: float
-        +longitudBrazos: float
-        +longitudPiernas: float
-        +rangoMovilidadArticular: Map
+        altura
+        peso
+        longitudBrazos
+        longitudPiernas
+        rangoMovilidadArticular
     }
     class Tecnica {
-        +id: String
-        +nombre: String
-        +categoria: String
-        +cinturonRequerido: NivelCinturon
+        id
+        nombre
+        categoria
+        cinturonRequerido
     }
     class FuenteConocimiento {
-        +id: String
-        +titulo: String
-        +tipo: TipoFuente
-        +estadoValidacion: EstadoValidacion
-        +contenidoVectorial: Vector
+        id
+        titulo
+        tipo
+        estadoValidacion
+        contenidoVectorial
     }
     class CheckpointTecnico {
-        +id: String
-        +fase: String
-        +anguloArticularIdeal: float
-        +toleranciaGrados: float
+        id
+        fase
+        anguloArticularIdeal
+        toleranciaGrados
     }
     class AnalisisBiomecanico {
-        +id: String
-        +fecha: DateTime
+        id
+        fecha
     }
     class MetricaCinematica {
-        +frameIndex: int
-        +anguloMedido: float
-        +velocidadMedida: float
-        +aceleracionMedida: float
+        frameIndex
+        anguloMedido
+        velocidadMedida
+        aceleracionMedida
     }
     class ErrorBiomecanico {
-        +id: String
-        +severidad: NivelSeveridad
-        +anguloDesviacion: float
-        +descripcionFallo: String
-        +esRecurrente: boolean
+        id
+        severidad
+        anguloDesviacion
+        descripcionFallo
+        esRecurrente
     }
     class RutaAprendizaje {
-        +progresoGeneral: float
-        +estadoPedagogicoActual: EstadoPedagogico
+        progresoGeneral
+        estadoPedagogicoActual
     }
     class RecomendacionAdaptativa {
-        +id: String
-        +tipoEstrategia: TipoEstrategia
-        +contenidoExplicativo: String
+        id
+        tipoEstrategia
+        contenidoExplicativo
     }
 
-    Usuario "1" --> "1" RutaAprendizaje : posee
-    Usuario "1" --> "1" PerfilBiomecanico : define
-    RutaAprendizaje "1" --> "*" RecomendacionAdaptativa : adapta
-    Usuario "1" --> "*" AnalisisBiomecanico : realiza
-    AnalisisBiomecanico "1" --> "1" Tecnica : evalúa
-    Tecnica "1" --> "*" CheckpointTecnico : define
-    FuenteConocimiento "1" --> "*" CheckpointTecnico : extrae
-    AnalisisBiomecanico "1" --> "*" MetricaCinematica : calcula
-    MetricaCinematica "1" --> "0..1" ErrorBiomecanico : genera
-    CheckpointTecnico "1" --> "1" ErrorBiomecanico : compara
-    PerfilBiomecanico "1" --> "1" ErrorBiomecanico : ajusta umbrales de
-    ErrorBiomecanico "*" --> "1" RecomendacionAdaptativa : mitiga
+    Usuario "1" -- "1" RutaAprendizaje : posee
+    Usuario "1" -- "1" PerfilBiomecanico : define
+    RutaAprendizaje "1" -- "*" RecomendacionAdaptativa : adapta
+    Usuario "1" -- "*" AnalisisBiomecanico : realiza
+    AnalisisBiomecanico "1" -- "1" Tecnica : evalúa
+    Tecnica "1" -- "*" CheckpointTecnico : define
+    FuenteConocimiento "1" -- "*" CheckpointTecnico : extrae
+    AnalisisBiomecanico "1" -- "*" MetricaCinematica : calcula
+    MetricaCinematica "1" -- "0..1" ErrorBiomecanico : genera
+    CheckpointTecnico "1" -- "1" ErrorBiomecanico : compara
+    PerfilBiomecanico "1" -- "1" ErrorBiomecanico : ajusta umbrales de
+    ErrorBiomecanico "*" -- "1" RecomendacionAdaptativa : mitiga
 ```
 
 ## **5.2 Especificación de Casos de Uso Principales (Formato Larman)**
