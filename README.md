@@ -1356,24 +1356,24 @@ Dado que el desarrollo de software bajo el Proceso Unificado es iterativo e incr
 
 # **Referencias**
 
-Google AI for Developers. (s.f.). *Gemini Developer API pricing*. Recuperado el 7 de abril de 2026, de [https://ai.google.dev/gemini-api/docs/pricing](https://ai.google.dev/gemini-api/docs/pricing)
+Google. (2026, 6 de abril). *Gemini API pricing*. Google AI Developers. Recuperado el 10 de abril de 2026, de https://ai.google.dev/gemini-api/docs/pricing?hl=en
 
-Google. (2026, 6 de abril). *Gemini API Pricing*. Google AI Developers. Recuperado el 10 de abril de 2026, de [https://ai.google.dev/gemini-api/docs/pricing?hl=en](https://ai.google.dev/gemini-api/docs/pricing?hl=en)
+Google AI for Developers. (s.f.-a). *Gemini Developer API pricing*. Recuperado el 7 de abril de 2026, de https://ai.google.dev/gemini-api/docs/pricing
 
-Google AI for Developers. (s.f.). *Models | Gemini API*. Recuperado el 7 de abril de 2026, de [https://ai.google.dev/api/models?hl=es-419](https://ai.google.dev/api/models?hl=es-419)
+Google AI for Developers. (s.f.-b). *Models | Gemini API*. Recuperado el 7 de abril de 2026, de https://ai.google.dev/api/models?hl=es-419
 
-Jiu Jitsu Life For Me. (2012, noviembre). *Ranking*. WordPress. Recuperado el 8 de abril de 2026, de [https://jiujitsulifeforme.wordpress.com/wp-content/uploads/2012/11/ranking.jpg](https://jiujitsulifeforme.wordpress.com/wp-content/uploads/2012/11/ranking.jpg)
+Jiu Jitsu Life For Me. (2012, noviembre). *Ranking*. WordPress. https://jiujitsulifeforme.wordpress.com/wp-content/uploads/2012/11/ranking.jpg
 
-Larman, C. (2003). *UML y Patrones: Una introducción al análisis y diseño orientado a objetos y al proceso unificado* (2.ª ed.). Pearson Educación.
+Larman, C. (2003). *UML y patrones: Una introducción al análisis y diseño orientado a objetos y al proceso unificado* (2.ª ed.). Pearson Educación.
 
-Lucidchart. (s.f.). *Diagramas creados con inteligencia*. Recuperado el 7 de abril de 2026, de [https://www.lucidchart.com/pages/es](https://www.lucidchart.com/pages/es)
+Lucidchart. (s.f.). *Diagramas creados con inteligencia*. https://www.lucidchart.com/pages/es
 
-Mannino, M. V. (2019). *Database Design, Application Development, and Administration* (7.ª ed.). Chicago Business Press.
+Mannino, M. V. (2019). *Database design, application development, and administration* (7.ª ed.). Chicago Business Press.
 
-Mermaid AI. (s.f.). *About Mermaid*. Recuperado el 7 de abril de 2026, de [https://mermaid.ai/open-source/intro/](https://mermaid.ai/open-source/intro/)
+Mermaid AI. (s.f.). *About Mermaid*. https://mermaid.ai/open-source/intro/
 
-Normas APA. (s.f.). *Guía Normas APA 7ª edición*. Recuperado el 7 de abril de 2026, de [https://normas-apa.org/wp-content/uploads/Guia-Normas-APA-7ma-edicion.pdf](https://normas-apa.org/wp-content/uploads/Guia-Normas-APA-7ma-edicion.pdf)
+Normas APA. (s.f.). *Guía Normas APA 7ª edición*. https://normas-apa.org/wp-content/uploads/Guia-Normas-APA-7ma-edicion.pdf
 
-Ribeiro, S., & Howell, K. (2008). *Jiu-Jitsu University*. Victory Belt Publishing.
+Ribeiro, S., & Howell, K. (2008). *Jiu-Jitsu university*. Victory Belt Publishing.
 
-Vercel. (s.f.). *Vercel Pricing: Hobby, Pro, and Enterprise plans*. Recuperado el 10 de abril de 2026, de [https://vercel.com/pricing](https://vercel.com/pricing)
+Vercel. (s.f.). *Vercel pricing: Hobby, Pro, and Enterprise plans*. Recuperado el 10 de abril de 2026, de https://vercel.com/pricing
