@@ -210,7 +210,7 @@ El objeto de este estudio es el modelado y diseño de una arquitectura de softwa
 
 ### **1.1.4 Alcance**
 El proyecto OpenBJJ se delimita bajo los siguientes criterios:
-- **Alcance Técnico:** Extracción de landmarks corporales en 3D en el lado del cliente (navegador web) a través de MediaPipe y TensorFlow.js, eliminando la transmisión del video original a servidores externos para proteger la privacidad. Base de datos vectorial en la nube (ej. Supabase Vector / Pinecone) para almacenar representaciones de documentos técnicos e indexación RAG. Lógica de adaptación instruccional serverless.
+- **Alcance Técnico:** Extracción de landmarks corporales en 3D en el lado del cliente (navegador web) a través de MediaPipe y TensorFlow.js, eliminando la transmisión del video original a servidores externos para proteger la privacidad. El motor RAG (incluyendo la generación de embeddings y el almacenamiento vectorial) se ejecuta 100% de manera local en el cliente a través de Transformers.js (para embeddings) e IndexedDB (como base de datos vectorial local), eliminando dependencias de almacenamiento en la nube (como Supabase o Pinecone). La única llamada externa a la nube es la petición final de inferencia de texto a la API de Gemini.
 - **Alcance de Dominio:** Cobertura de técnicas correspondientes a todos los niveles de graduación de Brazilian Jiu-Jitsu (cinturones Blanco, Azul, Morado, Marrón y Negro).
 - **Alcance Metodológico:** Implementación de la metodología del Proceso Unificado (UP) y asignación de responsabilidades de Craig Larman (patrones GRASP y GoF).
 - **Alcance de Despliegue:** Aplicación Web Progresiva (PWA) responsiva compatible con dispositivos móviles y ordenadores de escritorio mediante navegadores modernos con soporte WebGL.
@@ -278,11 +278,11 @@ La ejecución de este pipeline en el navegador del cliente elimina la necesidad 
 ## **2.2 Generación Aumentada por Recuperación (RAG) en Deportes**
 Los Modelos de Lenguaje de Gran Escala (LLMs) presentan el riesgo de generar respuestas erróneas o ficticias ("alucinaciones") cuando se les consulta sobre reglas y técnicas específicas de deportes complejos como el BJJ, dado que la literatura técnica puede no estar suficientemente representada en sus datos de entrenamiento generalistas.
 
-Para subsanar esto, el patrón de arquitectura RAG contextualiza al modelo generativo en tiempo de ejecución inyectando fragmentos textuales relevantes de documentos externos:
-1. **Ingestación de Conocimiento:** Documentos técnicos (libros en PDF, transcripciones de YouTube de instructores certificados) son segmentados en fragmentos lógicos (chunks).
-2. **Generación de Embeddings:** Un modelo de representación semántica convierte cada chunk en un vector multidimensional.
-3. **Indexación:** Los vectores se persisten en una base de datos vectorial (Vector DB).
-4. **Recuperación y Grounding:** Cuando el usuario selecciona una técnica, el sistema realiza una consulta vectorial, recupera los fragmentos y los checkpoints técnicos idóneos y los concatena al prompt del LLM junto con las métricas biomecánicas calculadas. De esta forma, el modelo avanzado evalúa el movimiento basándose estrictamente en la literatura corporativa oficial.
+Para subsanar esto, el patrón de arquitectura RAG contextualiza al modelo generativo en tiempo de ejecución inyectando fragmentos textuales relevantes de documentos externos de manera 100% local en el cliente:
+1. **Ingestación de Conocimiento:** Documentos técnicos (libros en PDF, transcripciones de YouTube subidas manualmente o vía API proxy) son segmentados en fragmentos lógicos (chunks) directamente en el navegador.
+2. **Generación de Embeddings Local:** Se utiliza la librería `Transformers.js` ejecutada localmente en el hilo de fondo del navegador (via Web Workers) para convertir cada chunk en un vector multidimensional sin subir los textos a servicios externos.
+3. **Indexación y Almacenamiento Vectorial:** Los vectores se persisten en una base de datos vectorial local construida sobre la API de IndexedDB (Vector DB Local).
+4. **Recuperación y Grounding:** Cuando el usuario selecciona una técnica, el sistema realiza una consulta vectorial mediante similitud coseno directamente en IndexedDB, recupera los fragmentos y checkpoints técnicos correspondientes, y los concatena al prompt del LLM junto con las métricas biomecánicas calculadas. De esta forma, el modelo de IA evalúa el movimiento basándose estrictamente en datos oficiales. La única comunicación externa a la nube es el prompt final enviado a la API de Gemini.
 
 <a id="figura-3"></a>
 **Figura 3**
@@ -343,10 +343,12 @@ OpenBJJ opera bajo una topología de arquitectura híbrida. El motor de visión 
 - **Recomendación Pedagógica Adaptativa:** Generación de rutas personalizadas basadas en fallos acumulativos.
 - **Validación de Datos:** Flujo para asegurar que las fuentes inyectadas por la comunidad cumplan con el criterio del instructor.
 
-### **4.2.3 Características de los Usuarios**
-1. **Practicante:** Alumno de cualquier cinturón que busca autoevaluarse y configurar su perfil biomecánico.
-2. **Instructor:** Experto certificado que gestiona, sube, e indexa las fuentes de conocimiento, además de validar los recursos del RAG.
-3. **Administrador:** Soporte técnico y monitor del sistema.
+### **4.2.3 Características de los Usuarios y Gestión de Roles Local**
+1. **Practicante:** Alumno de cualquier cinturón (desde blanco hasta negro) que busca autoevaluarse y configurar su perfil biomecánico.
+2. **Instructor:** Experto certificado de la academia que gestiona, sube e indexa las fuentes de conocimiento, además de validar los recursos del RAG.
+3. **Administrador:** Soporte técnico del sistema local.
+
+**Nota sobre la Gestión de Acceso y Roles:** Dado el principio de soberanía de datos y funcionamiento offline sin cuentas centralizadas, la plataforma carece de un servidor de autenticación de login tradicional. Los perfiles de usuario se persisten localmente en IndexedDB. Para habilitar los flujos de "Instructor" (ingesta y validación de fuentes), el usuario puede conmutar localmente al "Modo Instructor" ingresando un PIN de acceso o clave maestra almacenada en el `localStorage` del navegador. De esta manera, el control de acceso a la moderación se realiza 100% en el dispositivo del cliente.
 
 ### **4.2.4 Restricciones**
 - La API de MediaPipe client-side exige soporte WebGL activo en el navegador para acelerar el procesamiento de fotogramas.
@@ -436,7 +438,9 @@ El modelo de dominio representa los conceptos significativos del negocio de Open
 
 La clase **PerfilBiomecanico** está asociada mediante una relación estricta 1-a-1 con **Usuario**. Esta entidad captura los datos antropométricos del usuario (como altura, peso y longitudes segmentarias) junto con sus rangos de movilidad articular. Esta clase influye directamente en el cálculo del **ErrorBiomecanico**: en lugar de aplicar un umbral estático universal de tolerancia, el sistema evalúa la movilidad del practicante para flexibilizar dinámicamente los límites de desviación angular permitida (conforme a la regla de negocio `RD-02`). 
 
-De este modo, la clase **ErrorBiomecanico** (o *DesviacionTecnica*) actúa como entidad puente fundamental. Registra la diferencia entre la ejecución real medida por la **MetricaCinematica** y el patrón ideal extraído de la **FuenteConocimiento** (ajustado según el **PerfilBiomecanico** del **Usuario**). Esta información permite a la **RecomendacionAdaptativa** evaluar el historial de fallas y actualizar de forma personalizada la **RutaAprendizaje** del practicante.
+De este modo, la clase **ErrorBiomecanico** (o *DesviacionTecnica*) actúa como entidad puente fundamental. Registra la diferencia entre la ejecución real medida por la **MetricaCinematica** y el patrón ideal extraído de la **FuenteConocimiento** (ajustado según el **PerfilBiomecanico** del **Usuario**). Esta información permite a la **RecomendacionAdaptativa** evaluar el historial de fallas y actualizar de forma personalizada la **RutaAprendizaje** del practicante. 
+
+Cabe destacar que las recomendaciones pedagógicas y drills correctivos no se encuentran hardcodeados en el software. Cada chunk textual indexado en la base de datos vectorial local se asocia con un metadato estructurado denominado `tipoRecurso` (con valores `{tecnica, drill, explicacion_anatomica}`). Cuando el sistema detecta que un `ErrorBiomecanico` es recurrente (`esRecurrente == true`), el `RetrievalAugmentedController` aplica un filtro por este metadato en la búsqueda vectorial local (IndexedDB). Esto fuerza la recuperación de chunks clasificados como `drill` o `explicacion_anatomica` para inyectarlos en el prompt de Gemini, modificando de forma dinámica la estrategia instruccional hacia ejercicios de movilidad o explicaciones conceptuales profundas.
 
 ```mermaid
 classDiagram
@@ -819,7 +823,7 @@ Se aplica el patrón de arquitectura de 3 capas lógicas independientes para ase
 | :--- | :--- | :--- |
 | **Presentación** | Renderizar UI responsiva (Mobile-First, Glassmorphic Dashboard), capturar interactividad del video y pintar esqueleto 3D. | React, TypeScript, Tailwind CSS, Lucide Icons |
 | **Dominio** | Orquestar casos de uso, ejecutar el motor pedagógico adaptativo, gestionar perfiles antropométricos e instanciar errores biomecánicos. | TS Classes, GRASP Controllers, In-Memory Models |
-| **Servicios Técnicos** | Ejecutar estimación de landmarks corporales en 3D, calcular embeddings vectoriales, persistir en Vector DB local/nube y dialogar con APIs LLM. | MediaPipe Pose SDK, Supabase Vector client, Gemini AI API |
+| **Servicios Técnicos** | Ejecutar estimación de landmarks corporales en 3D, calcular embeddings vectoriales locales, persistir en Vector DB local (IndexedDB) y dialogar con APIs LLM. | MediaPipe Pose SDK, Transformers.js, IndexedDB, Gemini AI API |
 
 ## **5.6 Realización del Caso de Uso con Patrones GRASP**
 
@@ -830,39 +834,40 @@ sequenceDiagram
     participant UI as VideoUploaderView
     participant Ctrl as SesionEntrenamientoController
     participant MP as MediaPipePoseAdapter
+    participant Eval as AnalisisBiomecanico
     participant RAG as RetrievalAugmentedController
     participant LLM as GeminiServiceAdapter
-    participant Eval as AnalisisBiomecanico
     participant Ruta as RutaAprendizaje
 
     UI->>Ctrl: subirVideo(videoBlob, tecnicaId)
     
-    Note over Ctrl,MP: Adapter protege contra variaciones externas
+    Note over Ctrl,MP: Adapter protege contra variaciones externas de hardware/visión
     Ctrl->>MP: extract3DLandmarks(videoBlob)
     MP-->>Ctrl: landmarkVectors
     
-    Note over Ctrl,RAG: Controlador delega (No hace el trabajo pesado)
+    Note over Ctrl,Eval: Experto en Información: AnalisisBiomecanico calcula la física localmente
+    Ctrl->>Eval: calculateKinematics(landmarkVectors, perfil)
+    activate Eval
+    Eval->>Eval: calculateAnglesAndVelocities()
+    Eval-->>Ctrl: calculatedMetrics (Resumen Cinemático)
+    deactivate Eval
+    
+    Note over Ctrl,RAG: Fabricación Pura: Recupera contexto de IndexedDB local
     Ctrl->>RAG: getContextPrompts(tecnicaId)
     RAG-->>Ctrl: prompts[]
     
-    Note over Ctrl,LLM: Inferencia delegada al Adaptador
-    Ctrl->>LLM: evaluateInference(prompts, landmarkVectors)
-    Note over LLM,LLM: El Adaptador filtra los landmarks y envía a Gemini solo un resumen cinemático (ángulos clave y velocidades)
+    Note over Ctrl,LLM: Inferencia: Envía solo prompt + métricas filtradas a la nube
+    Ctrl->>LLM: evaluateInference(prompts, calculatedMetrics)
+    Note over LLM,LLM: Solo viajan datos de texto (JSON de 3KB). Privacidad del video garantizada.
     LLM-->>Ctrl: evaluationPayloadJSON
     
-    Note over Ctrl,Eval: Creator: El controlador ordena la creación
-    Ctrl->>Eval: create(evaluationPayloadJSON)
-    activate Eval
+    Note over Ctrl,Eval: Registra la evaluación táctica y los errores detectados por la IA
+    Ctrl->>Eval: registerEvaluation(evaluationPayloadJSON)
     
-    Note over Eval,Eval: Experto en Información: El análisis calcula la cinemática
-    Eval->>Eval: calculateKinematics()
-    Eval-->>Ctrl: analisisInstance
-    deactivate Eval
-    
-    Note over Ctrl,Ruta: Experto en Información para la pedagogía
+    Note over Ctrl,Ruta: Actualiza la ruta de aprendizaje adaptativa ante errores recurrentes
     Ctrl->>Ruta: updateRouting(analisisInstance)
     
-    Note over Ctrl,UI: Separación Modelo-Vista (Retorna datos, no comandos de UI)
+    Note over Ctrl,UI: Separación Modelo-Vista (Retorna objeto de negocio)
     Ctrl-->>UI: analisisInstance
 ```
 
@@ -878,7 +883,7 @@ La asignación de responsabilidades de diseño se justifica a través de la apli
 | **Experto en Información** | La clase `AnalisisBiomecanico` calcula los ángulos articulares, velocidades y desviaciones técnicas, encapsulando las coordenadas espaciales y la lógica de negocio cinemática. | **Alta Cohesión y Acoplamiento Débil:** Evita sobrecargar el controlador con lógica física matemática, manteniendo el dominio auto-contenido. |
 | **Creador** | La clase `SesionEntrenamientoController` instancia los objetos `AnalisisBiomecanico` y `ErrorBiomecanico` tras la recepción y parseo del payload JSON de evaluación. | **Trazabilidad:** Asigna la creación al objeto que registra y almacena directamente los reportes en el historial local. |
 | **Bajo Acoplamiento** | Las APIs complejas de estimación visual e inferencia RAG se aíslan mediante adaptadores (`MediaPipePoseAdapter` y `GeminiServiceAdapter`) implementando interfaces abstractas. | **Variaciones Protegidas:** La migración de MediaPipe a TensorFlow.js o de Gemini a OpenAI se realiza cambiando los adaptadores, sin alterar el código de dominio. |
-| **Polimorfismo** | Uso de las interfaces abstractas `IPoseEstimator`, `IVectorStore` y `ILLMProvider` para definir los contratos técnicos del sistema. | **Flexibilidad e Intercambiabilidad:** Las implementaciones concretas (MediaPipe, Supabase, Gemini) se pueden intercambiar sin reescribir la lógica de dominio. |
+| **Polimorfismo** | Uso de las interfaces abstractas `IPoseEstimator`, `IVectorStore` y `ILLMProvider` para definir los contratos técnicos del sistema. | **Flexibilidad e Intercambiabilidad:** Las implementaciones concretas de estimación local (MediaPipe), base vectorial local (IndexedDB) e inferencia (Gemini) se pueden intercambiar sin alterar el dominio. |
 | **Fabricación Pura** | La clase `RetrievalAugmentedController` gestiona la consulta y ensamblado de embeddings sin corresponder a ningún concepto del tatami físico. | **Alta Cohesión:** Evita contaminar la entidad pura `Tecnica` con lógica técnica de base de datos vectorial o tokenización RAG. |
 
 ---
@@ -950,8 +955,8 @@ classDiagram
     class MediaPipePoseAdapter {
         +extract3DLandmarks(videoBlob: Blob): Promise~Landmark3D[]~
     }
-    class SupabaseVectorAdapter {
-        -supabaseClient: any
+    class LocalVectorAdapter {
+        -db: any
         +saveEmbeddings(chunks: Chunk[], metadata: Metadata): Promise~void~
         +similarityQuery(queryVector: float[], topK: int): Promise~Chunk[]~
     }
@@ -961,7 +966,7 @@ classDiagram
     }
 
     IPoseEstimator <|.. MediaPipePoseAdapter
-    IVectorStore <|.. SupabaseVectorAdapter
+    IVectorStore <|.. LocalVectorAdapter
     ILLMProvider <|.. GeminiServiceAdapter
 
     class RetrievalAugmentedController {
@@ -1046,28 +1051,30 @@ graph TD
             UI["Capa Presentación (React/TS)"]
             Ctrl["SesionEntrenamientoController"]
             IndexedDB["Almacenamiento Local (IndexedDB)"]
+            Transformers["Transformers.js (Embeddings Local)"]
+            VectorStore["Vector DB Local (IndexedDB Vector-Store)"]
         end
         MediaPipe["MediaPipe Pose Engine (Local Vision)"]
         
         Browser --- PWA
         Ctrl --- MediaPipe
+        Ctrl --- Transformers
+        Ctrl --- VectorStore
     end
 
-    subgraph ServidorCloud ["Servicios en la Nube (Serverless)"]
+    subgraph ServidorCloud ["Servicio LLM Cloud"]
         direction TB
-        Supabase["Supabase Vector DB (RAG index)"]
         Gemini["Google Gemini API (LLM Engine)"]
     end
 
     Ctrl -- "HTTPS/REST: JSON Payload (Metrics + Context)" --> Gemini
-    Ctrl -- "HTTPS/REST: Similarity Queries" --> Supabase
     
     %% Notes and constraints
     style Cliente fill:#f5f5f7,stroke:#333,stroke-width:2px;
     style ServidorCloud fill:#e8f4fd,stroke:#0277bd,stroke-width:2px;
     
     classDef note fill:#fff9c4,stroke:#fbc02d,stroke-width:1px;
-    Note["NOTA: El video original NUNCA sale del Cliente. Solo viajan métricas cinemáticas y prompts."]:::note
+    Note["NOTA: El video y la búsqueda vectorial (RAG) ocurren 100% en local. Solo viaja el prompt y resumen de métricas."]:::note
     Cliente -.-> Note
 ```
 
@@ -1107,7 +1114,7 @@ Las interfaces principales del sistema son:
 **Figura 16**
 *Pantalla de Carga y Procesamiento de Video*
 
-- **Pantalla de Reporte Táctico (EvaluacionTactica):** Interfaz central que renderiza el objeto EvaluacionTactica. Se divide en bloques modulares que muestran: la postura detectada, una lista de errores con niveles de severidad codificados por color, recomendaciones de mejora y enlaces directos en formato de botones hacia las páginas del manual y material de YouTube.
+- **Pantalla de Reporte Táctico (AnalisisBiomecanico):** Interfaz central que renderiza el objeto AnalisisBiomecanico. Se divide en bloques modulares que muestran: la postura detectada, una lista de errores con niveles de severidad codificados por color, recomendaciones de mejora y enlaces directos en formato de botones hacia las páginas del manual y material de YouTube.
 <a id="figura-17"></a>
 **Figura 17**
 *Pantalla de Reporte Táctico*
@@ -1141,9 +1148,9 @@ La selección del stack tecnológico para OpenBJJ se alinea con las restriccione
 ## **6.3 Correspondencia de Paquetes y Estructura de Directorios**
 Según Larman, la organización del código fuente forma parte del Modelo de Implementación y debe reflejar fielmente los paquetes lógicos definidos en la arquitectura. Para OpenBJJ, la estructura de directorios en el repositorio de código se organizó mapeando directamente las capas arquitectónicas:
 /src/components: Contiene las clases frontera (<<boundary>>) correspondientes a la Capa de Presentación (ej. VideoUploader, tarjetas de resultados y botones).
-/src/controllers: Alberga los Controladores de Caso de Uso (<<controller>>), pertenecientes a la Capa de Dominio (ej. VideoAnalysisController.ts).
-/src/services: Implementa la Capa de Servicios Técnicos y utilidades, alojando los adaptadores (geminiService.ts) y servicios de almacenamiento (historyService.ts).
-/src/models/types.ts: Define las entidades puras del dominio (EvaluacionTactica, ErrorTecnico, ReferenciaManual).
+/src/controllers: Alberga los Controladores de Caso de Uso (<<controller>>), pertenecientes a la Capa de Dominio (ej. SesionEntrenamientoController.ts).
+/src/services: Implementa la Capa de Servicios Técnicos y utilidades, alojando los adaptadores (geminiService.ts) y adaptadores de almacenamiento (localPersistenceAdapter.ts).
+/src/models/types.ts: Define las entidades puras del dominio (AnalisisBiomecanico, ErrorBiomecanico, ReferenciaManual).
 App.tsx: Funciona como el orquestador principal de la aplicación.
 ## **6.4 Materialización del Diseño Orientado a Objetos**
 La traducción de los artefactos UML a código TypeScript se realizó respetando los patrones GRASP previamente justificados, garantizando que el salto de representación entre el diseño y el código sea mínimo.
@@ -1153,25 +1160,32 @@ La traducción de los artefactos UML a código TypeScript se realizó respetando
 
 | Clase UML (Diseño) | Implementación en TypeScript | Responsabilidad (Patrón GRASP / GoF) |
 | :--- | :--- | :--- |
-| VideoAnalysisController | VideoAnalysisController.ts | Controlador: Orquesta los eventos de la UI, gestiona el estado de carga y coordina los servicios de dominio y técnicos. |
-| GeminiService | geminiService.ts | Adaptador (GoF): Aísla la API externa de Google, configurando parámetros y procesando la comunicación HTTP. |
-| HistoryService | historyService.ts | Fabricación Pura: Abstrae la complejidad de la API IndexedDB para la persistencia local de evaluaciones. |
-| EvaluacionTactica | EvaluacionTactica.ts (Interface/Class) | Creador / Experto: Define la estructura estricta de datos e instancia el objeto a partir de la respuesta JSON. |
+| SesionEntrenamientoController | SesionEntrenamientoController.ts | Controlador: Orquesta los eventos de la UI, gestiona el estado de carga y coordina los servicios de dominio y adaptadores. |
+| GeminiServiceAdapter | geminiService.ts | Adaptador (GoF): Aísla la API externa de Google, configurando parámetros y procesando la inferencia multimodal. |
+| LocalPersistenceAdapter | localPersistenceAdapter.ts | Fabricación Pura: Abstrae la complejidad de la API IndexedDB para la persistencia local del historial de análisis. |
+| AnalisisBiomecanico | AnalisisBiomecanico.ts (Interface/Class) | Creador / Experto: Define la estructura estricta de datos e instancia el objeto a partir de la respuesta JSON de inferencia. |
 | PromptBuilder | promptBuilder.ts | Experto en Información: Centraliza y ensambla las reglas técnicas del Jiu-Jitsu para el modelo de lenguaje. |
 
 ## **6.5 Implementación del Flujo Principal (CU01)**
 El comportamiento dinámico modelado en el diagrama de secuencia se codificó en el método principal del controlador, ejecutando secuencialmente las siguientes operaciones:
-El usuario invoca el método analyzeVideo() pasando el blob del video y la posición táctica.
-El controlador invoca la API nativa de Canvas para extraer los fotogramas clave a formato Base64.
-Se invoca a PromptBuilder para construir el contexto técnico (grounding) basado en el manual.
-Se ejecuta la promesa asíncrona geminiService.infer(), enviando los fotogramas y el texto a la IA.
-El controlador recibe el JSON, lo limpia de formatos residuales, y utiliza el patrón Creador para instanciar una EvaluacionTactica.
-Finalmente, se invoca historyService.saveAnalysisToHistory() para guardar el objeto en la memoria local y se actualiza el estado de la interfaz de usuario.
+1. El usuario invoca el método analyzeVideo() pasando el blob del video y la posición táctica.
+2. El controlador invoca al motor local `MediaPipePoseAdapter` para la extracción de landmarks 3D.
+3. Se invoca a `AnalisisBiomecanico.calculateKinematics(landmarks, perfil)` para computar las métricas de física articular de manera local (Experto).
+4. Se invoca a PromptBuilder para construir el contexto técnico (grounding RAG) basado en las fuentes locales.
+5. Se ejecuta la promesa asíncrona geminiService.infer(), enviando las métricas reducidas y el prompt estructurado a la IA.
+6. El controlador recibe el JSON, lo limpia de formatos residuales, y utiliza el patrón Creador para instanciar una AnalisisBiomecanico.
+7. Finalmente, se invoca localPersistenceAdapter.saveAnalysisToHistory() para guardar el objeto en la memoria local y se actualiza el estado de la interfaz de usuario.
+
+### **6.5.1 Ingesta y Extracción de YouTube Client-Side**
+Para cumplir con la restricción de arquitectura 100% cliente (client-side), la ingesta de fuentes de video de YouTube (CU02) se implementa mediante dos vías técnicas alternativas para evitar depender de un backend dedicado:
+- **Subida de Transcripción Manual:** El Instructor puede subir manualmente el archivo de subtítulos en formato `.txt` o `.srt` junto con la URL del video.
+- **Proxy Transcript API de Terceros:** El cliente realiza peticiones HTTPS directas a una API proxy pública (e.g., YouTube Transcript API expuesta a través de un servicio CORS-Anywhere verificado) para obtener la transcripción en formato JSON directamente en el navegador, segmentando y tokenizando el contenido con Transformers.js antes de persistirlo en el vector-store local de IndexedDB.
+
 ## **6.6 Orden de Implementación**
 Una práctica fundamental de la ingeniería de software es implementar y probar las clases desde la menos acoplada hasta la más acoplada. El código de OpenBJJ se desarrolló siguiendo este orden estricto:
-Entidades de Dominio (EvaluacionTactica, ErrorTecnico, ReferenciaManual): Al ser clases de datos puros sin dependencias externas, se programaron primero.
-Servicios Técnicos y Utilidades (PromptBuilder, GeminiService, HistoryService): Se implementaron los adaptadores y constructores de forma aislada, permitiendo verificar la conexión a la API de Gemini y a IndexedDB mediante pruebas unitarias.
-Controladores (VideoAnalysisController): Una vez que las entidades y los servicios estaban estables, se implementó el controlador que los acopla y coordina el flujo lógico del caso de uso.
+Entidades de Dominio (AnalisisBiomecanico, ErrorBiomecanico, ReferenciaManual): Al ser clases de datos puros sin dependencias externas, se programaron primero.
+Servicios Técnicos y Utilidades (PromptBuilder, GeminiServiceAdapter, LocalPersistenceAdapter): Se implementaron los adaptadores y constructores de forma aislada, permitiendo verificar la conexión a la API de Gemini y a IndexedDB mediante pruebas unitarias.
+Controladores (SesionEntrenamientoController): Una vez que las entidades y los servicios estaban estables, se implementó el controlador que los acopla y coordina el flujo lógico del caso de uso.
 Capa de Presentación (VideoUploader, Componentes React): Finalmente, se desarrolló la interfaz gráfica, la cual simplemente invoca los métodos públicos expuestos por el controlador.
 
 # **CAPÍTULO VII: SEGURIDAD**
@@ -1188,7 +1202,7 @@ Cifrado en Tránsito: Para evitar la intercepción de los datos sensibles (las i
 ## **7.3 Integridad**
 La integridad garantiza que la información se mantenga exacta y no sea alterada de manera indebida durante su procesamiento o almacenamiento. OpenBJJ asegura la integridad técnica a través de:
 Transacciones Atómicas Locales: Todas las operaciones de escritura y eliminación de reportes tácticos en IndexedDB se ejecutan en modo readwrite con manejo explícito de control transaccional (eventos abort y complete). Esto previene la corrupción del historial en caso de que la aplicación se cierre abruptamente o el dispositivo se quede sin batería durante el guardado.
-Validación de Esquema JSON (JSON Schema Validation): Dado que la IA generativa puede ser propensa a entregar estructuras impredecibles o "alucinaciones", OpenBJJ implementa un estricto control de integridad en la capa del Dominio. La respuesta de la API de Gemini es interceptada y validada contra un esquema JSON predefinido antes de permitir la instanciación de la clase EvaluacionTactica. Si el payload está malformado, el sistema descarta los datos y evita la persistencia de información corrupta.
+Validación de Esquema JSON (JSON Schema Validation): Dado que la IA generativa puede ser propensa a entregar estructuras impredecibles o "alucinaciones", OpenBJJ implementa un estricto control de integridad en la capa del Dominio. La respuesta de la API de Gemini es interceptada y validada contra un esquema JSON predefinido antes de permitir la instanciación de la clase AnalisisBiomecanico. Si el payload está malformado, el sistema descarta los datos y evita la persistencia de información corrupta.
 Inmutabilidad del Historial: Una vez que un reporte táctico es procesado y guardado en IndexedDB, sus atributos (fecha, errores detectados y recomendaciones) se vuelven inmutables para el usuario, garantizando que el historial refleje fielmente el diagnóstico técnico emitido en ese momento exacto.
 ## **7.4 Disponibilidad**
 La disponibilidad asegura que el sistema y los datos estén operativos y accesibles para los usuarios cuando se necesiten. Para la aplicación OpenBJJ, diseñada para ser utilizada en el entorno dinámico de un tatami de entrenamiento, la disponibilidad se soporta en:
@@ -1322,7 +1336,7 @@ El desarrollo y diseño de la aplicación web progresiva (PWA) OpenBJJ ha culmin
 Las principales conclusiones derivadas del proyecto son:
 1. **Éxito de la Arquitectura Híbrida y Reducción de Costes:** La elección de realizar la estimación de landmarks biomecánicos corporales en 3D en el lado del cliente (navegador) a través de MediaPipe y WebGL ha resultado altamente efectiva. Al transferir el procesamiento de visión por computadora pesado al procesador del cliente, se redujo a cero la necesidad de servidores basados en GPU. El costo de operación (OPEX) se restringe a consultas de texto a embeddings y API de lenguaje de bajo costo, logrando un margen de viabilidad económica excelente para su despliegue comercial (SaaS). Asimismo, esto blinda la privacidad del practicante al no transmitir sus videos brutos por la red.
 2. **Evolución del RAG y Grounding Dinámico:** La arquitectura RAG vectorial (Retrieval-Augmented Generation) superó la rigidez de las soluciones tradicionales basadas en videotecas estáticas o reglas técnicas hardcoded. La capacidad de indexar semánticamente manuales en PDF y transcripciones de YouTube bajo demanda e inyectar checkpoints en prompts LLM en tiempo de ejecución, dota a la plataforma de una flexibilidad única para adaptarse a las ontologías particulares de cualquier academia o nivel de graduación (de cinturón blanco a negro).
-3. **Rigurosidad Metodológica (UP y GRASP):** La aplicación del Proceso Unificado y el diseño basado en los principios de asignación de responsabilidades GRASP y Polimorfismo de Craig Larman aseguraron un sistema con alta cohesión y bajo acoplamiento. El desacoplamiento de las implementaciones tecnológicas concretas (MediaPipe, Supabase Vector y Gemini) mediante las interfaces abstractas `IPoseEstimator`, `IVectorStore` y `ILLMProvider` garantiza que la evolución del sistema ante futuros cambios en librerías de IA se realice sin alterar las reglas del negocio ni la lógica de dominio.
+3. **Rigurosidad Metodológica (UP y GRASP):** La aplicación del Proceso Unificado y el diseño basado en los principios de asignación de responsabilidades GRASP y Polimorfismo de Craig Larman aseguraron un sistema con alta cohesión y bajo acoplamiento. El desacoplamiento de las implementaciones tecnológicas concretas (MediaPipe, LocalVectorAdapter e inferencia de Gemini) mediante las interfaces abstractas `IPoseEstimator`, `IVectorStore` y `ILLMProvider` garantiza que la evolución del sistema ante futuros cambios en librerías de IA se realice sin alterar las reglas del negocio ni la lógica de dominio.
 4. **Pedagogía Adaptativa Basada en Desviaciones:** La introducción de la clase conceptual `ErrorBiomecanico` (o *DesviacionTecnica*) y la calibración del `PerfilBiomecanico` permitieron al sistema adaptar dinámicamente las rutas instruccionales según el biotipo y la recurrencia histórica de fallos del alumno, respondiendo de manera eficaz al practicante que presenta problemas persistentes de aprendizaje.
 
 ## **9.2 Recomendaciones**
