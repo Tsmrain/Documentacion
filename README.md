@@ -115,9 +115,9 @@ El sistema realiza el seguimiento del progreso histórico del alumno y altera la
     - [4.3.3 Requisitos No Funcionales (RNF)](#433-requisitos-no-funcionales-rnf)
 - [**Capítulo V: Análisis y Diseño Orientado a Objetos**](#capítulo-v-análisis-y-diseño-orientado-a-objetos)
   - [5.1 Modelo de Dominio Conceptual](#51-modelo-de-dominio-conceptual)
-  - [5.2 Especificación de Casos de Uso Principales](#52-especificación-de-casos-de-uso-principales)
-    - [Caso de Uso CU01: Realizar Análisis Biomecánico y Táctico](#caso-de-uso-cu01-realizar-análisis-biomecánico-y-táctico)
-    - [Caso de Uso CU02: Ingestar Nueva Fuente de Conocimiento](#caso-de-uso-cu02-ingestar-nueva-fuente-de-conocimiento)
+  - [5.2 Especificación de Casos de Uso Principales (Formato Larman)](#52-especificación-de-casos-de-uso-principales-formato-larman)
+    - [Caso de Uso CU01: Realizar Análisis Biomecánico y Táctico Adaptativo](#caso-de-uso-cu01-realizar-análisis-biomecánico-y-táctico-adaptativo)
+    - [Caso de Uso CU02: Ingestar Nueva Fuente de Conocimiento (RAG)](#caso-de-uso-cu02-ingestar-nueva-fuente-de-conocimiento-rag)
     - [Caso de Uso CU03: Consultar Progreso y Recibir Tutoría Adaptativa](#caso-de-uso-cu03-consultar-progreso-y-recibir-tutoría-adaptativa)
     - [Caso de Uso CU04: Gestionar Perfil Biomecánico del Usuario](#caso-de-uso-cu04-gestionar-perfil-biomecánico-del-usuario)
     - [Caso de Uso CU05: Validar Fuente de Conocimiento](#caso-de-uso-cu05-validar-fuente-de-conocimiento)
@@ -441,85 +441,226 @@ classDiagram
     ErrorBiomecanico "*" --> "1" RecomendacionAdaptativa : mitiga
 ```
 
-## **5.2 Especificación de Casos de Uso Principales**
+## **5.2 Especificación de Casos de Uso Principales (Formato Larman)**
 
-### **Caso de Uso CU01: Realizar Análisis Biomecánico y Táctico**
-- **Actor Principal:** Practicante
-- **Personal Involucrado e Intereses:**
-  - **Practicante:** Desea recibir retroalimentación técnica y biomecánica en 3D objetiva e instantánea sobre su ejecución técnica, identificando fallas de movimiento y recibiendo lecturas angulares ajustadas a su perfil antropométrico.
-- **Precondiciones:**
-  - El practicante ha seleccionado una técnica del catálogo y cargado un video monocular de su ejecución.
-- **Garantías de Éxito (Postcondiciones):**
-  - El sistema ha extraído los landmarks 3D localmente y calculado los ángulos articulares y cinemáticos, contrastándolos con la ontología del RAG adaptada por el **PerfilBiomecanico** del usuario.
-- **Escenario Principal de Éxito (Flujo Básico):**
-  1. El Practicante selecciona la técnica a evaluar y sube el video de sparring/drilling.
-  2. El Sistema invoca localmente el motor de MediaPipe en el navegador.
-  3. El Sistema extrae las coordenadas 3D de los landmarks corporales en los fotogramas clave.
-  4. El Sistema calcula los ángulos articulares y vectores cinemáticos por fotograma.
-  5. El Sistema recupera el **PerfilBiomecanico** del practicante para ajustar los umbrales de tolerancia de la técnica.
-  6. El Sistema consulta la base de datos vectorial mediante RAG para recuperar los fragmentos de la técnica validada.
-  7. El Sistema inyecta las métricas y los textos recuperados en el prompt estructurado en inglés.
-  8. El Sistema procesa la inferencia en la API de Gemini para evaluar las desviaciones.
-  9. El Sistema genera las instancias de **ErrorBiomecanico** si los ángulos se desvían de los umbrales adaptados del biotipo.
-  10. El Sistema presenta la línea de tiempo biomecánica con las lecturas y recomendaciones.
+A continuación se detallan los casos de uso principales utilizando el formato "completamente vestido" (fully dressed) propuesto por Craig Larman, asegurando la trazabilidad de requisitos, actores y flujos alternativos.
+
+#### Caso de Uso CU01: Realizar Análisis Biomecánico y Táctico Adaptativo
+
+**Actor Principal:** Practicante (Alumno de BJJ).
+**Intereses de las Partes Involucradas:**
+*   **Practicante:** Desea recibir retroalimentación objetiva, instantánea y adaptada a su nivel (Blanco a Negro) sobre su ejecución técnica, identificando errores biomecánicos específicos (ángulos, velocidad) sin depender exclusivamente del instructor.
+*   **Instructor:** Desea que el sistema sirva como herramienta de apoyo para corregir errores recurrentes fuera del horario de clase, optimizando el tiempo presencial.
+*   **Sistema de IA (Gemini):** Desea recibir entradas estructuradas (landmarks + contexto RAG) para minimizar alucinaciones y costos de tokens.
+
+**Precondiciones:**
+1.  El practicante ha iniciado sesión o está usando la aplicación localmente.
+2.  El dispositivo cuenta con soporte WebGL activo para MediaPipe.
+3.  Existe al menos una fuente de conocimiento (Manual/Video) indexada en la Base de Datos Vectorial asociada a la técnica seleccionada.
+
+**Garantías de Éxito (Postcondiciones):**
+1.  Se ha extraído y procesado la secuencia de landmarks 3D del video localmente.
+2.  Se han calculado las métricas cinemáticas (ángulos, velocidades) por fotograma.
+3.  Se ha recuperado el contexto técnico relevante mediante RAG.
+4.  La IA ha generado un reporte estructurado comparando la ejecución real vs. el patrón ideal.
+5.  Se ha registrado el análisis en el historial del usuario (`AnalisisBiomecanico`).
+6.  Si se detectaron errores recurrentes, se ha actualizado la `RutaAprendizaje` con una recomendación adaptativa.
+
+**Escenario Principal de Éxito (Flujo Básico):**
+1.  El Practicante selecciona la técnica a evaluar (ej. "Guardia Cerrada") y el nivel de cinturón.
+2.  El Practicante carga o graba un video de su ejecución (máx. 45 seg).
+3.  El Sistema valida el formato y duración del video.
+4.  El Sistema invoca al motor local **MediaPipePoseAdapter** para extraer los landmarks 3D $(x,y,z)$ de cada fotograma clave.
+5.  El **SesionEntrenamientoController** calcula las métricas cinemáticas (ángulos articulares, velocidades) basándose en los landmarks.
+6.  El Sistema consulta al **RetrievalAugmentedController** pasando el ID de la técnica.
+7.  El **RetrievalAugmentedController** busca en la **VectorDBAdapter** los fragmentos de manuales/videos relevantes (Grounding).
+8.  El Sistema ensambla un prompt estructurado que incluye: métricas calculadas + contexto RAG + instrucción de evaluación.
+9.  El Sistema envía el prompt a la **GeminiServiceAdapter**.
+10. La IA retorna un JSON con la evaluación táctica, detección de errores y puntuación biomecánica.
+11. El Sistema parsea la respuesta, identifica instancias de `ErrorBiomecanico` si las desviaciones superan el umbral (ej. >15°).
+12. El Sistema verifica el historial del usuario. Si el error es recurrente, el motor adaptativo selecciona una estrategia pedagógica alternativa (ej. drill de movilidad en lugar de video técnico).
+13. El Sistema despliega la línea de tiempo interactiva con el esqueleto 3D superpuesto, resaltando los errores y mostrando la recomendación adaptativa.
+14. El Sistema guarda el registro en IndexedDB.
+
+**Extensiones (Flujos Alternativos):**
+*   **3a. Video inválido o duración excesiva:**
+    1.  El Sistema detecta que el video excede los 45 segundos o tiene formato no soportado.
+    2.  El Sistema muestra alerta: "Video no válido. Máximo 45 segundos."
+    3.  El Sistema aborta el proceso y retorna al paso 1.
+*   **4a. Fallo en la estimación de Pose (Oclusión severa):**
+    1.  MediaPipe reporta confianza baja (<0.5) en más del 30% de los landmarks.
+    2.  El Sistema alerta: "No se pudo rastrear el esqueleto correctamente. Verifique iluminación y ropa."
+    3.  El Sistema aborta el análisis biomecánico pero permite guardar el video como referencia manual.
+*   **7a. No se encuentra contexto RAG:**
+    1.  La Base de Datos Vectorial no retorna fragmentos relevantes para la técnica seleccionada.
+    2.  El Sistema utiliza un prompt de "Fallback" basado en principios universales de BJJ (base, alineación, palanca).
+    3.  Continúa en el paso 8.
+*   **9a. Fallo de conexión con API de IA:**
+    1.  La petición a Gemini falla por timeout o error de red.
+    2.  El Sistema reintenta automáticamente hasta 3 veces.
+    3.  Si falla nuevamente, muestra: "Error de servicio. Intente más tarde." y guarda los datos crudos (landmarks) para procesamiento diferido si es posible.
+
+**Requisitos Especiales:**
+*   Latencia total del análisis < 5 segundos.
+*   Privacidad: El video original NUNCA sale del dispositivo. Solo se transmiten coordenadas numéricas y texto.
 
 ---
 
-### **Caso de Uso CU02: Ingestar Nueva Fuente de Conocimiento**
-- **Actor Principal:** Instructor
-- **Personal Involucrado e Intereses:**
-  - **Instructor:** Desea alimentar la base de conocimiento cargando manuales en PDF o videos de YouTube para grounding de la IA.
-- **Precondiciones:**
-  - El Instructor ha iniciado sesión con credenciales validadas.
-- **Garantías de Éxito (Postcondiciones):**
-  - El sistema registra la fuente de conocimiento en estado "Pendiente de Validación" hasta su aprobación definitiva.
-- **Escenario Principal de Éxito (Flujo Básico):**
-  1. El Instructor sube un archivo PDF del manual o introduce el URL de un video de YouTube.
-  2. El Sistema segmenta el contenido en fragmentos lógicos.
-  3. El Sistema genera los vectores semánticos (embeddings) y los guarda transatoriamente con estado "Pendiente".
+#### Caso de Uso CU02: Ingestar Nueva Fuente de Conocimiento (RAG)
+
+**Actor Principal:** Instructor (Usuario Autorizado).
+**Intereses de las Partes Involucradas:**
+*   **Instructor:** Desea expandir la base de conocimientos del sistema con sus propios manuales, reglamentos o videos explicativos para personalizar la enseñanza.
+*   **Sistema:** Debe mantener la integridad semántica de los embeddings y evitar duplicados.
+
+**Precondiciones:**
+1.  El Instructor tiene permisos de "Editor" o "Admin".
+2.  El archivo PDF es legible (texto seleccionable) o el video de YouTube tiene subtítulos disponibles.
+
+**Garantías de Éxito (Postcondiciones):**
+1.  El contenido textual ha sido extraído y segmentado en chunks.
+2.  Se han generado vectores (embeddings) para cada chunk.
+3.  Los vectores han sido almacenados e indexados en la Base de Datos Vectorial.
+4.  La fuente queda marcada como "Activa" para consultas RAG.
+
+**Escenario Principal de Éxito (Flujo Básico):**
+1.  El Instructor accede al módulo de "Gestión de Conocimiento".
+2.  El Instructor selecciona "Agregar Fuente" y elige tipo (PDF o YouTube URL).
+3.  El Instructor sube el archivo PDF o pega la URL del video.
+4.  El Sistema valida el archivo/enlace.
+5.  El Sistema extrae el texto completo (OCR si es necesario para PDFs escaneados, o API de subtítulos para YouTube).
+6.  El Sistema segmenta el texto en fragmentos lógicos (chunks) de tamaño óptimo (ej. 500 tokens).
+7.  El Sistema invoca al servicio de Embeddings para convertir cada chunk en un vector multidimensional.
+8.  El Sistema almacena los vectores en la **VectorDBAdapter** asociados a metadatos (Técnica, Nivel, Autor).
+9.  El Sistema confirma: "Fuente indexada exitosamente. Disponible para análisis."
+
+**Extensiones (Flujos Alternativos):**
+*   **4a. Archivo corrupto o URL inválida:**
+    1.  El Sistema no puede leer el contenido.
+    2.  Muestra error específico: "PDF dañado" o "Video privado/no existente".
+    3.  Retorna al paso 2.
+*   **6a. Texto insuficiente para generar embeddings:**
+    1.  El documento tiene menos de 50 palabras.
+    2.  El Sistema alerta: "Contenido demasiado breve para ser útil técnicamente."
+    3.  Cancela la indexación.
 
 ---
 
-### **Caso de Uso CU03: Consultar Progreso y Recibir Tutoría Adaptativa**
-- **Actor Principal:** Practicante
-- **Escenario Principal de Éxito (Flujo Básico):**
-  1. El Practicante accede a su panel de progreso individual.
-  2. El Sistema recupera el historial de análisis y errores locales.
-  3. El Sistema analiza la persistencia del mismo **ErrorBiomecanico** (ej. codo abierto en la Montada) y formula una **RecomendacionAdaptativa** (drill físico o ejercicio auxiliar).
+#### Caso de Uso CU03: Consultar Progreso y Recibir Tutoría Adaptativa
+
+**Actor Principal:** Practicante.
+**Intereses de las Partes Involucradas:**
+*   **Practicante:** Desea ver su evolución temporal y entender por qué recibe ciertas recomendaciones.
+*   **Sistema:** Debe identificar patrones de error recurrentes para activar la lógica adaptativa.
+
+**Precondiciones:**
+1.  El Practicante tiene al menos 3 análisis históricos guardados.
+
+**Garantías de Éxito (Postcondiciones):**
+1.  Se visualiza el dashboard de progreso con métricas agregadas.
+2.  Se identifican los errores más frecuentes (`ErrorBiomecanico.recurrente == true`).
+3.  Se presenta una ruta de aprendizaje personalizada.
+
+**Escenario Principal de Éxito (Flujo Básico):**
+1.  El Practicante navega a la pestaña "Mi Progreso".
+2.  El Sistema recupera el historial de `AnalisisBiomecanico` desde IndexedDB.
+3.  El Sistema agrupa los errores por tipo técnico (ej. "Codo abierto", "Cadera baja").
+4.  El Sistema calcula la tasa de recurrencia de cada error en los últimos 30 días.
+5.  Si un error tiene recurrencia > 70%, el Sistema marca la técnica como "Estancada".
+6.  El Motor Adaptativo consulta la base de estrategias pedagógicas.
+7.  El Sistema genera una `RecomendacionAdaptativa`:
+    *   *Si es error biomecánico puro:* Sugiere drill de aislamiento muscular.
+    *   *Si es error conceptual:* Sugiere video explicativo lento o lectura de manual.
+8.  El Sistema despliega el gráfico de evolución y la recomendación activa.
+
+**Extensiones (Flujos Alternativos):**
+*   **2a. Historial vacío o insuficiente:**
+    1.  El Sistema detecta < 3 análisis.
+    2.  Muestra mensaje motivacional: "¡Sigue entrenando! Necesitamos más datos para personalizar tu ruta."
+    3.  Oculta la sección de recomendaciones adaptativas.
 
 ---
 
-### **Caso de Uso CU04: Gestionar Perfil Biomecánico del Usuario**
-- **Actor Principal:** Practicante
-- **Personal Involucrado e Intereses:**
-  - **Practicante:** Desea registrar sus datos antropométricos para evitar que el sistema genere falsas alarmas de error por poseer extremidades largas o limitaciones biológicas de flexibilidad.
-- **Precondiciones:**
-  - El Practicante tiene una cuenta en el sistema.
-- **Garantías de Éxito (Postcondiciones):**
-  - El sistema crea o actualiza la instancia de **PerfilBiomecanico** y recalcula los rangos límites angulares del catálogo de técnicas del usuario.
-- **Escenario Principal de Éxito (Flujo Básico):**
-  1. El Practicante accede a la configuración de perfil cinemático.
-  2. El Practicante introduce su altura, peso y longitud de brazos/piernas.
-  3. El Practicante completa un test interactivo en cámara de rangos de movilidad articular (flexión/extensión básica).
-  4. El Sistema guarda estos datos de movilidad en el **PerfilBiomecanico** del dispositivo.
-  5. El Sistema confirma la calibración cinemática del biotipo.
+#### Caso de Uso CU04: Gestionar Perfil Biomecánico del Usuario
+
+**Actor Principal:** Practicante.
+**Intereses de las Partes Involucradas:**
+*   **Practicante:** Desea registrar y calibrar sus datos antropométricos (altura, peso, longitud de extremidades) y su rango de movilidad articular para que el sistema adapte los umbrales de evaluación cinemática a su biotipo único, evitando falsos positivos por rigidez o proporciones físicas inusuales.
+*   **Sistema:** Requiere parámetros físicos precisos para calibrar los algoritmos de detección de desviaciones y ajustar los umbrales de los checkpoints de las técnicas.
+
+**Precondiciones:**
+1.  El Practicante tiene una cuenta en el sistema o acceso local activo.
+
+**Garantías de Éxito (Postcondiciones):**
+1.  Se ha creado o actualizado el `PerfilBiomecanico` del usuario con sus medidas antropométricas.
+2.  Se han guardado los resultados del test de movilidad inicial.
+3.  Los umbrales angulares de las técnicas se recalculan y adaptan al perfil cinemático del usuario.
+
+**Escenario Principal de Éxito (Flujo Básico):**
+1.  El Practicante accede a la pestaña de "Perfil Biomecánico y Calibración".
+2.  El Practicante introduce sus datos antropométricos: altura, peso, longitud de brazos (envergadura) y longitud de piernas.
+3.  El Practicante inicia el "Test de Movilidad Articular Interactivo" guiado por la cámara del dispositivo.
+4.  El Sistema activa la cámara web y carga el modelo **MediaPipePoseAdapter** en segundo plano.
+5.  El Practicante realiza movimientos básicos de flexión y extensión (hombro, cadera, rodilla) siguiendo las instrucciones en pantalla.
+6.  El Sistema mide los ángulos articulares máximos y mínimos alcanzados por el usuario.
+7.  El Sistema guarda el `PerfilBiomecanico` resultante en IndexedDB.
+8.  El Sistema confirma al usuario la correcta calibración y ajuste de umbrales cinemáticos.
+
+**Extensiones (Flujos Alternativos):**
+*   **3a. El usuario omite el test de movilidad interactivo:**
+    1.  El Practicante puede optar por no usar la cámara y guardar únicamente los datos de altura/peso/longitud.
+    2.  El Sistema asigna valores de movilidad por defecto basados en promedios anatómicos estándar.
+    3.  Continúa en el paso 7.
+*   **5a. Iluminación o posicionamiento incorrecto durante el test:**
+    1.  El Sistema detecta baja visibilidad o imposibilidad de rastrear las articulaciones del practicante.
+    2.  El Sistema muestra una advertencia en pantalla indicando cómo mejorar el encuadre e iluminación.
+    3.  El Sistema ofrece reiniciar el test o cancelarlo.
+
+**Requisitos Especiales:**
+*   El test de calibración interactivo debe completarse en menos de 60 segundos.
+*   Privacidad: Las imágenes capturadas por la cámara durante el test se procesan estrictamente en la memoria del navegador y no se guardan ni transmiten.
 
 ---
 
-### **Caso de Uso CU05: Validar Fuente de Conocimiento**
-- **Actor Principal:** Instructor
-- **Personal Involucrado e Intereses:**
-  - **Instructor:** Desea revisar las fuentes e información ingresada por otros miembros o instructores antes de consolidarlas en el grounding del motor RAG, evitando el ingreso de material erróneo (Garantía de Calidad de Datos).
-- **Precondiciones:**
-  - El Instructor tiene rol de validador técnico en la plataforma.
-- **Garantías de Éxito (Postcondiciones):**
-  - La fuente de conocimiento aprobada cambia su estado a "Validado" y es indexada formalmente en la base vectorial activa para todos los alumnos.
-- **Escenario Principal de Éxito (Flujo Básico):**
-  1. El Instructor accede a la cola de moderación de fuentes técnicas.
-  2. El Sistema presenta la lista de recursos en estado "Pendiente de Validación".
-  3. El Instructor revisa el contenido original (PDF o video) y los checkpoints extraídos por la IA.
-  4. El Instructor aprueba la calidad técnica de la fuente.
-  5. El Sistema actualiza el estado del documento a "Validado" e indexa los embeddings vectoriales semánticos en el almacén principal.
+#### Caso de Uso CU05: Validar Fuente de Conocimiento
+
+**Actor Principal:** Instructor (Moderador/Validador Técnico).
+**Intereses de las Partes Involucradas:**
+*   **Instructor:** Desea verificar que los documentos y videos subidos por la comunidad sean precisos, seguros y pedagógicamente válidos antes de que estén accesibles para la base de conocimientos RAG general.
+*   **Practicantes (Alumnos):** Tienen interés en que el grounding de la IA se base exclusivamente en fuentes verificadas de alta calidad, evitando lesiones por recomendaciones erróneas o de técnicas peligrosas sin supervisión.
+*   **Sistema:** Requiere que la base vectorial mantenga un alto nivel de precisión en sus referencias semánticas, evitando ruidos o contradicciones pedagógicas.
+
+**Precondiciones:**
+1.  El Instructor ha iniciado sesión y cuenta con el rol de "Validador Técnico".
+2.  Existen fuentes de conocimiento (PDFs, transcripciones de YouTube) en estado "Pendiente de Validación" en la cola de revisión.
+
+**Garantías de Éxito (Postcondiciones):**
+1.  La fuente de conocimiento cambia su estado a "Validada" y se indexa formalmente en el almacén vectorial principal.
+2.  Si es rechazada, se elimina la fuente de forma permanente o se devuelve al creador con observaciones.
+
+**Escenario Principal de Éxito (Flujo Básico):**
+1.  El Instructor ingresa a la "Cola de Validación de Fuentes".
+2.  El Sistema presenta la lista de recursos y documentos técnicos en estado "Pendiente".
+3.  El Instructor selecciona una fuente de la cola para auditarla.
+4.  El Sistema presenta el contenido original, los metadatos asignados (Técnica, Cinturón) y el resumen semántico extraído por el sistema.
+5.  El Instructor evalúa la calidad y veracidad del material.
+6.  El Instructor presiona el botón "Aprobar y Publicar".
+7.  El Sistema actualiza el estado del documento a "Validado".
+8.  El Sistema indexa formalmente los embeddings de esta fuente en la base de datos vectorial principal del RAG.
+9.  El Sistema notifica al Instructor el éxito de la indexación y retira la fuente de la cola.
+
+**Extensiones (Flujos Alternativos):**
+*   **5a. El material contiene errores técnicos o es unsafe (inseguro):**
+    1.  El Instructor presiona "Rechazar Fuente".
+    2.  El Sistema solicita ingresar un motivo de rechazo (campo obligatorio).
+    3.  El Instructor introduce la justificación técnica.
+    4.  El Sistema marca la fuente como "Rechazada", elimina los fragmentos temporales del almacén y notifica al usuario que subió la fuente.
+*   **8a. Error de red al indexar en la Base de Datos Vectorial:**
+    1.  La conexión con el proveedor vectorial falla.
+    2.  El Sistema revierte el estado a "Pendiente" y muestra: "Fallo en indexación. Intente de nuevo."
+
+**Requisitos Especiales:**
+*   La interfaz debe permitir la previsualización rápida del documento PDF o video de YouTube sin salir de la cola de moderación.
 
 ## **5.3 Diagrama de Secuencia del Sistema (DSS)**
 
