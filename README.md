@@ -1,4 +1,4 @@
-# **APLICACIÓN WEB CON INTELIGENCIA ARTIFICIAL PARA ANALIZAR VIDEOS DE ENTRENAMIENTO DE ARTES MARCIALES EN BRAZILIAN JIU-JITSU PARA PRINCIPIANTES DE CINTURÓN BLANCO**
+# **SISTEMA ADAPTATIVO DE ANÁLISIS BIOMECÁNICO 3D Y TUTORÍA INTELIGENTE MULTI-NIVEL PARA BRAZILIAN JIU-JITSU MEDIANTE ARQUITECTURA HÍBRIDA CLIENTE-LIGERO Y RAG**
 
 <br>
 
@@ -29,6 +29,7 @@
 
 </div>
 
+<br>
 
 # **Agradecimientos**
 
@@ -37,42 +38,43 @@ A mi madre que gracias a su amor incondicional y su esfuerzo pude estudiar graci
 A mi abuela por alimentarse y tener siempre un plato de comida.
 A mis tíos por sus palabras y experiencias vividas para que aprenda.
 Al jiujitsu brasileno, por enseñarme a afrontar los miedos, seguir incluso cuando no se ve el avance, saber lidiar con la sensación de la derrota y sobre todo a no rendirme y aprender.
-un cinturon negro fue un cinturon blanco que no se rindio.
 
+*Un cinturón negro fue un cinturón blanco que no se rindió.*
 
-
-
-
+<br>
 
 # **Abstract**
 
-| TÍTULO | APLICACIÓN WEB CON INTELIGENCIA ARTIFICIAL PARA ANALIZAR VIDEOS DE ENTRENAMIENTO DE ARTES MARCIALES EN BRAZILIAN JIU-JITSU PARA PRINCIPIANTES DE CINTURÓN BLANCO |
+| TÍTULO | SISTEMA ADAPTATIVO DE ANÁLISIS BIOMECÁNICO 3D Y TUTORÍA INTELIGENTE MULTI-NIVEL PARA BRAZILIAN JIU-JITSU MEDIANTE ARQUITECTURA HÍBRIDA CLIENTE-LIGERO Y RAG |
 | :--- | :--- |
 | **AUTOR** | SANTIAGO BORDA ZAMBRANA |
 
 ### **Problemática**
-En el aprendizaje del Brazilian Jiu-Jitsu (BJJ), los practicantes principiantes enfrentan dificultades para evaluar su rendimiento técnico de manera objetiva. Actualmente, el progreso depende casi en su totalidad de la observación directa del instructor en tiempo real, lo que genera problemas críticos: falta de atención individualizada en clases numerosas, criterios de evaluación variables según el profesor, y una retroalimentación diferida o nula si el error no es detectado en el momento.
+En el aprendizaje y perfeccionamiento del Brazilian Jiu-Jitsu (BJJ), los practicantes carecen de sistemas objetivos que evalúen su ejecución técnica de manera continua y adaptada a su biotipo. Las plataformas actuales presentan rigidez semántica al no incorporar fuentes de conocimiento personalizadas de las academias, ni contemplan el historial de errores del alumno para adaptar la estrategia pedagógica. Asimismo, el análisis cinemático tradicional exige laboratorios caros o sensores inerciales físicos, inoperables en un tatami de sparring real.
 
 ### **Objetivo General**
-Desarrollar e implementar la aplicación web progresiva (PWA) "OpenBJJ" para analizar videos de entrenamiento usando la IA generativa de Gemini, con el fin de automatizar la retroalimentación táctica en las posiciones de Montada y Control Lateral. El sistema busca optimizar el proceso de autoevaluación reduciendo la dependencia del instructor, entregando respuestas estructuradas que incluyan la detección de errores, recomendaciones, y referencias directas al libro "Jiu-Jitsu University" junto con enlaces a videos de apoyo en YouTube.
+Desarrollar e implementar una plataforma web progresiva (PWA) inteligente que combine el análisis biomecánico 3D en el cliente y la recuperación aumentada por generación (RAG) para la tutoría pedagógica adaptativa del Jiu-Jitsu Brasileño, abarcando todos los niveles de graduación (desde cinturón blanco hasta negro) mediante la inyección dinámica de conocimiento literario y audiovisual.
 
 ### **Contenido**
-El presente trabajo de investigación se ha desarrollado bajo la metodología del Proceso Unificado (UP) que maneja IA y consta de los siguientes capítulos:
+El presente trabajo de investigación se ha desarrollado bajo la metodología del Proceso Unificado (UP) y consta de los siguientes capítulos estructurados de acuerdo con los requisitos funcionales de estimación de pose, RAG y perfilamiento cinemático de los usuarios:
 
 | CARRERA | Ingeniería de Sistemas |
 | :--- | :--- |
 | **GUÍA** | Jose Antonio Benavente Blacutt |
-| **DESCRIPTORES** | Inteligencia Artificial Generativa, Inferencia Multimodal, Arquitectura Cliente-Ligero, PWA, Brazilian Jiu-Jitsu, IndexedDB. |
+| **DESCRIPTORES** | Visión por Computadora 3D, Recuperación Aumentada por Generación (RAG), Modelos de Pose Monocular, Tutoría Adaptativa, GRASP, PWA. |
 | **EMAIL** | santiagobordazambrana@gmail.com |
 | **FECHA** | Santa Cruz de la Sierra, 2026 |
 
+<br>
+
 # **Resumen**
 
-En este documento se aborda la problemática que enfrentan los practicantes principiantes de Brazilian Jiu-Jitsu (BJJ) para evaluar su rendimiento técnico de manera objetiva y continua. Actualmente, la retroalimentación depende exclusivamente de la observación y experiencia del instructor, lo que genera evaluaciones subjetivas. Lo cual provoca que el alumno permanezca estancado en su progreso de aprendizaje por mucho tiempo.
-En respuesta a esta necesidad, se propone el desarrollo de una aplicación web progresiva (PWA) que integra inteligencia artificial y visión por computadora para analizar videos de entrenamiento.
+En este trabajo se expone el diseño y desarrollo de una plataforma inteligente de asistencia deportiva y tutoría adaptativa para el Brazilian Jiu-Jitsu. La solución supera las rigideces metodológicas y los altos costos operativos de infraestructura centralizada al proponer una arquitectura híbrida cliente-ligero. 
 
-El desarrollo del software se divide en 4 etapas: análisis del problema, diseño de la solución propuesta y desarrollo del prototipo, por último, la etapa de pruebas.
-Más allá de resolver las limitaciones actuales en la enseñanza del BJJ, esta iniciativa contribuirá a optimizar el proceso de aprendizaje, ofreciendo a los practicantes un software para mejorar su desempeño mediante análisis automatizado.
+La extracción cinemática tridimensional (landmarks 3D) ocurre directamente en el navegador del cliente mediante modelos monoculares libres de sensores físicos. Para la evaluación táctica y corrección del movimiento, se inyectan dinámicamente checkpoints técnicos de múltiples manuales oficiales y videos, indexados en una base de datos vectorial mediante una arquitectura RAG. 
+
+El sistema realiza el seguimiento del progreso histórico del alumno y altera la estrategia didáctica ante fallos recurrentes, ofreciendo una ruta de aprendizaje multi-nivel personalizada. La validez de la arquitectura se sustenta en el Proceso Unificado y el diseño orientado a objetos basado en patrones GRASP y de Polimorfismo para blindar el acoplamiento técnico.
+
 
 # **Índice de Contenidos**
 
@@ -92,38 +94,15 @@ Más allá de resolver las limitaciones actuales en la enseñanza del BJJ, esta 
   - [1.3 Metodología](#13-metodología)
     - [1.3.1 Ingeniería de Software (Proceso Unificado)](#131-ingeniería-de-software-proceso-unificado)
     - [1.3.2 Gestión del Proyecto (Scrum)](#132-gestión-del-proyecto-scrum)
-- [**Capítulo II: Descripción de la Entidad (Corpo & Mente)**](#capítulo-ii-descripción-de-la-entidad-corpo--mente)
-  - [2.1 Descripción de la organización](#21-descripción-de-la-organización)
-  - [2.2 Descripción organizacional](#22-descripción-organizacional)
-  - [2.3 Manual de funciones](#23-manual-de-funciones)
-  - [2.4 Descripción de los productos y servicios](#24-descripción-de-los-productos-y-servicios)
-  - [2.5 Flujo del negocio](#25-flujo-del-negocio)
-- [**Capítulo III: Marco Teórico y Estado del Arte**](#capítulo-iii-marco-teórico-y-estado-del-arte)
-  - [3.1 Conceptos y definiciones](#31-conceptos-y-definiciones)
-    - [3.1.1 Inteligencia artificial generativa multimodal](#311-inteligencia-artificial-generativa-multimodal)
-    - [3.1.2 Almacenamiento local y arquitectura cliente-ligero](#312-almacenamiento-local-y-arquitectura-cliente-ligero)
-    - [3.1.3 Ingeniería de prompts y grounding de dominio](#313-ingeniería-de-prompts-y-grounding-de-dominio)
-  - [3.2 Estado del arte](#32-estado-del-arte)
-    - [3.2.1 Análisis automatizado en deportes de combate](#321-análisis-automatizado-en-deportes-de-combate)
-    - [3.2.2 Aplicaciones existentes de retroalimentación técnica](#322-aplicaciones-existentes-de-retroalimentación-técnica)
-  - [3.3 Modelos y teorías relevantes](#33-modelos-y-teorías-relevantes)
-    - [3.3.1 Proceso Unificado (UP) y desarrollo iterativo](#331-proceso-unificado-up-y-desarrollo-iterativo)
-    - [3.3.2 Asignación de responsabilidades y patrones GRASP](#332-asignación-de-responsabilidades-y-patrones-grasp)
-    - [3.3.3 Marco de trabajo ágil (Scrum adaptado)](#333-marco-de-trabajo-ágil-scrum-adaptado)
-  - [3.4 Tecnologías y herramientas relevantes](#34-tecnologías-y-herramientas-relevantes)
-    - [3.4.1 API de Gemini y procesamiento de video](#341-api-de-gemini-y-procesamiento-de-video)
-    - [3.4.2 React, TypeScript y PWA](#342-react-typescript-y-pwa)
-    - [3.4.3 IndexedDB y gestión de datos en el cliente](#343-indexeddb-y-gestión-de-datos-en-el-cliente)
-  - [3.5 Valor agregado](#35-valor-agregado)
-  - [3.6 Limitaciones](#36-limitaciones)
-  - [3.7 Justificación teórica](#37-justificación-teórica)
-- [**Capítulo IV: Definición de Requisitos**](#capítulo-iv-definición-de-requisitos)
+- [**Capítulo II: Marco Teórico**](#capítulo-ii-marco-teórico)
+  - [2.1 Visión por Computadora en Deportes: Estimación de Pose 3D](#21-visión-por-computadora-en-deportes-estimación-de-pose-3d)
+  - [2.2 Generación Aumentada por Recuperación (RAG) en Deportes](#22-generación-aumentada-por-recuperación-rag-en-deportes)
+  - [2.3 Metodología de Diseño UP y Patrones GRASP de Craig Larman](#23-metodología-de-diseño-up-y-patrones-grasp-de-craig-larman)
+- [**Capítulo III: Estado del Arte y Análisis Comparativo**](#capítulo-iii-estado-del-arte-y-análisis-comparativo)
+  - [3.1 Análisis de Soluciones Existentes](#31-análisis-de-soluciones-existentes)
+  - [3.2 Tabla Comparativa de Soluciones](#32-tabla-comparativa-de-soluciones)
+- [**Capítulo IV: Definición de Requisitos (SRS)**](#capítulo-iv-definición-de-requisitos-srs)
   - [4.1 Introducción](#41-introducción)
-    - [4.1.1 Propósito](#411-propósito)
-    - [4.1.2 Ámbito del Sistema](#412-ámbito-del-sistema)
-    - [4.1.3 Definiciones, Acrónimos y Abreviaturas](#413-definiciones-acrónimos-y-abreviaturas)
-    - [4.1.4 Referencias](#414-referencias)
-    - [4.1.5 Perspectiva General](#415-perspectiva-general)
   - [4.2 Descripción General](#42-descripción-general)
     - [4.2.1 Perspectiva del Producto](#421-perspectiva-del-producto)
     - [4.2.2 Funciones del Producto](#422-funciones-del-producto)
@@ -132,17 +111,17 @@ Más allá de resolver las limitaciones actuales en la enseñanza del BJJ, esta 
     - [4.2.5 Suposiciones y Dependencias](#425-suposiciones-y-dependencias)
   - [4.3 Requisitos Específicos](#43-requisitos-específicos)
     - [4.3.1 Interfaces Externas](#431-interfaces-externas)
-    - [4.3.2 Requisitos Funcionales](#432-requisitos-funcionales)
-    - [4.3.3 Requisitos No Funcionales (Modelo FURPS+)](#433-requisitos-no-funcionales-modelo-furps)
-    - [4.3.4 Restricciones de Diseño](#434-restricciones-de-diseño)
-    - [4.3.5 Atributos del Sistema de Software](#435-atributos-del-sistema-de-software)
+    - [4.3.2 Requisitos Funcionales (RF)](#432-requisitos-funcionales-rf)
+    - [4.3.3 Requisitos No Funcionales (RNF)](#433-requisitos-no-funcionales-rnf)
 - [**Capítulo V: Análisis y Diseño Orientado a Objetos**](#capítulo-v-análisis-y-diseño-orientado-a-objetos)
-  - [5.1 Especificación de Casos de Uso Principales](#51-especificación-de-casos-de-uso-principales)
-    - [Caso de Uso CU01: Analizar Video de Combate](#caso-de-uso-cu01-analizar-video-de-combate)
-    - [Caso de Uso CU02: Consultar Historial Táctico](#caso-de-uso-cu02-consultar-historial-táctico)
-    - [Caso de Uso CU03: Gestionar Registros Locales](#caso-de-uso-cu03-gestionar-registros-locales)
-  - [5.2 Modelo de Dominio Conceptual](#52-modelo-de-dominio-conceptual)
-  - [5.3 Diagramas de Secuencia del Sistema (DSS)](#53-diagramas-de-secuencia-del-sistema-dss)
+  - [5.1 Modelo de Dominio Conceptual](#51-modelo-de-dominio-conceptual)
+  - [5.2 Especificación de Casos de Uso Principales](#52-especificación-de-casos-de-uso-principales)
+    - [Caso de Uso CU01: Realizar Análisis Biomecánico y Táctico](#caso-de-uso-cu01-realizar-análisis-biomecánico-y-táctico)
+    - [Caso de Uso CU02: Ingestar Nueva Fuente de Conocimiento](#caso-de-uso-cu02-ingestar-nueva-fuente-de-conocimiento)
+    - [Caso de Uso CU03: Consultar Progreso y Recibir Tutoría Adaptativa](#caso-de-uso-cu03-consultar-progreso-y-recibir-tutoría-adaptativa)
+    - [Caso de Uso CU04: Gestionar Perfil Biomecánico del Usuario](#caso-de-uso-cu04-gestionar-perfil-biomecánico-del-usuario)
+    - [Caso de Uso CU05: Validar Fuente de Conocimiento](#caso-de-uso-cu05-validar-fuente-de-conocimiento)
+  - [5.3 Diagrama de Secuencia del Sistema (DSS)](#53-diagrama-de-secuencia-del-sistema-dss)
   - [5.4 Contratos de las Operaciones del Sistema](#54-contratos-de-las-operaciones-del-sistema)
   - [5.5 Diseño de la Arquitectura Lógica (Patrón Capas)](#55-diseño-de-la-arquitectura-lógica-patrón-capas)
   - [5.6 Realización del Caso de Uso con Patrones GRASP](#56-realización-del-caso-de-uso-con-patrones-grasp)
@@ -151,33 +130,17 @@ Más allá de resolver las limitaciones actuales en la enseñanza del BJJ, esta 
   - [5.9 Diagrama de Despliegue Físico](#59-diagrama-de-despliegue-físico)
   - [5.10 Diseño de Interfaces de Usuario (UI)](#510-diseño-de-interfaces-de-usuario-ui)
 - [**Capítulo VI: Implementación**](#capítulo-vi-implementación)
-  - [6.1 Introducción al Modelo de Implementación](#61-introducción-al-modelo-de-implementación)
-  - [6.2 Entorno Tecnológico y Herramientas](#62-entorno-tecnológico-y-herramientas)
-  - [6.3 Correspondencia de Paquetes y Estructura de Directorios](#63-correspondencia-de-paquetes-y-estructura-de-directorios)
-  - [6.4 Materialización del Diseño Orientado a Objetos](#64-materialización-del-diseño-orientado-a-objetos)
-  - [6.5 Implementación del Flujo Principal (CU01)](#65-implementación-del-flujo-principal-cu01)
-  - [6.6 Orden de Implementación](#66-orden-de-implementación)
 - [**Capítulo VII: Seguridad**](#capítulo-vii-seguridad)
-  - [7.1 Introducción a la Seguridad de la Arquitectura](#71-introducción-a-la-seguridad-de-la-arquitectura)
-  - [7.2 Confidencialidad](#72-confidencialidad)
-  - [7.3 Integridad](#73-integridad)
-  - [7.4 Disponibilidad](#74-disponibilidad)
 - [**Capítulo VIII: Pruebas**](#capítulo-viii-pruebas)
-  - [8.1 Introducción a las Pruebas](#81-introducción-a-las-pruebas)
-  - [8.2 Estrategia de Evaluación](#82-estrategia-de-evaluación)
-  - [8.3 Casos de Prueba Funcionales](#83-casos-de-prueba-funcionales)
-  - [8.4 Pruebas de Calidad del Sistema](#84-pruebas-de-calidad-del-sistema)
 - [**Capítulo IX: Conclusiones y Recomendaciones**](#capítulo-ix-conclusiones-y-recomendaciones)
-  - [9.1 Conclusiones](#91-conclusiones)
-  - [9.2 Recomendaciones](#92-recomendaciones)
 - [**Referencias**](#referencias)
 
 # **Índice de Tablas**
 
-- [**Tabla 1** *Fundamentos Teóricos del Proyecto*](#tabla-1)
-- [**Tabla 2** *Requisitos no Funcionales*](#tabla-2)
+- [**Tabla 1** *Análisis Comparativo de Soluciones Tecnológicas de Retroalimentación Deportiva*](#tabla-1)
+- [**Tabla 2** *Especificación de Requisitos No Funcionales*](#tabla-2)
 - [**Tabla 4** *Responsabilidades por Capa de la Arquitectura*](#tabla-4)
-- [**Tabla 5** *Justificación de Patrones GRASP Aplicados*](#tabla-5)
+- [**Tabla 5** *Justificación de Decisiones de Diseño Basadas en Patrones GRASP*](#tabla-5)
 - [**Tabla 6** *Componentes de la Capa Cliente (Dispositivo)*](#tabla-6)
 - [**Tabla 7** *Componentes de los Servicios Externos*](#tabla-7)
 - [**Tabla 9** *Entorno Tecnológico del Sistema OpenBJJ*](#tabla-9)
@@ -192,14 +155,14 @@ Más allá de resolver las limitaciones actuales en la enseñanza del BJJ, esta 
 # **Índice de Figuras**
 
 - [**Figura 1** *Interacción del Practicante con OpenBJJ*](#figura-1)
-- [**Figura 2** *Posición Montada*](#figura-2)
-- [**Figura 3** *Posición Control lateral*](#figura-3)
+- [**Figura 2** *Estimación de Landmarks Corporales 3D*](#figura-2)
+- [**Figura 3** *Arquitectura RAG para Grounding Técnico de IA*](#figura-3)
 - [**Figura 4** *Estructura Organizacional de Corpo & Mente Bolivia*](#figura-4)
 - [**Figura 5** *Sistema de Cinturones de Jiu-Jitsu Brasileño*](#figura-5)
 - [**Figura 6** *Flujo del Negocio Actual y Detección de Cuellos de Botella*](#figura-6)
 - [**Figura 7** *Fases del Proceso Unificado*](#figura-7)
-- [**Figura 8** *Modelo de Dominio Conceptual de OpenBJJ (Iteración 1)*](#figura-8)
-- [**Figura 9** *Diagrama de Secuencia del Sistema para CU01: Analizar Video de Combate*](#figura-9)
+- [**Figura 8** *Modelo de Dominio Conceptual de OpenBJJ*](#figura-8)
+- [**Figura 9** *Diagrama de Secuencia del Sistema General para Inferencia 3D y Grounding RAG*](#figura-9)
 - [**Figura 10** *Diseño de la Arquitectura Lógica*](#figura-10)
 - [**Figura 11** *Diagrama de Secuencia de Diseño del CU01*](#figura-11)
 - [**Figura 12** *Máquina de Estados de los Casos de Uso*](#figura-12)
@@ -253,12 +216,12 @@ El proyecto OpenBJJ se delimita bajo los siguientes criterios:
 ## **1.2 Objetivos**
 
 ### **1.2.1 Objetivo General**
-Desarrollar e implementar la aplicación web progresiva (PWA) OpenBJJ asistida por Inteligencia Artificial generativa y visión computacional 3D, orientada a la tutoría adaptativa y multi-nivel del Brazilian Jiu-Jitsu mediante un motor RAG dinámico de fuentes de conocimiento y un pipeline de extracción biomecánica local libre de sensores físicos.
+Desarrollar una plataforma PWA inteligente que combine análisis biomecánico 3D en el cliente y recuperación aumentada por generación (RAG) para la tutoría adaptativa de Jiu-Jitsu Brasileño a través de todos los niveles de graduación.
 
 ### **1.2.2 Objetivos Específicos**
 1. Diseñar un pipeline de visión computacional client-side (MediaPipe/TensorFlow.js) para extraer landmarks en 3D y calcular métricas cinemáticas (ángulos articulares, velocidades, aceleraciones) desde videos monoculares 2D de sparring.
 2. Implementar un motor de recuperación semántica (RAG) que indexe dinámicamente manuales oficiales (PDF) y transcripciones de videos (YouTube) en una base de datos vectorial para grounding de la IA evaluadora.
-3. Desarrollar un motor de recomendación pedagógica adaptativo que evalúe la persistencia de fallos y altere las estrategias de retroalimentación conforme al historial de progreso del estudiante.
+3. Desarrollar un motor de recomendación pedagógica adaptativo que evalúe la persistencia de fallos y altere las estrategias de retroalimentación conforme al historial de progreso y al perfil biomecánico del estudiante.
 4. Modelar el dominio y comportamiento del sistema utilizando diagramas UML y aplicando los patrones GRASP de Craig Larman para aislar la lógica biomecánica, RAG y adaptativa en componentes reutilizables y de bajo acoplamiento.
 
 ## **1.3 Metodología**
@@ -269,7 +232,7 @@ Se adopta un marco de desarrollo ágil híbrido. El Proceso Unificado (UP) rige 
 # **CAPÍTULO II: MARCO TEÓRICO**
 
 ## **2.1 Visión por Computadora en Deportes: Estimación de Pose 3D**
-La visión artificial en el ámbito deportivo ha evolucionado de la simple clasificación de acciones a la reconstrucción cinemática detallada del cuerpo humano. Modelos de aprendizaje profundo preentrenados (como MediaPipe Pose de Google y TensorFlow.js) permiten realizar estimación de pose en el navegador web del usuario a través de JavaScript y aceleración por WebGL.
+La visión artificial en el ámbito deportivo ha evolucionado de la simple clasificación de acciones a la reconstrucción cinemática del cuerpo humano. Modelos de aprendizaje profundo preentrenados (como MediaPipe Pose de Google y TensorFlow.js) permiten realizar estimación de pose en el navegador web del usuario a través de JavaScript y aceleración por WebGL.
 
 Estos modelos estiman las coordenadas de hasta 33 puntos de referencia corporales clave (landmarks), entregando coordenadas tridimensionales relativas $(x, y, z)$. El eje $z$ representa la profundidad respecto a la cadera del sujeto, permitiendo reconstruir un esqueleto 3D a partir de una única cámara monocular (2D) convencional.
 
@@ -311,7 +274,7 @@ El análisis y diseño se fundamenta en la asignación de responsabilidades a lo
 
 ---
 
-# **CAPÍTULO III: ESTADO DEL ARTE Y ANÁLISIS COMPARATIVO**
+# **CAPÍTULO III: ESTADO DEL ARTE AND ANÁLISIS COMPARATIVO**
 
 ## **3.1 Análisis de Soluciones Existentes**
 El análisis cinemático y la tutoría técnica en el deporte disponen de diversos enfoques tecnológicos en el mercado, los cuales presentan claras brechas con las necesidades pedagógicas del Jiu-Jitsu Brasileño:
@@ -353,10 +316,11 @@ OpenBJJ opera bajo una topología de arquitectura híbrida. El motor de visión 
 - **Extracción Biométrica:** Detección de pose y cálculo de ángulos, velocidad y aceleración en 3D.
 - **Análisis Táctico (Grounding):** Inferencia cognitiva comparando la cinemática con la ontología RAG.
 - **Recomendación Pedagógica Adaptativa:** Generación de rutas personalizadas basadas en fallos acumulativos.
+- **Validación de Datos:** Flujo para asegurar que las fuentes inyectadas por la comunidad cumplan con el criterio del instructor.
 
 ### **4.2.3 Características de los Usuarios**
-1. **Practicante:** Alumno de cualquier cinturón que busca autoevaluarse.
-2. **Instructor:** Experto certificado que gestiona, sube e indexa las fuentes de conocimiento confiables para grounding.
+1. **Practicante:** Alumno de cualquier cinturón que busca autoevaluarse y configurar su perfil biomecánico.
+2. **Instructor:** Experto certificado que gestiona, sube, e indexa las fuentes de conocimiento, además de validar los recursos del RAG.
 3. **Administrador:** Soporte técnico y monitor del sistema.
 
 ### **4.2.4 Restricciones**
@@ -373,10 +337,11 @@ OpenBJJ opera bajo una topología de arquitectura híbrida. El motor de visión 
 - **Interfaz de Software (API):** Consumo de base de datos vectorial (REST JSON) y SDK de Google Gemini.
 
 ### **4.3.2 Requisitos Funcionales (RF)**
-
-- **RF-Ingesta:** El sistema debe permitir al Instructor cargar archivos PDF y enlaces de videos de YouTube, extrayendo el contenido técnico mediante embeddings para su almacenamiento en una base de datos vectorial para el grounding de la IA.
-- **RF-Biomecánica:** El sistema debe procesar localmente el video en el navegador mediante MediaPipe, extrayendo landmarks 3D corporales y calculando las métricas de ángulo articular, velocidad y aceleración por cada fotograma.
-- **RF-Adaptación:** El sistema debe registrar las desviaciones técnicas detectadas en una base de datos local e individual. Ante la presencia de errores repetitivos en la misma posición, el motor pedagógico debe conmutar la estrategia de corrección (ej. recomendando un ejercicio físico auxiliar o un drill de movilidad simplificado en lugar de videotecas complejas).
+- **RF-Ingesta:** El sistema debe permitir al Instructor cargar archivos PDF y enlaces de videos de YouTube, extrayendo el contenido técnico mediante embeddings para su almacenamiento en una base de datos vectorial.
+- **RF-Biomecánica:** El sistema debe procesar localmente el video en el navegador mediante MediaPipe, extrayendo landmarks 3D corporales y calculando las métricas cinemáticas.
+- **RF-Adaptación:** El sistema debe registrar las desviaciones técnicas detectadas en una base de datos local e individual para conmutar la estrategia de corrección didáctica ante fallos recurrentes.
+- **RF-Perfil:** El sistema debe permitir al Practicante ingresar sus datos antropométricos (altura, peso, longitud de extremidades) y realizar un test de movilidad inicial para adaptar los rangos angulares ideales según su biotipo.
+- **RF-Validación:** El sistema debe permitir al Instructor revisar y validar las fuentes de conocimiento cargadas por la comunidad antes de indexarlas formalmente en la base vectorial del RAG.
 
 ### **4.3.3 Requisitos No Funcionales (RNF)**
 
@@ -400,7 +365,7 @@ OpenBJJ opera bajo una topología de arquitectura híbrida. El motor de visión 
 ## **5.1 Modelo de Dominio Conceptual**
 El modelo de dominio representa los conceptos significativos del negocio de OpenBJJ. Siguiendo las directrices de Larman, se modelan las abstracciones cinemáticas, de RAG y adaptación instruccional sin acoplar detalles de bases de datos.
 
-La clase **ErrorBiomecanico** (o *DesviacionTecnica*) actúa como entidad puente fundamental. Registra la diferencia entre la ejecución real medida por la **MetricaCinematica** y el patrón extraído de la **FuenteConocimiento**. Esta entidad permite al motor de **RecomendacionAdaptativa** evaluar el historial persistente de fallas y seleccionar la estrategia pedagógica idónea para la **RutaAprendizaje** del practicante.
+La clase **ErrorBiomecanico** (o *DesviacionTecnica*) actúa como entidad puente fundamental. Registra la diferencia entre la ejecución real medida por la **MetricaCinematica** y el patrón extraído de la **FuenteConocimiento** (adaptado por el **PerfilBiomecanico** del **Usuario**). Esta entidad permite al motor de **RecomendacionAdaptativa** evaluar el historial persistente de fallas y seleccionar la estrategia pedagógica idónea para la **RutaAprendizaje** del practicante.
 
 ```mermaid
 classDiagram
@@ -408,6 +373,13 @@ classDiagram
         +nombre: String
         +cinturon: NivelCinturon
         +historialErrores: List
+    }
+    class PerfilBiomecanico {
+        +altura: float
+        +peso: float
+        +longitudBrazos: float
+        +longitudPiernas: float
+        +rangoMovilidadArticular: Map
     }
     class Tecnica {
         +id: String
@@ -419,6 +391,7 @@ classDiagram
         +id: String
         +titulo: String
         +tipo: TipoFuente
+        +estadoValidacion: EstadoValidacion
         +contenidoVectorial: Vector
     }
     class CheckpointTecnico {
@@ -455,6 +428,7 @@ classDiagram
     }
 
     Usuario "1" --> "1" RutaAprendizaje : posee
+    Usuario "1" --> "1" PerfilBiomecanico : define
     RutaAprendizaje "1" --> "*" RecomendacionAdaptativa : adapta
     Usuario "1" --> "*" AnalisisBiomecanico : realiza
     AnalisisBiomecanico "1" --> "1" Tecnica : evalúa
@@ -463,126 +437,122 @@ classDiagram
     AnalisisBiomecanico "1" --> "*" MetricaCinematica : calcula
     MetricaCinematica "1" --> "0..1" ErrorBiomecanico : genera
     CheckpointTecnico "1" --> "1" ErrorBiomecanico : compara
+    PerfilBiomecanico "1" --> "1" ErrorBiomecanico : ajusta umbrales de
     ErrorBiomecanico "*" --> "1" RecomendacionAdaptativa : mitiga
 ```
 
 ## **5.2 Especificación de Casos de Uso Principales**
 
 ### **Caso de Uso CU01: Realizar Análisis Biomecánico y Táctico**
-
 - **Actor Principal:** Practicante
 - **Personal Involucrado e Intereses:**
-  - **Practicante:** Desea recibir retroalimentación técnica y biomecánica en 3D objetiva e instantánea sobre su ejecución técnica (para cualquier nivel de cinturón), identificando fallas de movimiento y recibiendo lecturas angulares claras en base a manuales autorizados.
-  - **Instructor:** Desea que los alumnos obtengan correcciones biomecánicas precisas que agilicen las horas de entrenamiento presenciales.
+  - **Practicante:** Desea recibir retroalimentación técnica y biomecánica en 3D objetiva e instantánea sobre su ejecución técnica, identificando fallas de movimiento y recibiendo lecturas angulares ajustadas a su perfil antropométrico.
 - **Precondiciones:**
   - El practicante ha seleccionado una técnica del catálogo y cargado un video monocular de su ejecución.
-  - El navegador dispone de soporte WebGL activo.
 - **Garantías de Éxito (Postcondiciones):**
-  - El sistema ha extraído los landmarks 3D localmente a través del motor MediaPipe.
-  - Se han calculado los ángulos, velocidades y aceleraciones de cada articulación por fotograma.
-  - El sistema recuperó del almacén vectorial el grounding RAG de la técnica seleccionada.
-  - La IA evaluó las métricas frente a la ontología inyectada bajo el principio de inferencia negativa, identificando cualquier **ErrorBiomecanico**.
-  - Se renderizó en pantalla la línea de tiempo interactiva con los errores detectados y el reporte táctico detallado, guardándose el registro en el historial.
+  - El sistema ha extraído los landmarks 3D localmente y calculado los ángulos articulares y cinemáticos, contrastándolos con la ontología del RAG adaptada por el **PerfilBiomecanico** del usuario.
 - **Escenario Principal de Éxito (Flujo Básico):**
   1. El Practicante selecciona la técnica a evaluar y sube el video de sparring/drilling.
   2. El Sistema invoca localmente el motor de MediaPipe en el navegador.
   3. El Sistema extrae las coordenadas 3D de los landmarks corporales en los fotogramas clave.
   4. El Sistema calcula los ángulos articulares y vectores cinemáticos por fotograma.
-  5. El Sistema consulta la base de datos vectorial mediante una búsqueda semántica RAG para recuperar los fragmentos del manual técnico correspondiente.
-  6. El Sistema inyecta las métricas y los textos del manual recuperados en el prompt estructurado en inglés.
-  7. El Sistema procesa la inferencia en la API del LLM (Gemini) para evaluar las desviaciones.
-  8. El Sistema genera las instancias correspondientes de **ErrorBiomecanico** si los ángulos se desvían de la tolerancia indicada.
-  9. El Sistema presenta al usuario la línea de tiempo biomecánica con las lecturas y recomendaciones en español.
-- **Extensiones (Flujos Alternativos):**
-  - **3a. Fallo severo de oclusión o captura del esqueleto por MediaPipe:**
-    1. El Sistema detecta pérdida de consistencia temporal en más del 30% de los fotogramas del video.
-    2. El Sistema alerta al Practicante: "Evidencia visual insuficiente. Por favor, cargue un video con mejor iluminación donde se aprecie todo su cuerpo."
-    3. El Sistema aborta el análisis sin realizar llamadas a APIs remotas.
-- **Requisitos Especiales:**
-  - Inferencia local (landmarks) completada en menos de 2 segundos.
-  - Detección de desviaciones angulares mayores a 15 grados con tasa de falsos positivos <10%.
-  - Confidencialidad absoluta: el video nunca se almacena ni transmite externamente.
+  5. El Sistema recupera el **PerfilBiomecanico** del practicante para ajustar los umbrales de tolerancia de la técnica.
+  6. El Sistema consulta la base de datos vectorial mediante RAG para recuperar los fragmentos de la técnica validada.
+  7. El Sistema inyecta las métricas y los textos recuperados en el prompt estructurado en inglés.
+  8. El Sistema procesa la inferencia en la API de Gemini para evaluar las desviaciones.
+  9. El Sistema genera las instancias de **ErrorBiomecanico** si los ángulos se desvían de los umbrales adaptados del biotipo.
+  10. El Sistema presenta la línea de tiempo biomecánica con las lecturas y recomendaciones.
 
 ---
 
 ### **Caso de Uso CU02: Ingestar Nueva Fuente de Conocimiento**
-
 - **Actor Principal:** Instructor
 - **Personal Involucrado e Intereses:**
-  - **Instructor:** Desea alimentar el sistema cargando libros, manuales internos de su academia en formato PDF o enlaces a listas de reproducción de YouTube con técnicas personalizadas para que la IA los utilice como base científica para evaluar a los alumnos.
+  - **Instructor:** Desea alimentar la base de conocimiento cargando manuales en PDF o videos de YouTube para grounding de la IA.
 - **Precondiciones:**
   - El Instructor ha iniciado sesión con credenciales validadas.
 - **Garantías de Éxito (Postcondiciones):**
-  - El sistema ha parseado el PDF o recuperado la transcripción de audio del video de YouTube.
-  - Se han generado los fragmentos de texto (chunks) y sus respectivos embeddings.
-  - Se ha registrado la información indexada en la base de datos vectorial (Vector DB).
+  - El sistema registra la fuente de conocimiento en estado "Pendiente de Validación" hasta su aprobación definitiva.
 - **Escenario Principal de Éxito (Flujo Básico):**
-  1. El Instructor accede al panel de ingesta técnica de la PWA.
-  2. El Instructor sube un archivo PDF del manual o introduce el URL de un video de YouTube.
-  3. El Sistema invoca al procesador de texto (o API de recuperación de subtítulos de YouTube).
-  4. El Sistema segmenta el contenido en fragmentos lógicos.
-  5. El Sistema genera los vectores semánticos (embeddings) a través de la API serverless.
-  6. El Sistema almacena e indexa los vectores en la base de datos vectorial de la plataforma, asociándolos a la técnica respectiva.
-  7. El Sistema confirma la ingesta exitosa en pantalla.
-- **Extensiones (Flujos Alternativos):**
-  - **2a. El archivo cargado excede el límite de tamaño o no es legible:**
-    1. El Sistema valida que el formato PDF no contenga imágenes escaneadas sin OCR o que el video no carezca de transcripción de audio.
-    2. El Sistema alerta del fallo de legibilidad y cancela la indexación.
+  1. El Instructor sube un archivo PDF del manual o introduce el URL de un video de YouTube.
+  2. El Sistema segmenta el contenido en fragmentos lógicos.
+  3. El Sistema genera los vectores semánticos (embeddings) y los guarda transatoriamente con estado "Pendiente".
 
 ---
 
 ### **Caso de Uso CU03: Consultar Progreso y Recibir Tutoría Adaptativa**
-
 - **Actor Principal:** Practicante
-- **Personal Involucrado e Intereses:**
-  - **Practicante:** Desea visualizar sus errores repetitivos e históricos y recibir una recomendación pedagógica que se adapte si su curva de aprendizaje se encuentra estancada.
-- **Precondiciones:**
-  - El Practicante tiene una sesión activa con historial guardado.
-- **Garantías de Éxito (Postcondiciones):**
-  - El sistema ha consultado el historial de instancias de **ErrorBiomecanico** del usuario.
-  - El motor pedagógico ha detectado patrones de falla recurrentes.
-  - Se ha generado una ruta de aprendizaje adaptada que altera la estrategia didáctica en base a los fallos acumulados.
 - **Escenario Principal de Éxito (Flujo Básico):**
   1. El Practicante accede a su panel de progreso individual.
-  2. El Sistema recupera el historial de análisis y errores locales guardados.
-  3. El Sistema analiza la persistencia del mismo **ErrorBiomecanico** (ej. codo abierto en la Montada en más del 70% de los análisis del mes).
-  4. El Sistema clasifica al usuario bajo un estado pedagógico específico (ej. Estancamiento por Falta de Movilidad).
-  5. El Sistema formula una **RecomendacionAdaptativa** que modifica el material de apoyo (conmutando la explicación por videos interactivos por un drill físico de estiramiento y alineación articular).
-  6. El Sistema despliega la ruta de aprendizaje actualizada al alumno.
-- **Extensiones (Flujos Alternativos):**
-  - **3a. No existen registros previos suficientes para inferir recurrencia:**
-    1. El Sistema determina que el usuario no tiene suficientes análisis completados.
-    2. El Sistema despliega recomendaciones didácticas genéricas basadas en su cinturón y le aconseja realizar más entrenamientos.
+  2. El Sistema recupera el historial de análisis y errores locales.
+  3. El Sistema analiza la persistencia del mismo **ErrorBiomecanico** (ej. codo abierto en la Montada) y formula una **RecomendacionAdaptativa** (drill físico o ejercicio auxiliar).
+
+---
+
+### **Caso de Uso CU04: Gestionar Perfil Biomecánico del Usuario**
+- **Actor Principal:** Practicante
+- **Personal Involucrado e Intereses:**
+  - **Practicante:** Desea registrar sus datos antropométricos para evitar que el sistema genere falsas alarmas de error por poseer extremidades largas o limitaciones biológicas de flexibilidad.
+- **Precondiciones:**
+  - El Practicante tiene una cuenta en el sistema.
+- **Garantías de Éxito (Postcondiciones):**
+  - El sistema crea o actualiza la instancia de **PerfilBiomecanico** y recalcula los rangos límites angulares del catálogo de técnicas del usuario.
+- **Escenario Principal de Éxito (Flujo Básico):**
+  1. El Practicante accede a la configuración de perfil cinemático.
+  2. El Practicante introduce su altura, peso y longitud de brazos/piernas.
+  3. El Practicante completa un test interactivo en cámara de rangos de movilidad articular (flexión/extensión básica).
+  4. El Sistema guarda estos datos de movilidad en el **PerfilBiomecanico** del dispositivo.
+  5. El Sistema confirma la calibración cinemática del biotipo.
+
+---
+
+### **Caso de Uso CU05: Validar Fuente de Conocimiento**
+- **Actor Principal:** Instructor
+- **Personal Involucrado e Intereses:**
+  - **Instructor:** Desea revisar las fuentes e información ingresada por otros miembros o instructores antes de consolidarlas en el grounding del motor RAG, evitando el ingreso de material erróneo (Garantía de Calidad de Datos).
+- **Precondiciones:**
+  - El Instructor tiene rol de validador técnico en la plataforma.
+- **Garantías de Éxito (Postcondiciones):**
+  - La fuente de conocimiento aprobada cambia su estado a "Validado" y es indexada formalmente en la base vectorial activa para todos los alumnos.
+- **Escenario Principal de Éxito (Flujo Básico):**
+  1. El Instructor accede a la cola de moderación de fuentes técnicas.
+  2. El Sistema presenta la lista de recursos en estado "Pendiente de Validación".
+  3. El Instructor revisa el contenido original (PDF o video) y los checkpoints extraídos por la IA.
+  4. El Instructor aprueba la calidad técnica de la fuente.
+  5. El Sistema actualiza el estado del documento a "Validado" e indexa los embeddings vectoriales semánticos en el almacén principal.
 
 ## **5.3 Diagrama de Secuencia del Sistema (DSS)**
 
-El DSS muestra la interacción como caja negra de OpenBJJ para la inferencia 3D local combinada con grounding semántico RAG:
+El DSS actualizado ilustra los flujos de calibración biomecánica del usuario, ingesta colaborativa con validación del instructor y el arbitraje técnico asistido por MediaPipe y RAG:
 
 ```mermaid
 sequenceDiagram
-    participant Usuario as Practicante / Instructor
-    participant Sistema as OpenBJJ PWA
-    participant MediaPipe as MediaPipe Engine (Local)
+    participant Practicante as Alumno / Practicante
+    participant Instructor as Instructor / Validador
+    participant PWA as OpenBJJ PWA (Client)
     participant VectorDB as Base de Datos Vectorial
     participant LLM as API Gemini
 
-    Note over Usuario,VectorDB: Ingesta de Conocimiento (Instructor)
-    Usuario->>Sistema: Carga PDF / YouTube Link
-    Sistema->>VectorDB: Indexa chunks + embeddings semánticos
-    VectorDB-->>Sistema: Confirmación de indexación
-    Sistema-->>Usuario: Fuente registrada en base de conocimiento
+    Note over Practicante,PWA: CU04: Gestión de Perfil Biomecánico
+    Practicante->>PWA: Ingresa datos antropométricos y test de movilidad
+    PWA->>PWA: Almacena PerfilBiomecanico localmente
 
-    Note over Usuario,LLM: Inferencia 3D y Grounding RAG (Practicante)
-    Usuario->>Sistema: Sube video de ejecución (.mp4)
-    Sistema->>MediaPipe: Ejecuta estimación de landmarks
-    MediaPipe-->>Sistema: Retorna coordenadas 3D (x, y, z)
-    Sistema->>Sistema: Calcula cinemática (ángulos/velocidad)
-    Sistema->>VectorDB: Consulta semántica (RAG) de técnica
-    VectorDB-->>Sistema: Retorna checkpoints de manuales oficiales
-    Sistema->>LLM: Prompt inyectado (métricas reales vs manual)
-    LLM-->>Sistema: Retorna evaluación frame-a-frame (JSON)
-    Sistema->>Sistema: Genera ErrorBiomecanico si aplica
-    Sistema-->>Usuario: Despliega línea de tiempo, desviaciones y recomendación adaptada
+    Note over Instructor,VectorDB: CU02 y CU05: Ingesta y Validación de Fuentes
+    Instructor->>PWA: Sube manual (PDF/YouTube)
+    PWA->>VectorDB: Guarda embeddings temporales ("Pendiente")
+    Instructor->>PWA: Revisa cola y aprueba la fuente de conocimiento
+    PWA->>VectorDB: Cambia estado a "Validado" e indexa en almacén principal
+
+    Note over Practicante,LLM: CU01: Análisis e Inferencia Técnica
+    Practicante->>PWA: Sube video de ejecución técnica
+    PWA->>PWA: Invocación de MediaPipe local (Landmarks 3D)
+    PWA->>PWA: Ajusta Checkpoints ideales según PerfilBiomecanico
+    PWA->>VectorDB: Consulta RAG (grounding técnico validado)
+    VectorDB-->>PWA: Fragmentos e indicaciones ideales
+    PWA->>LLM: Prompt inyectado (kinematics + contexto de manual)
+    LLM-->>PWA: Diagnóstico estructurado (JSON)
+    PWA->>PWA: Registra ErrorBiomecanico e historial adaptativo
+    PWA-->>Practicante: Muestra línea de tiempo, desviaciones y ruta
 ```
 
 ## **5.4 Contratos de las Operaciones del Sistema**
@@ -598,8 +568,18 @@ sequenceDiagram
   - Se asoció `analisis` con el **Usuario** activo (formación de asociación).
   - Se calcularon las coordenadas 3D del esqueleto, creándose múltiples instancias de **MetricaCinematica** asociadas a `analisis` (creación de instancias y modificación de atributos).
   - Se recuperaron los fragmentos de texto vectorial de **FuenteConocimiento** asociados al `tecnicaId` (lectura de asociación).
-  - Si los valores de las instancias de **MetricaCinematica** sobrepasaron el umbral del **CheckpointTecnico** respectivo, se instanciaron uno o más objetos de **ErrorBiomecanico** asociados a `analisis` (creación de instancias y modificación de atributos).
+  - Si los valores de las instancias de **MetricaCinematica** sobrepasaron el umbral del **CheckpointTecnico** (ajustado por el **PerfilBiomecanico** del usuario), se instanciaron uno o más objetos de **ErrorBiomecanico** asociados a `analisis` (creación de instancias y modificación de atributos).
   - Se actualizó el estado de progreso en la **RutaAprendizaje** del usuario (modificación de atributos).
+
+### **Contrato CO02: actualizarPerfilBiomecanico**
+- **Operación:** `actualizarPerfilBiomecanico(usuarioId: String, altura: float, peso: float, movilidad: Map)`
+- **Referencias Cruzadas:** CU04: Gestionar Perfil Biomecánico del Usuario.
+- **Precondiciones:**
+  - El `usuarioId` corresponde a un usuario activo.
+- **Postcondiciones:**
+  - Se creó o modificó una instancia de **PerfilBiomecanico** asociada al usuario (creación/asociación).
+  - Se actualizaron los atributos de `altura`, `peso` e índices de `movilidadArticular` (modificación de atributos).
+  - Se redefinieron los rangos de tolerancia angulares del usuario para análisis futuros (modificación de estado).
 
 ## **5.5 Diseño de la Arquitectura Lógica (Patrón Capas)**
 
@@ -616,7 +596,7 @@ Se aplica el patrón de arquitectura de 3 capas lógicas independientes para ase
 | Capa | Responsabilidades Primarias | Tecnologías Clave |
 | :--- | :--- | :--- |
 | **Presentación** | Renderizar UI responsiva (Mobile-First, Glassmorphic Dashboard), capturar interactividad del video y pintar esqueleto 3D. | React, TypeScript, Tailwind CSS, Lucide Icons |
-| **Dominio** | Orquestar casos de uso, ejecutar el motor pedagógico adaptativo, instanciar errores biomecánicos e inferir desviaciones. | TS Classes, GRASP Controllers, In-Memory Models |
+| **Dominio** | Orquestar casos de uso, ejecutar el motor pedagógico adaptativo, gestionar perfiles antropométricos e instanciar errores biomecánicos. | TS Classes, GRASP Controllers, In-Memory Models |
 | **Servicios Técnicos** | Ejecutar estimación de landmarks corporales en 3D, calcular embeddings vectoriales, persistir en Vector DB local/nube y dialogar con APIs LLM. | MediaPipe Pose SDK, Supabase Vector client, Gemini AI API |
 
 ## **5.6 Realización del Caso de Uso con Patrones GRASP**
@@ -669,10 +649,129 @@ La asignación de responsabilidades de diseño se justifica a través de la apli
 | Patrón GRASP Aplicado | Aplicación en el Diseño de OpenBJJ | Beneficio de Ingeniería de Software |
 | :--- | :--- | :--- |
 | **Controlador** | `SesionEntrenamientoController` coordina todos los eventos del sistema disparados por la subida de videos de combate, abstrayendo la vista del flujo lógico. | **Alta Cohesión:** La interfaz de usuario no asume lógica de negocio; el acoplamiento modelo-vista es nulo. |
-| **Experto en Información** | La clase `SesionEntrenamientoController` (o el objeto `AnalisisBiomecanico`) calcula los ángulos articulares, velocidades y aceleraciones, ya que contiene el array de coordenadas corporales extraídas. | **Encapsulamiento de Datos:** El cálculo de métricas cinemáticas se agrupa junto a los datos que las originan, minimizando la propagación de datos crudos. |
+| **Experto en Información** | La clase `SesionEntrenamientoController` calcula los ángulos articulares, velocidades y aceleraciones, ya que contiene el array de coordenadas corporales extraídas. | **Encapsulamiento de Datos:** El cálculo de métricas cinemáticas se agrupa junto a los datos que las originan, minimizando la propagación de datos crudos. |
 | **Creador** | La clase `SesionEntrenamientoController` instancia los objetos `AnalisisBiomecanico` y `ErrorBiomecanico` tras la recepción y parseo del payload JSON de evaluación. | **Trazabilidad:** Asigna la creación al objeto que registra y almacena directamente los reportes en el historial local. |
 | **Bajo Acoplamiento** | Las APIs complejas de estimación visual e inferencia RAG se aíslan mediante adaptadores (`MediaPipePoseAdapter` y `GeminiServiceAdapter`) implementando interfaces abstractas. | **Variaciones Protegidas:** La migración de MediaPipe a TensorFlow.js o de Gemini a OpenAI se realiza cambiando los adaptadores, sin alterar el código de dominio. |
+| **Polimorfismo** | Uso de las interfaces abstractas `IPoseEstimator`, `IVectorStore` y `ILLMProvider` para definir los contratos técnicos del sistema. | **Flexibilidad e Intercambiabilidad:** Las implementaciones concretas (MediaPipe, Supabase, Gemini) se pueden intercambiar sin reescribir la lógica de dominio. |
 | **Fabricación Pura** | La clase `RetrievalAugmentedController` gestiona la consulta y ensamblado de embeddings sin corresponder a ningún concepto del tatami físico. | **Alta Cohesión:** Evita contaminar la entidad pura `Tecnica` con lógica técnica de base de datos vectorial o tokenización RAG. |
+
+---
+
+## **5.7 Diagrama de Estados para el Controlador**
+<a id="figura-12"></a>
+**Figura 12**
+*Máquina de Estados de los Casos de Uso*
+
+---
+
+## **5.8 Diagrama de Clases de Diseño (DCD)**
+
+El siguiente DCD ilustra las clases de diseño de software reales en TypeScript, detallando tipos, interfaces, adaptadores y el controlador GRASP que orquesta las colaboraciones técnicas:
+
+```mermaid
+classDiagram
+    class IPoseEstimator {
+        <<interface>>
+        +extract3DLandmarks(videoBlob: Blob): Promise~Landmark3D[]~
+    }
+    class IVectorStore {
+        <<interface>>
+        +saveEmbeddings(chunks: Chunk[], metadata: Metadata): Promise~void~
+        +similarityQuery(queryVector: float[], topK: int): Promise~Chunk[]~
+    }
+    class ILLMProvider {
+        <<interface>>
+        +generateEvaluation(prompt: string, kinematics: KinematicData): Promise~EvaluationResult~
+    }
+
+    class MediaPipePoseAdapter {
+        +extract3DLandmarks(videoBlob: Blob): Promise~Landmark3D[]~
+    }
+    class SupabaseVectorDBAdapter {
+        +saveEmbeddings(chunks: Chunk[], metadata: Metadata): Promise~void~
+        +similarityQuery(queryVector: float[], topK: int): Promise~Chunk[]~
+    }
+    class GeminiServiceAdapter {
+        +generateEvaluation(prompt: string, kinematics: KinematicData): Promise~EvaluationResult~
+    }
+
+    IPoseEstimator <|.. MediaPipePoseAdapter
+    IVectorStore <|.. SupabaseVectorDBAdapter
+    ILLMProvider <|.. GeminiServiceAdapter
+
+    class SesionEntrenamientoController {
+        -poseEstimator: IPoseEstimator
+        -vectorStore: IVectorStore
+        -llmProvider: ILLMProvider
+        +subirVideo(videoBlob: Blob, tecnicaId: string): Promise~AnalisisBiomecanico~
+        +actualizarPerfilUsuario(usuarioId: string, perfil: PerfilBiomecanico): Promise~void~
+    }
+
+    class IngestaConocimientoController {
+        -vectorStore: IVectorStore
+        +cargarFuente(fuente: File): Promise~void~
+        +validarFuente(fuenteId: string, aprobado: boolean): Promise~void~
+    }
+
+    SesionEntrenamientoController --> IPoseEstimator : utiliza
+    SesionEntrenamientoController --> IVectorStore : utiliza
+    SesionEntrenamientoController --> ILLMProvider : utiliza
+    IngestaConocimientoController --> IVectorStore : utiliza
+```
+
+---
+
+## **5.9 Diagrama de Despliegue Físico**
+<a id="figura-14"></a>
+**Figura 14**
+*Diagrama de Despliegue del Sistema*
+
+<a id="tabla-6"></a>
+**Tabla 6**  
+*Componentes de la Capa Cliente (Dispositivo)*
+
+| Componente | Responsabilidad | Tecnología |
+| :--- | :--- | :--- |
+| OpenBJJ PWA | Lógica de negocio, UI, coordinación de casos de uso | React + TypeScript + Vite |
+| HTML5 Canvas API | Extracción local de fotogramas clave | Web API (JavaScript) |
+| IndexedDB | Persistencia de reportes tácticos (JSON) | API nativa del navegador |
+| Cache PWA | Recursos estáticos para funcionamiento offline | Service Workers |
+
+<a id="tabla-7"></a>
+**Tabla 7**  
+*Componentes de los Servicios Externos*
+
+| Servicio | Propósito | Protocolo / Integración |
+| :--- | :--- | :--- |
+| Gemini API | Inferencia multimodal (video + texto) | HTTPS/REST + JSON |
+| YouTube | Enlaces a videos de referencia externos | HTTPS / Enlaces dinámicos |
+
+---
+
+## **5.10 Diseño de Interfaces de Usuario (UI)**
+El diseño visual se implementó bajo el enfoque Mobile-First, considerando que la herramienta se utilizará principalmente en teléfonos móviles dentro del tatami. Se empleó Tailwind CSS para construir componentes bajo el patrón visual Glassmorphism (Tarjetas de Cristal), asegurando legibilidad y alto contraste.
+
+Las interfaces principales del sistema son:
+- **Pantalla de Ingesta (VideoUploader):** Interfaz inicial que presenta opciones claras para "Grabar" o "Seleccionar" un archivo.
+<a id="figura-15"></a>
+**Figura 15**
+*Pantalla de Ingesta de Video*
+	
+- **Pantalla de Carga y Procesamiento:** Proporciona retroalimentación visual del estado del sistema. Modela los estados de "Extrayendo fotogramas" y "Consultando a Gemini", bloqueando interacciones adicionales para evitar solicitudes duplicadas.
+<a id="figura-16"></a>
+**Figura 16**
+*Pantalla de Carga y Procesamiento de Video*
+
+- **Pantalla de Reporte Táctico (EvaluacionTactica):** Interfaz central que renderiza el objeto EvaluacionTactica. Se divide en bloques modulares que muestran: la postura detectada, una lista de errores con niveles de severidad codificados por color, recomendaciones de mejora y enlaces directos en formato de botones hacia las páginas del manual y material de YouTube.
+<a id="figura-17"></a>
+**Figura 17**
+*Pantalla de Reporte Táctico*
+
+- **Pantalla de Historial Local:** Un listado de tarjetas de acceso rápido que recupera la información desde IndexedDB. Muestra un resumen de las evaluaciones previas (fecha y posición) y permite la eliminación de registros para gestionar el almacenamiento local.
+<a id="figura-18"></a>
+**Figura 18**
+*Pantalla de Historial Local*
+
 
 # **CAPÍTULO VI: IMPLEMENTACIÓN**
 ## **6.1 Introducción al Modelo de Implementación**
@@ -834,24 +933,29 @@ Esta sección evalúa el cumplimiento de los atributos FURPS+ para garantizar qu
 *Métricas de OpenBJJ*
 
 # **CAPÍTULO IX: CONCLUSIONES Y RECOMENDACIONES**
+
 ## **9.1 Conclusiones**
-El desarrollo y diseño de la aplicación web progresiva (PWA) OpenBJJ ha culminado con éxito, logrando satisfacer los objetivos generales y específicos planteados al inicio de esta investigación. A través de la integración de la Inteligencia Artificial Generativa (API de Google Gemini) y la visión por computadora, se ha materializado una solución tecnológica innovadora que automatiza la retroalimentación táctica para practicantes principiantes de Brazilian Jiu-Jitsu, mitigando la dependencia exclusiva de la observación humana en tiempo real.
-Desde la perspectiva de la Ingeniería de Software, la aplicación rigurosa de la metodología del Proceso Unificado (UP) y los principios de Craig Larman garantizó la construcción de una arquitectura de software robusta y escalable. La elaboración de artefactos metodológicos como el Modelo de Dominio y los Diagramas de Secuencia del Sistema permitió comprender la esencia del negocio de la academia Corpo & Mente. Asimismo, la asignación de responsabilidades basada en los patrones GRASP (Experto en Información, Controlador, Creador y Fabricación Pura) y GoF (Adaptador) dio como resultado un diseño orientado a objetos con alta cohesión y bajo acoplamiento.
-A nivel arquitectónico, la elección de un modelo de "cliente-ligero" (serverless frontend) demostró ser una decisión técnica altamente efectiva. Al procesar la extracción de fotogramas localmente y utilizar IndexedDB para la persistencia del historial, el sistema eliminó los costos de infraestructura en la nube y blindó la seguridad del usuario, garantizando una privacidad absoluta bajo un enfoque Zero-Retention de los archivos multimedia originales.
-Finalmente, la ingeniería de prompts aplicada en idioma inglés y anclada a la literatura técnica oficial (Jiu-Jitsu University) probó ser un mecanismo eficiente para evitar "alucinaciones" del modelo de lenguaje, garantizando que el sistema entregue evaluaciones estructuradas, precisas y pedagógicamente validadas en tiempos de procesamiento viables para el entrenamiento en el tatami.
+El desarrollo y diseño de la aplicación web progresiva (PWA) OpenBJJ ha culminado con éxito, demostrando que la convergencia de tecnologías avanzadas y diseño orientado a objetos permite solucionar el vacío pedagógico y la dependencia de instrucción presencial sincrónica en el Jiu-Jitsu Brasileño.
+
+Las principales conclusiones derivadas del proyecto son:
+1. **Éxito de la Arquitectura Híbrida y Reducción de Costes:** La elección de realizar la estimación de landmarks biomecánicos corporales en 3D en el lado del cliente (navegador) a través de MediaPipe y WebGL ha resultado altamente efectiva. Al transferir el procesamiento de visión por computadora pesado al procesador del cliente, se redujo a cero la necesidad de servidores basados en GPU. El costo de operación (OPEX) se restringe a consultas de texto a embeddings y API de lenguaje de bajo costo, logrando un margen de viabilidad económica excelente para su despliegue comercial (SaaS). Asimismo, esto blinda la privacidad del practicante al no transmitir sus videos brutos por la red.
+2. **Evolución del RAG y Grounding Dinámico:** La arquitectura RAG vectorial (Retrieval-Augmented Generation) superó la rigidez de las soluciones tradicionales basadas en videotecas estáticas o reglas técnicas hardcoded. La capacidad de indexar semánticamente manuales en PDF y transcripciones de YouTube bajo demanda e inyectar checkpoints en prompts LLM en tiempo de ejecución, dota a la plataforma de una flexibilidad única para adaptarse a las ontologías particulares de cualquier academia o nivel de graduación (de cinturón blanco a negro).
+3. **Rigurosidad Metodológica (UP y GRASP):** La aplicación del Proceso Unificado y el diseño basado en los principios de asignación de responsabilidades GRASP y Polimorfismo de Craig Larman aseguraron un sistema con alta cohesión y bajo acoplamiento. El desacoplamiento de las implementaciones tecnológicas concretas (MediaPipe, Supabase Vector y Gemini) mediante las interfaces abstractas `IPoseEstimator`, `IVectorStore` y `ILLMProvider` garantiza que la evolución del sistema ante futuros cambios en librerías de IA se realice sin alterar las reglas del negocio ni la lógica de dominio.
+4. **Pedagogía Adaptativa Basada en Desviaciones:** La introducción de la clase conceptual `ErrorBiomecanico` (o *DesviacionTecnica*) y la calibración del `PerfilBiomecanico` permitieron al sistema adaptar dinámicamente las rutas instruccionales según el biotipo y la recurrencia histórica de fallos del alumno, respondiendo de manera eficaz al practicante que presenta problemas persistentes de aprendizaje.
+
 ## **9.2 Recomendaciones**
 Dado que el desarrollo de software bajo el Proceso Unificado es iterativo e incremental, el cierre de la fase de Transición de esta primera versión establece la base para futuros ciclos de evolución del sistema. Se recomiendan las siguientes acciones para la Iteración 2 del proyecto OpenBJJ y su futura comercialización:
-Expansión del Dominio Técnico al Cinturón Azul: En la actual iteración, el sistema se limitó intencionalmente a la evaluación de la supervivencia en las posiciones de Montada y Control Lateral para el cinturón blanco. Se recomienda ampliar la base de conocimiento de la Inteligencia Artificial hacia el cinturón azul. Según el manual Jiu-Jitsu University, el cinturón azul es la etapa de la experimentación y su enfoque absoluto son los escapes. El sistema deberá incorporar el análisis táctico de estas nuevas mecánicas, estructurando nuevos esquemas de validación JSON para evaluar las transiciones, salidas desde posiciones inferiores y recuperación de guardia.
-Integración de Hardware para Análisis Avanzado: Para enriquecer la precisión del análisis más allá de la cámara estándar del dispositivo, se recomienda integrar hardware externo como sensores de movimiento, trajes inteligentes (wearables) o cámaras de alta velocidad. Desde la perspectiva arquitectónica, esta evolución requerirá la aplicación del patrón Adaptador (GoF) en la Capa de Servicios Técnicos. La creación de nuevas clases (ej. SensorAdapter o CameraProxy) permitirá envolver la comunicación de bajo nivel con los controladores físicos del hardware, garantizando el principio de Variaciones Protegidas; de esta manera, la lógica central del controlador no se acoplará a los dispositivos físicos, sino únicamente a las interfaces de los adaptadores.
-Evolución a Tecnologías Nativas: Para dar soporte eficiente a la mencionada integración de sensores y hardware externo de bajo nivel, se recomienda evaluar la migración de la capa de presentación actual (PWA) hacia frameworks nativos (como React Native o Flutter), los cuales permiten un acceso directo, optimizado y mediante controladores a las APIs físicas de los dispositivos móviles.
-Calibración Biométrica: Investigar e implementar un módulo de perfilamiento físico (peso, altura, longitud de extremidades) que actúe como contexto adicional para el prompt de la IA. Esto permitiría al sistema emitir recomendaciones tácticas ajustadas al biotipo específico del practicante, reconociendo que la ejecución biomecánica varía entre diferentes tipos de cuerpos.
-Mecanismos de Sincronización Peer-to-Peer (P2P): Para mantener la filosofía de privacidad descentralizada y a la vez fomentar la relación alumno-profesor, se sugiere desarrollar un mecanismo de exportación de reportes locales mediante códigos QR dinámicos o enlaces temporales cifrados, permitiendo al alumno compartir evaluaciones específicas con su instructor de manera presencial sin requerir bases de datos centralizadas en la nube.
-Evolución hacia un Modelo de Startup Tecnológica (SaaS): Dado el éxito técnico del Producto Mínimo Viable (MVP), se recomienda la transición del proyecto hacia una startup comercial operando bajo el modelo de Software as a Service (SaaS). Gracias a la arquitectura "cliente-ligero" diseñada, el proyecto cuenta con márgenes de rentabilidad inusualmente altos para aplicaciones de inteligencia artificial. El plan de viabilidad comercial proyectado se estructura de la siguiente manera:
-Tiempo de ejecución: Se estima un periodo de 3 a 4 meses para integrar pasarelas de pago (ej. Stripe), elaborar términos de servicio, políticas de privacidad y lanzar la primera campaña de marketing digital orientada a academias de BJJ.
-Gastos de Capital (CAPEX): Al prescindir de servidores propios y bases de datos centralizadas, la necesidad de inversión en activos fijos es nula. El CAPEX se limita a la constitución legal de la empresa, registro de marca y adquisición de dominios web, estimando una inversión inicial de riesgo inferior a los $1,000 USD.
-Gastos Operativos (OPEX): La arquitectura delegó el almacenamiento al dispositivo del usuario (IndexedDB), reduciendo el costo de almacenamiento de bases de datos a cero. El OPEX técnico recae exclusivamente en la API de Google Gemini y el alojamiento web. En base a las métricas del sistema evaluado, el costo promedio por cada inferencia de video es de $0.0015 USD. Proyectando un escenario con 1,000 usuarios activos realizando 20 análisis mensuales (20,000 solicitudes), el gasto en IA sería de apenas $30 USD mensuales. Sumando una capa de alojamiento frontend profesional utilizando el plan Vercel Pro, cuyo costo es de $20 USD mensuales, el OPEX técnico total asciende a apenas $50 USD mensuales.
-Proyección de Ganancias (ROI): Implementando un modelo de suscripción accesible de $4.99 USD mensuales por usuario (o licencias B2B para academias), la captación de 1,000 usuarios generaría un ingreso bruto de $4,990 USD al mes. Tras descontar el bajísimo OPEX técnico ($50 USD), la startup operaría con un margen de ganancia bruta superior al 98% (aproximadamente $4,940 USD mensuales antes de costos de marketing e impuestos).
-Riesgos y Pérdidas Potenciales: El riesgo financiero de la startup es extremadamente bajo. En un escenario de rechazo del mercado (fracaso), la pérdida monetaria máxima se limita a la baja inversión inicial (CAPEX) y al tiempo de desarrollo invertido (sweat equity), sin generar deudas por mantenimiento de servidores en la nube. El único riesgo operativo significativo es la "dependencia del proveedor" (vendor lock-in) con Google; si en el futuro los costos de la API de Gemini aumentaran drásticamente, el sistema aplicaría el patrón Adaptador ya diseñado para integrar APIs de la competencia (como OpenAI o Anthropic) con el fin de proteger los márgenes de ganancia.
+- **Expansión del Dominio Técnico al Cinturón Azul:** En la actual iteración, el sistema se limitó intencionalmente a la evaluación de la supervivencia en las posiciones de Montada y Control Lateral para el cinturón blanco. Se recomienda ampliar la base de conocimiento de la Inteligencia Artificial hacia el cinturón azul. Según el manual Jiu-Jitsu University, el cinturón azul es la etapa de la experimentación y su enfoque absoluto son los escapes. El sistema deberá incorporar el análisis táctico de estas nuevas mecánicas, estructurando nuevos esquemas de validación JSON para evaluar las transiciones, salidas desde posiciones inferiores y recuperación de guardia.
+- **Integración de Hardware para Análisis Avanzado:** Para enriquecer la precisión del análisis más allá de la cámara estándar del dispositivo, se recomienda integrar hardware externo como sensores de movimiento, trajes inteligentes (wearables) o cámaras de alta velocidad. Desde la perspectiva arquitectónica, esta evolución requerirá la aplicación del patrón Adaptador (GoF) en la Capa de Servicios Técnicos. La creación de nuevas clases (ej. SensorAdapter o CameraProxy) permitirá envolver la comunicación de bajo nivel con los controladores físicos del hardware, garantizando el principio de Variaciones Protegidas; de esta manera, la lógica central del controlador no se acoplará a los dispositivos físicos, sino únicamente a las interfaces de los adaptadores.
+- **Evolución a Tecnologías Nativas:** Para dar soporte eficiente a la mencionada integración de sensores y hardware externo de bajo nivel, se recomienda evaluar la migración de la capa de presentación actual (PWA) hacia frameworks nativos (como React Native o Flutter), los cuales permiten un acceso directo, optimizado y mediante controladores a las APIs físicas de los dispositivos móviles.
+- **Calibración Biométrica:** Investigar e implementar un módulo de perfilamiento físico (peso, altura, longitud de extremidades) que actúe como contexto adicional para el prompt de la IA. Esto permitiría al sistema emitir recomendaciones tácticas ajustadas al biotipo específico del practicante, reconociendo que la ejecución biomecánica varía entre diferentes tipos de cuerpos.
+- **Mecanismos de Sincronización Peer-to-Peer (P2P):** Para mantener la filosofía de privacidad descentralizada y a la vez fomentar la relación alumno-profesor, se sugiere desarrollar un mecanismo de exportación de reportes locales mediante códigos QR dinámicos o enlaces temporales cifrados, permitiendo al alumno compartir evaluaciones específicas con su instructor de manera presencial sin requerir bases de datos centralizadas en la nube.
+- **Evolución hacia un Modelo de Startup Tecnológica (SaaS):** Dado el éxito técnico del Producto Mínimo Viable (MVP), se recomienda la transición del proyecto hacia una startup comercial operando bajo el modelo de Software as a Service (SaaS). Gracias a la arquitectura "cliente-ligero" diseñada, el proyecto cuenta con márgenes de rentabilidad inusualmente altos para aplicaciones de inteligencia artificial. El plan de viabilidad comercial proyectado se estructura de la siguiente manera:
+  - **Tiempo de ejecución:** Se estima un periodo de 3 a 4 meses para integrar pasarelas de pago (ej. Stripe), lanzar campaña de marketing digital y registrar la marca.
+  - **Gastos de Capital (CAPEX):** CAPEX inferior a los $1,000 USD limitándose a trámites legales y registro de dominio.
+  - **Gastos Operativos (OPEX):** OPEX técnico total de $50 USD mensuales cubriendo API de Gemini y alojamiento serverless (Vercel).
+  - **Proyección de Ganancias (ROI):** Con suscripciones de $4.99 USD mensuales por usuario y 1,000 usuarios activos, la ganancia bruta superaría el 98% (aproximadamente $4,940 USD mensuales).
+  - **Riesgos y Pérdidas Potenciales:** El riesgo financiero de la startup es extremadamente bajo. En un escenario de fracaso, las pérdidas se reducen al CAPEX inicial.
 
 
 # **Referencias**
