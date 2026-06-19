@@ -1191,10 +1191,11 @@ flowchart TD
     App --> DB
     App --> LS
     
-    App -- HTTPS / JSON 3KB --> Gemini
-    
-    Note over App,Gemini: 1. No se transmiten archivos de video brutos a la nube.<br/>2. Solo se transmiten vectores de métricas reducidos y texto.
+    App -- "HTTPS / JSON (Resumen Cinemático 3KB)" --> Gemini
 ```
+
+> [!IMPORTANT]
+> **Nota crítica de Privacidad:** El archivo de video original en formato bruto NUNCA sale del dispositivo del cliente. El análisis espacial e inferencia de landmarks ocurre estrictamente en memoria volátil local. A la API de Gemini en la nube solo se transmiten resúmenes cinemáticos (vectores de ángulos y velocidades en formato JSON de 3KB) y prompts de texto consolidando el grounding contextual.
 
 ---
 
