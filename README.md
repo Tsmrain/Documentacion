@@ -153,13 +153,14 @@ En este trabajo se expone el diseño y modelado orientado a objetos de una plata
 - [**Figura 3** *DSS-CU01: Flujo Completo de Análisis Biomecánico y Autodetección*](#figura-3)
 - [**Figura 4** *DSS-CU02: Flujo de Ingesta y Vectorización RAG*](#figura-4)
 - [**Figura 5** *DSS-CU03: Flujo de Consulta de Progreso y Tutoría Adaptativa*](#figura-5)
-- [**Figura 6** *DSS-CU10: Flujo de Recomendación y Adaptación de Videos de YouTube*](#figura-6)
+- [**Figura 6** *DSS-CU09: Flujo de Recomendación de Videos de YouTube*](#figura-6)
 - [**Figura 7** *Diagrama de Secuencia de Diseño (Realización de CU01)*](#figura-7)
 - [**Figura 8** *Máquina de Estados de SesionEntrenamientoController*](#figura-8)
 - [**Figura 9** *Diagrama de Clases de Diseño (DCD)*](#figura-9)
 - [**Figura 10** *Diagrama de Despliegue Físico de OpenBJJ*](#figura-10)
 - [**Figura 11** *Diagrama de Secuencia de Diseño (Realización de CU02)*](#figura-11)
 - [**Figura 12** *Diagrama de Secuencia de Diseño (Realización de CU03)*](#figura-12)
+- [**Figura 13** *DSS-CU10: Flujo de Registro de Visualización de YouTube*](#figura-13)
 
 ---
 
@@ -590,24 +591,24 @@ flowchart TD
         CU02(CU02: Ingestar Nueva Fuente de Conocimiento - RAG)
         CU03(CU03: Consultar Progreso y Recibir Tutoría Adaptativa)
         CU04(CU04: Gestionar Datos Antropométricos del Usuario)
-        CU06(CU06: Gestionar Sesiones de Entrenamiento)
-        CU07(CU07: Exportar/Compartir Reportes)
-        CU08(CU08: Configurar Preferencias del Sistema)
-        CU09(CU09: Calibrar Entorno de Captura)
-        CU10(CU10: Recibir Recomendación de Video de YouTube)
-        CU11(CU11: Registrar Visualización de Video de YouTube)
+        CU05(CU05: Gestionar Sesiones de Entrenamiento)
+        CU06(CU06: Exportar/Compartir Reportes)
+        CU07(CU07: Configurar Preferencias del Sistema)
+        CU08(CU08: Calibrar Entorno de Captura)
+        CU09(CU09: Recibir Recomendación de Video de YouTube)
+        CU10(CU10: Registrar Visualización de Video de YouTube)
     end
     
     Practicante --> CU01
     Practicante --> CU02
     Practicante --> CU03
     Practicante --> CU04
+    Practicante --> CU05
     Practicante --> CU06
     Practicante --> CU07
     Practicante --> CU08
     Practicante --> CU09
     Practicante --> CU10
-    Practicante --> CU11
 ```
 
 ---
@@ -827,7 +828,7 @@ flowchart TD
 * Manejar la conversión dinámica si el usuario cambia el sistema de unidades del perfil (métrico/imperial) sin introducir ruido en el historial biomecánico acumulado.
 
 
-### Caso de Uso CU06: Gestionar Sesiones de Entrenamiento
+### Caso de Uso CU05: Gestionar Sesiones de Entrenamiento
 
 **Actor Principal:** Practicante
 
@@ -879,7 +880,7 @@ flowchart TD
 * Optimizar la velocidad de carga de miniaturas de esqueleto 3D para dispositivos de baja gama.
 
 
-### Caso de Uso CU07: Exportar/Compartir Reportes
+### Caso de Uso CU06: Exportar/Compartir Reportes
 
 **Actor Principal:** Practicante
 
@@ -931,7 +932,7 @@ flowchart TD
 * Permitir a los profesores agregar comentarios de texto anotados directamente sobre el PDF exportado antes de su almacenamiento definitivo.
 
 
-### Caso de Uso CU08: Configurar Preferencias del Sistema
+### Caso de Uso CU07: Configurar Preferencias del Sistema
 
 **Actor Principal:** Practicante
 
@@ -977,7 +978,7 @@ flowchart TD
 * Sincronizar preferencias del usuario entre múltiples dispositivos utilizando almacenamiento local temporal (localStorage) y base de datos centralizada de manera consistente.
 
 
-### Caso de Uso CU09: Calibrar Entorno de Captura
+### Caso de Uso CU08: Calibrar Entorno de Captura
 
 **Actor Principal:** Practicante
 
@@ -1034,7 +1035,7 @@ flowchart TD
 * Implementar alertas hápticas o de voz ante cambios de estado de calibración para que el practicante no tenga que ver la pantalla mientras se posiciona.
 
 
-### Caso de Uso CU10: Recibir Recomendación de Video de YouTube
+### Caso de Uso CU09: Recibir Recomendación de Video de YouTube
 
 **Actor Principal:** Practicante
 
@@ -1077,6 +1078,54 @@ flowchart TD
 
 **Problemas Abiertos:**
 * Establecer la efectividad relativa de videos explicativos en cámara lenta frente a videos con diferente perspectiva.
+
+
+### Caso de Uso CU10: Registrar Visualización de Video de YouTube
+
+**Actor Principal:** Practicante
+
+**Interesados y sus Intereses:**
+* **Practicante:** Desea que el sistema registre que ha visualizado el video sugerido para actualizar su estado de aprendizaje y recibir recomendaciones futuras adaptadas.
+* **Sistema/IA:** Requiere almacenar de forma precisa la confirmación de visualización en el `HistorialVisualizacion` del `PerfilCompetencia` para evaluar la efectividad pedagógica de las tutorías.
+* **Instructor:** Se beneficia de que la plataforma registre las interacciones de estudio autónomo de sus alumnos para supervisar su nivel de compromiso.
+
+**Precondiciones:**
+* El usuario ha recibido una recomendación de video de YouTube asociada a un error biomecánico detectado (CU09).
+* La sesión del usuario está activa y tiene acceso al Servidor Local.
+
+**Garantía de Éxito / Postcondiciones:**
+* Se crea un registro en la entidad `HistorialVisualizacion` asociado al `PerfilCompetencia` del Practicante, marcando el video como consumido y registrando la fecha actual de visualización en el Servidor Local.
+
+**Escenario Principal de Éxito (Flujo Básico):**
+1. El Practicante hace clic en el enlace o botón de reproducción del video de YouTube en la interfaz de la PWA.
+2. El Sistema redirige al Practicante a la plataforma externa de YouTube (deep link) y registra localmente el evento de clic.
+3. El Practicante retorna a la PWA tras visualizar el material y confirma la reproducción.
+4. El Sistema envía una solicitud HTTP POST al API Gateway del Servidor Local delegando en el controlador la persistencia de la visualización.
+5. El `AdaptationController` recibe la confirmación y solicita a `CentralDBPersistenceAdapter` guardar el registro en el historial.
+6. El Servidor Local crea la instancia de `HistorialVisualizacion` vinculada al `PerfilCompetencia` del usuario con el atributo `fechaVisualizacion` correspondiente.
+7. El Sistema actualiza el estado visual del panel pedagógico confirmando al usuario el registro de su progreso.
+
+**Extensiones (Flujos Alternativos):**
+* **4.a. El navegador no retorna el control correctamente o el usuario cancela:**
+  1. El Sistema detecta la inactividad de confirmación en la sesión.
+  2. El Sistema mantiene el estado del video como "Sugerido (Pendiente de confirmación)" en la ruta de aprendizaje activa.
+* **5.a. Error de conexión con el Servidor Local al registrar:**
+  1. El `CentralDBPersistenceAdapter` reporta un fallo de red o tiempo de espera agotado.
+  2. El Sistema almacena temporalmente el evento de visualización en el `localStorage` del cliente.
+  3. El Sistema programa una sincronización diferida para cuando se restablezca la conectividad con el API Gateway.
+
+**Requisitos Especiales:**
+* La confirmación de visualización debe registrarse de manera asíncrona sin interrumpir la navegación en la PWA.
+
+**Lista de Variaciones de Tecnología y Datos:**
+* Redirección a través del protocolo HTTPS a la app nativa de YouTube o en un iframe controlado.
+* Almacenamiento local temporal en `localStorage` para resiliencia offline.
+
+**Frecuencia de Ocurrencia:**
+* Alta - Ocurre cada vez que el practicante sigue una recomendación pedagógica para corregir un fallo biomecánico.
+
+**Problemas Abiertos:**
+* Implementar una validación del tiempo de reproducción real mediante la API de YouTube Iframe Player para evitar confirmaciones fraudulentas de videos no vistos.
 
 
 ---
@@ -1137,11 +1186,29 @@ sequenceDiagram
     Sistema-->>Practicante: mostrarRutaAprendizajePersonalizada(estrategiaActiva, drillsRecomendados)
 ```
 
-### **DSS-CU10: Recibir Recomendación de Video de YouTube**
+### **DSS-CU09: Recibir Recomendación de Video de YouTube**
 
 <a id="figura-6"></a>
 **Figura 6**  
-*DSS-CU10: Flujo de Recomendación y Adaptación de Videos de YouTube*
+*DSS-CU09: Flujo de Recomendación de Videos de YouTube*
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Practicante
+    participant Sistema as Sistema (Caja Negra)
+    
+    Practicante->>Sistema: solicitarRecomendacionYouTube(tecnicaId)
+    Note over Sistema: 1. Consulta base de datos centralizada de videos RAG<br/>2. Filtro contra HistorialVisualizacion<br/>3. Selección de video alternativo/drill si fallos > 3
+
+    Sistema-->>Practicante: recomendarVideoURL(youtubeUrl, enfoquePedagogico)
+```
+
+### **DSS-CU10: Registrar Visualización de Video de YouTube**
+
+<a id="figura-13"></a>
+**Figura 13**  
+*DSS-CU10: Flujo de Registro de Visualización de YouTube*
 
 ```mermaid
 sequenceDiagram
@@ -1149,11 +1216,6 @@ sequenceDiagram
     actor Practicante
     participant Sistema as Sistema (Caja Negra)
     participant YouTube as YouTube (Externo)
-    
-    Practicante->>Sistema: solicitarRecomendacionYouTube(tecnicaId)
-    Note over Sistema: 1. Consulta base de datos centralizada de videos RAG<br/>2. Filtro contra HistorialVisualizacion<br/>3. Selección de video alternativo/drill si fallos > 3
-
-    Sistema-->>Practicante: recomendarVideoURL(youtubeUrl, enfoquePedagogico)
     
     Practicante->>YouTube: abrirVideoExterno(youtubeUrl)
     YouTube-->>Practicante: reproducirVideo()
@@ -1174,7 +1236,7 @@ sequenceDiagram
 *   **Postcondiciones:**
     *   Se creó una instancia `s` de la entidad `SesionEntrenamiento`.
     *   `s.fecha` se modificó a la fecha actual del sistema.
-    *   `s.videoBlobLocal` se modificó al archivo cargado.
+    *   `s.videoBlobLocal` se mantuvo en memoria volátil para el procesamiento de fotogramas clave (no persistido).
     *   Se crearon múltiples instancias de `MetricaCinematica` y se asociaron a `s`.
     *   Se asoció una instancia de la entidad `Tecnica` a `s`.
     *   Se creó una instancia `ab` de `AnalisisBiomecanico` y se asoció a `s`.
@@ -1198,7 +1260,7 @@ sequenceDiagram
 
 ### **Contrato CO03: `consultarProgresoAdaptativo`**
 *   **Operación:** `consultarProgresoAdaptativo(usuarioId: UUID): RutaAprendizaje`
-*   **Referencias Cruzadas:** Caso de Uso CU03 y CU10.
+*   **Referencias Cruzadas:** Caso de Uso CU03, CU09 y CU10.
 *   **Precondiciones:**
     *   Existe un `PerfilCompetencia` inicializado para el `usuarioId`.
 *   **Postcondiciones:**
