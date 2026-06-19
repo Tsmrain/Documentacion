@@ -562,7 +562,6 @@ classDiagram
     }
     class HistorialVisualizacion {
         fechaVisualizacion
-        videoId
         mejoraPosterior
         tiempoPracticaMinutos
     }
