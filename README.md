@@ -148,6 +148,10 @@ En este trabajo se expone el diseño y modelado orientado a objetos de una plata
 
 # **Índice de Figuras**
 
+- [**Figura 2.1** *Estructura Organizacional de Corpo & Mente Bolivia*](#figura-2-1)
+- [**Figura 2.2** *Sistema de Cinturones de Jiu-Jitsu Brasileño*](#figura-2-2)
+- [**Figura 2.3** *Flujo del Negocio Actual y Detección de Cuellos de Botella*](#figura-2-3)
+
 - [**Figura 1** *Modelo de Dominio Conceptual de OpenBJJ*](#figura-1)
 - [**Figura 2** *Diagrama Global de Casos de Uso del Sistema*](#figura-2)
 - [**Figura 3** *DSS-CU01: Flujo Completo de Análisis Biomecánico y Autodetección*](#figura-3)
@@ -229,30 +233,51 @@ El trabajo correspondiente al presente documento (Fases de Inicio y Elaboración
 # **CAPÍTULO II: DESCRIPCIÓN DE LA ENTIDAD (CORPO & MENTE)**
 
 ## **2.1 Descripción de la organización**
-El contexto de aplicación de la plataforma inteligente es la "Academia Moderna de Artes Marciales". Tradicionalmente, los dojos y academias han dependido exclusivamente de la transmisión verbal y la instrucción física sincrónica de las técnicas de combate. Una academia moderna busca integrar la tecnología digital no para sustituir la interacción física —esencia indispensable de los deportes de contacto—, sino para expandir y complementar las capacidades de asimilación cognitiva del alumno fuera del dojo o en momentos de práctica libre autónoma. La entidad actúa como un espacio de entrenamiento híbrido donde los aspectos mecánicos del cuerpo (Corpo) y el entendimiento táctico de la mente (Mente) se unifican mediante la retroalimentación objetiva de datos.
+Corpo & Mente es una institución internacional de élite dedicada a la enseñanza del Jiu-Jitsu Brasileño (BJJ), fundada hace más de 30 años en Feira de Santana, Bahía, Brasil, por el maestro José Humberto Tavares Soares. La organización se destaca por su metodología enfocada en la formación de líderes y el fortalecimiento del deporte como una filosofía de vida.
+
+La sucursal Corpo & Mente Bolivia, ubicada en Santa Cruz de la Sierra, opera bajo esta franquicia, combinando aspectos físicos, filosóficos y estratégicos. Actualmente, la academia funciona como una comunidad organizada donde la enseñanza es dirigida de forma personalizada por instructores certificados, quienes supervisan el desarrollo técnico de los alumnos en un ambiente de respeto y excelencia deportiva.
 
 ## **2.2 Descripción organizacional**
-La estructura organizativa del ecosistema digital de la academia se compone de dos actores principales:
-1. **Instructores / Profesores Certificados:** Responsables de la calidad de la enseñanza física y de proveer manuales y fuentes oficiales de entrenamiento.
-2. **Practicantes (Alumnos):** Estudiantes de diversos niveles de graduación (cinturón blanco a negro) que interactúan con la interfaz para registrar entrenamientos, recibir tutorías y cargar material de estudio de forma colaborativa.
-Las tareas de soporte técnico y calibración de la base de datos se gestionan de forma serverless y automática por la aplicación web.
+La estructura interna de la academia en Bolivia es de carácter lineal, lo que permite un control directo sobre la calidad de la enseñanza. Esta organización garantiza que la información técnica fluya desde la administración y los profesores hacia los practicantes.
+
+<a id="figura-2-1"></a>
+**Figura 2.1**  
+*Estructura Organizacional de Corpo & Mente Bolivia*
+
+![Estructura Organizacional de Corpo & Mente Bolivia](src/assets/organizational_structure.png)
 
 ## **2.3 Manual de funciones**
-- **Practicante:**
-  - Cargar o grabar videos de sparring o drills técnicos.
-  - Configurar manualmente sus datos antropométricos básicos (altura, peso) para el escalado cinemático.
-  - Consultar reportes cinemáticos y seguir las recomendaciones pedagógicas adaptativas en YouTube o guías de drills.
-  - Cargar de forma colaborativa fuentes de conocimiento (PDFs o videos) para su análisis e ingesta.
-- **Instructor:**
-  - Cargar manuales oficiales de la academia (PDF) o transcripciones de videos tutoriales, delegando en el motor de IA (Gemini) la validación de pertinencia de forma autónoma.
-  - Supervisar el progreso y la evolución técnica general de los alumnos del dojo.
-
+Bajo el modelo de operación actual, las responsabilidades están distribuidas de la siguiente manera:
+*   **Administrador:** Se encarga de la gestión operativa: organización de horarios, cobros, pagos y coordinación de eventos o seminarios.
+*   **Profesores (Instructores):** Son los únicos responsables de enseñar, planificar y ejecutar las sesiones de entrenamiento. Su función principal es observar el desempeño de los alumnos y proporcionar correcciones técnicas manuales durante la clase.
+*   **Practicantes/Alumnos:** Su rol es participar activamente en las sesiones, cumplir con la puntualidad y depender de la observación del profesor para identificar sus errores y progresar.
 
 ## **2.4 Descripción de los productos y servicios**
-La aplicación web inteligente proporciona los siguientes servicios clave como extensión del entrenamiento del tatami:
-- **Autoevaluación Cinemática Local:** Servicio que procesa videos del usuario en tiempo real y calcula métricas cinemáticas directamente en su dispositivo.
-- **Tutoría Adaptativa y Grounding:** Inferencia en lenguaje natural basada en manuales de verdad validados.
-- **Redirección de Aprendizaje de YouTube (Deep Linking):** Sugerencia de videos tutoriales en la app móvil o web de YouTube según el error biomecánico detectado, con lógica de cambio de estrategia en caso de persistencia del fallo.
+La academia ofrece servicios especializados que validan el progreso del alumno de forma tradicional:
+*   **Enseñanza Regular de BJJ:** Clases grupales e individuales para todos los niveles, desde principiantes hasta avanzados.
+*   **Exámenes de Graduación:** Sesiones oficiales donde se evalúa el conocimiento técnico para la obtención de cinturones con validez nacional e internacional.
+*   **Seminarios Técnicos:** Sesiones intensivas de actualización basadas en la metodología de la franquicia Corpo & Mente.
+
+<a id="figura-2-2"></a>
+**Figura 2.2**  
+*Sistema de Cinturones de Jiu-Jitsu Brasileño*
+
+![Sistema de Cinturones de Jiu-Jitsu Brasileño](src/assets/bjj_belt_progression.png)
+
+## **2.5 Flujo del negocio**
+El flujo actual de la academia se basa en un ciclo de retroalimentación puramente presencial y manual. Este proceso, aunque efectivo, está limitado por la capacidad de observación del ojo humano en tiempo real.
+
+<a id="figura-2-3"></a>
+**Figura 2.3**  
+*Flujo del Negocio Actual y Detección de Cuellos de Botella*
+
+![Flujo del Negocio Actual y Detección de Cuellos de Botella](src/assets/current_business_flow.png)
+
+**Descripción del proceso actual:**
+1.  **Instrucción:** El profesor explica una técnica a todo el grupo.
+2.  **Práctica (Drill/Rolling):** Los practicantes ejecutan el movimiento simultáneamente.
+3.  **Observación Limitada:** El profesor recorre el tatami intentando detectar errores. Debido a la cantidad de alumnos, muchos movimientos incorrectos pasan desapercibidos.
+4.  **Retroalimentación Diferida:** El practicante recibe la corrección solo si el profesor lo vio en el momento justo. Si el practicante entrena por su cuenta o graba su lucha, no tiene forma de saber si su técnica es correcta hasta la siguiente clase presencial.
 
 ---
 
