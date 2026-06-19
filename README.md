@@ -191,7 +191,7 @@ El proyecto OpenBJJ se delimita bajo los siguientes criterios:
 - **Alcance de Despliegue:** Aplicación Web Progresiva (PWA) responsiva compatible con dispositivos móviles y ordenadores de escritorio mediante navegadores modernos con soporte WebGL.
 
 ### **1.1.5 Justificación**
-- **Tecnológica:** Demuestra la viabilidad de implementar arquitecturas cognitivas complejas (visión 3D + RAG) mediante una ejecución híbrida distribuida, demostrando la viabilidad de un modelo híbrido en el borde (Edge AI) para la captura cinemática y un nodo centralizado local para la soberanía del motor RAG corporativo.
+- **Tecnológica:** Demuestra la viabilidad de implementar arquitecturas cognitivas complejas (visión 3D + RAG) mediante un modelo híbrido en el borde (Edge AI) para la captura cinemática y un nodo centralizado local para la soberanía del motor RAG corporativo.
 - **Económica:** Suprime la necesidad de servidores de procesamiento de video basados en GPU, delegando la carga computacional pesada al procesador local del cliente. El consumo de APIs se restringe a llamadas de texto y embeddings vectoriales de bajo costo.
 - **Social:** Facilita el acceso democratizado y autónomo a la educación de artes marciales de alta calidad, alineándose con las fuentes bibliográficas de preferencia de cada academia sin intervención del programador.
 
@@ -281,7 +281,7 @@ El siguiente cuadro analiza comparativamente las soluciones respecto a la propue
 | **Soporte Multi-nivel** | N/A | Sí (Solo visualización) | No | Sí (Rutas de Blanco a Negro) |
 | **Adaptabilidad Pedagógica** | No | No | No (Evaluación aislada) | Sí (Rastreo histórico de errores) |
 | **Seguridad y Privacidad** | Media (Datos en nube) | Alta (No graba) | Baja (Video enviado a servidores) | Alta (Procesamiento local client-side) |
-| **Costo Operativo de GPU** | Alto | Nulo | Alto (Servidores en la nube) | Nulo (Ejecución distribuida en cliente) |
+| **Costo Operativo de GPU** | Alto | Nulo | Alto (Servidores en la nube) | Nulo para la nube (Carga cinemática en cliente y procesamiento RAG optimizado en servidor local) |
 | **Autodetección Multimodal** | No (Selección manual) | No | No (Selección manual) | Sí (Detección por Gemini Vision) |
 | **Open-Domain (Sin prompts fijos)**| No | No | No (Hardcoded) | Sí (Dynamic Prompt Builder) |
 
@@ -409,6 +409,7 @@ Los requisitos no funcionales se estructuran bajo el estándar de calidad FURPS+
 - El desarrollo de cliente se restringe a PWA responsiva programada sobre React y TypeScript de alta cohesión.
 - La persistencia vectorial y de datos maestros reside en una base de datos centralizada alojada en el servidor principal (la laptop del investigador), a la cual los clientes se conectan a través de una API.
 - El cliente se comunica con el servidor central mediante llamadas HTTPS API para sincronización, persistencia e ingesta de conocimiento, interactuando de forma híbrida con la API del backend y la API de Gemini.
+- No se permite el almacenamiento de video bruto; la persistencia de perfiles y resúmenes cinemáticos filtrados (payloads de 3KB) se realiza de manera centralizada en la base de datos del servidor principal a través de la API.
 
 
 ### **4.3.5 Atributos del Sistema de Software**
@@ -1291,7 +1292,7 @@ classDiagram
     }
     class ITechniqueClassifier {
         <<interface>>
-        +clasificarTecnicaVideo(video: Blob) String
+        +clasificarTecnicaVideo(keyframesSummary: KeyframesDataType) String
     }
     class IPersistenceService {
         <<interface>>
@@ -1317,7 +1318,7 @@ classDiagram
         -apiKey: String
         -client: GeminiClient
         +evaluarMovimiento(promptJSON: String) String
-        +clasificarTecnicaVideo(video: Blob) String
+        +clasificarTecnicaVideo(keyframesSummary: KeyframesDataType) String
     }
     class CentralDBPersistenceAdapter {
         -apiEndpoint: String
