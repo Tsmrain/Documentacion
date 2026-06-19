@@ -636,10 +636,6 @@ flowchart TD
     5.  El Sistema envía un resumen visual (keyframes) al API Gateway del Servidor Local, el cual realiza una llamada interna a `GeminiServiceAdapter` para clasificar la técnica del video de manera autónoma (Autodetección Multimodal).
     6.  El Servidor Local (a través de Gemini) responde con el ID de la técnica y el identificador de la disciplina (ej. "Guardia Cerrada").
     7.  El `RetrievalAugmentedController` del cliente realiza una petición HTTP al API Gateway del Servidor Local, delegando en el `CentralVectorDBAdapter` la búsqueda de fragmentos semánticamente equivalentes en la base de datos vectorial centralizada para esa técnica.
-    8.  El `DynamicPromptBuilder` del cliente fusiona los fragmentos RAG con las métricas biomecánicas calculadas locales en un prompt JSON de contexto.
-    9.  El prompt estructurado se envía al API Gateway del Servidor Local, el cual realiza la llamada a la API externa de Gemini para la evaluación cognitiva final.
-    10. El API Gateway del Servidor Local devuelve el reporte al cliente; el Sistema en el cliente recibe y parsea la evaluación, identificando desviaciones angulares mayores a la tolerancia fija de $\pm 15^{\circ}$ normalizada por las dimensiones antropométricas del usuario.
-    11. El Sistema guarda los resultados en el historial del `PerfilCompetencia` en el Servidor Local y despliega la línea de tiempo 3D del esqueleto con el informe de fallas y recomendaciones adaptativas de YouTube.
 *   **Extensiones (Flujos Alternativos):**
     *   **3.a. Fallo en estimación de landmarks (oclusión severa):**
         1. MediaPipe reporta una confianza media inferior a 0.5.
