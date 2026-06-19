@@ -229,10 +229,10 @@ El trabajo correspondiente al presente documento (Fases de Inicio y Elaboración
 El contexto de aplicación de la plataforma inteligente es la "Academia Moderna de Artes Marciales". Tradicionalmente, los dojos y academias han dependido exclusivamente de la transmisión verbal y la instrucción física sincrónica de las técnicas de combate. Una academia moderna busca integrar la tecnología digital no para sustituir la interacción física —esencia indispensable de los deportes de contacto—, sino para expandir y complementar las capacidades de asimilación cognitiva del alumno fuera del dojo o en momentos de práctica libre autónoma. La entidad actúa como un espacio de entrenamiento híbrido donde los aspectos mecánicos del cuerpo (Corpo) y el entendimiento táctico de la mente (Mente) se unifican mediante la retroalimentación objetiva de datos.
 
 ## **2.2 Descripción organizacional**
-La estructura organizativa del ecosistema digital de la academia se compone de tres actores principales:
+La estructura organizativa del ecosistema digital de la academia se compone de dos actores principales:
 1. **Instructores / Profesores Certificados:** Responsables de la calidad de la enseñanza física y la curación del conocimiento literario y audiovisual inyectado en el sistema.
 2. **Practicantes (Alumnos):** Estudiantes de diversos niveles de graduación (cinturón blanco a negro) que interactúan con la interfaz para registrar entrenamientos y recibir tutorías.
-3. **Administradores del Sistema:** Personal encargado del soporte operativo local de la PWA y la calibración técnica.
+Las tareas de soporte técnico y calibración de la base de datos se gestionan de forma serverless y automática por la aplicación web.
 
 ## **2.3 Manual de funciones**
 - **Practicante:**
@@ -242,9 +242,6 @@ La estructura organizativa del ecosistema digital de la academia se compone de t
 - **Instructor (Rol de Validador de Fuentes):**
   - Cargar manuales oficiales de la academia (PDF) o transcripciones de videos tutoriales.
   - Revisar y moderar las fuentes de conocimiento subidas colaborativamente por la comunidad de alumnos, otorgando el estado "Validado" que las habilita en el motor RAG local.
-- **Administrador:**
-  - Administrar el almacenamiento local de IndexedDB del dispositivo del dojo o del usuario.
-  - Verificar la conectividad de red con la API externa de Gemini.
 
 ## **2.4 Descripción de los productos y servicios**
 La aplicación web inteligente proporciona los siguientes servicios clave como extensión del entrenamiento del tatami:
@@ -345,10 +342,11 @@ OpenBJJ opera bajo una topología de arquitectura híbrida orientada al borde (E
 - **Tutoría Pedagógica Adaptativa:** Redirección a videos e inyección de drills de aislamiento si el error biomecánico persiste por más de 3 intentos.
 
 ### **4.2.3 Características de los Usuarios**
-El sistema define tres actores formales:
+El sistema define dos actores formales:
 1. **Practicante (Alumno):** Usuario atleta que sube videos, registra sus datos antropométricos (altura/peso) en la app y sigue las recomendaciones pedagógicas adaptativas.
 2. **Instructor (Validador):** Moderador encargado de cargar y validar las fuentes RAG y drills de la academia.
-3. **Administrador:** Encargado del mantenimiento técnico de las bases de datos locales y APIs.
+
+Al operar bajo una arquitectura serverless y descentralizada en el borde, no se requiere la presencia de un Administrador humano local, delegando las tareas de calibración de almacenamiento e integridad de APIs a procesos automatizados en el navegador cliente.
 
 **Gestión de Acceso Local:** La plataforma carece de un backend centralizado de autenticación. Los perfiles se guardan localmente en IndexedDB. Para habilitar las funciones de Instructor (ingesta y validación de fuentes), el usuario conmutará su rol local mediante el ingreso de un PIN de acceso o clave maestra almacenada de forma cifrada en el `localStorage` del cliente.
 
@@ -434,15 +432,16 @@ El sistema debe estar disponible en modo offline para la visualización del perf
 | **Usuario** | `altura` | Decimal | `[0.50, 2.50]` metros | Mayor que cero. Usado para normalizar las longitudes relativas de landmarks. |
 | **Usuario** | `peso` | Decimal | `[30.00, 250.00]` kilogramos | Mayor que cero. Usado para métricas de fuerza/masa relativas si aplica. |
 | **MetricaCinematica** | `anguloMedido` | Decimal | `[0.00, 360.00]` grados | Calculado por la fórmula de coseno entre tres landmarks de la articulación. |
-| **ErrorBiomecanico** | `severidad` | Enumerado | `{Leve, Moderado, Crítico}` | Leve: desv. $\le 15^{\circ}$; Moderado: desv. entre $15^{\circ}$ y $30^{\circ}$; Crítico: desv. $> 30^{\circ}$ o error recurrente. |
+| **ErrorBiomecanico** | `severidad` | Enumerado | `{Leve, Moderado, Crítico}` | Leve: desv. entre $16^{\circ}$ y $25^{\circ}$; Moderado: desv. entre $26^{\circ}$ y $40^{\circ}$; Crítico: desv. $> 40^{\circ}$ o error recurrente. |
 | **FuenteConocimiento** | `estadoValidacion` | Enumerado | `{Pendiente, Validado, Rechazado}` | Por defecto se crea en "Pendiente". Solo "Validado" pasa al RAG activo. |
 | **VideoRecomendado** | `youtubeVideoId` | Cadena | Alfanumérico ID de YouTube | Longitud exacta de 11 caracteres. Obligatorio para deep link. |
-| **Tecnica** | `tecnicaId` | Cadena | UUID v4 | Identificador único. Obligatorio. |
+| **Tecnica** | `tecnicaId` | Cadena | Alfanumérico | Código identificador único de la técnica (código interno). Obligatorio. |
 | **Tecnica** | `nombre` | Cadena | Alfanumérico | Obligatorio. Nombre descriptivo de la técnica (ej. "Guardia Cerrada"). |
 | **Tecnica** | `categoria` | Enumerado | `{Guardia, Pasaje, Sumisión, Derribo, Transición}` | Obligatorio. Define la categoría táctica del movimiento. |
 | **CheckpointTecnico** | `anguloArticularIdeal` | Decimal | `[0.00, 180.00]` grados | Ángulo objetivo para la articulación en una fase determinada. |
 | **CheckpointTecnico** | `toleranciaGrados` | Decimal | `[0.00, 45.00]` grados | Margen de desviación permitido antes de registrar un error biomecánico. |
 | **RutaAprendizaje** | `progresoGeneral` | Decimal | `[0.00, 100.00]` % | Porcentaje acumulado de maestría del nivel actual. |
+| **RutaAprendizaje** | `nivelCompetenciaActual` | Enumerado | `{Principiante, Intermedio, Avanzado}` | Rige la dificultad de los drills y videos pedagógicos recomendados. |
 
 ---
 
@@ -632,7 +631,7 @@ flowchart TD
     *   Landmarks 3D extraídos en cliente, técnica clasificada automáticamente, RAG consultado, prompt dinámico estructurado, evaluación devuelta y persistida localmente.
 *   **Escenario Principal de Éxito (Flujo Básico):**
     1.  El Practicante graba o carga un video (máx. 45 seg) de su combate o drill técnico.
-    2.  El Sistema valida el límite de duración local y procesa el video frame a frame.
+    2.  El Sistema valida el límite de duración local y procesa el video mediante submuestreo de fotogramas clave.
     3.  El `MediaPipePoseAdapter` de visión computacional extrae los landmarks 3D $(x,y,z)$ locales.
     4.  El controlador calcula métricas cinemáticas locales (ángulos críticos, velocidad de extremidades).
     5.  El Sistema envía un resumen visual (keyframes) a la `GeminiServiceAdapter` para clasificar la técnica del video (Autodetección Multimodal).
@@ -1060,12 +1059,11 @@ sequenceDiagram
     *   La GPU tiene soporte WebGL habilitado y el tamaño del archivo no excede 50MB (duración < 45 segundos).
 *   **Postcondiciones:**
     *   Se creó una instancia `s` de la entidad `SesionEntrenamiento`.
-    *   `s.fecha` se estableció con la fecha actual del sistema.
-    *   `s.videoBlobLocal` se enlazó con el archivo físico cargado.
-    *   Se calculó y almacenó una colección de instancias de `MetricaCinematica` asociadas a `s`.
-    *   Se consultó la API de Gemini para la clasificación de la técnica, asociando la correspondiente entidad `Tecnica` a la sesión.
-    *   Se consultó `VectorDBAdapter` inyectando los fragmentos recuperados en `DynamicPromptBuilder`.
-    *   Se creó e inicializó la instancia `ab` de `AnalisisBiomecanico` vinculada a `s` con el JSON de retroalimentación devuelto por el LLM.
+    *   `s.fecha` se modificó a la fecha actual del sistema.
+    *   `s.videoBlobLocal` se modificó al archivo cargado.
+    *   Se crearon múltiples instancias de `MetricaCinematica` y se asociaron a `s`.
+    *   Se asoció una instancia de la entidad `Tecnica` a `s`.
+    *   Se creó una instancia `ab` de `AnalisisBiomecanico` y se asoció a `s`.
 
 ---
 
@@ -1076,10 +1074,8 @@ sequenceDiagram
     *   El usuario posee el rol de Instructor y la clave maestra ha sido ingresada localmente.
 *   **Postcondiciones:**
     *   Se creó una instancia `fc` de `FuenteConocimiento` (o de sus subclases `ManualPDF` o `VideoYouTube`).
-    *   `fc.titulo` y otros campos específicos se inicializaron con los datos del archivo y de `metadata`.
-    *   `fc.estadoValidacion` se inicializó con el valor "Pendiente".
-    *   El archivo se fragmentó en chunks de texto locales y se crearon sus respectivos vectores de embedding multidimensionales.
-    *   Se persistieron los chunks y los vectores en IndexedDB.
+    *   Los atributos de `fc` se modificaron con los valores del archivo y de `metadata`.
+    *   `fc.estadoValidacion` se modificó a "Pendiente".
 
 ---
 
@@ -1089,10 +1085,8 @@ sequenceDiagram
 *   **Precondiciones:**
     *   Existe un `PerfilCompetencia` inicializado para el `usuarioId`.
 *   **Postcondiciones:**
-    *   Se leyeron las desviaciones históricas de `ErrorBiomecanico`.
-    *   Se detectaron los patrones recurrentes donde `esRecurrente == true` (vecesDetectadoConsecutivas > 3).
-    *   Se modificó el plan pedagógico en `RutaAprendizaje` si el alumno no ha mejorado cinemáticamente.
-    *   Se retornó el objeto `RutaAprendizaje` actualizado.
+    *   Para cada `ErrorBiomecanico` cuya cantidad de `vecesDetectadoConsecutivas` superó el umbral de 3, su atributo `esRecurrente` se modificó a `true`.
+    *   Los atributos de la entidad `RutaAprendizaje` asociada al perfil del usuario se modificaron de acuerdo a la nueva estrategia didáctica.
 
 ---
 
