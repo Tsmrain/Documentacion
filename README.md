@@ -185,7 +185,7 @@ El objeto de este estudio es el modelado y diseño de una arquitectura de softwa
 
 ### **1.1.4 Alcance**
 El proyecto OpenBJJ se delimita bajo los siguientes criterios:
-- **Alcance Técnico:** Extracción de landmarks corporales en 3D en el lado del cliente (navegador web) a través de MediaPipe y TensorFlow.js, eliminando la transmisión del video original a servidores externos de terceros. La persistencia de datos maestros, perfiles de competencia e indexación semántica/vectorial del motor RAG se gestionan de forma centralizada en el servidor principal (laptop del investigador), interactuando el cliente con el backend central mediante una API HTTPS. Esto elimina el uso de procesamiento vectorial o almacenamiento IndexedDB en el dispositivo cliente, garantizando la ligereza de la PWA.
+- **Alcance Técnico:** Extracción de landmarks corporales en 3D en el lado del cliente (navegador web) a través de MediaPipe y TensorFlow.js, eliminando la transmisión del video original a servidores externos de terceros. La persistencia de datos maestros, perfiles de competencia e indexación semántica/vectorial del motor RAG se gestionan de forma centralizada en el Servidor Local, interactuando el cliente con el backend central mediante una API HTTPS. Esto elimina el uso de procesamiento vectorial o almacenamiento IndexedDB en el dispositivo cliente, garantizando la ligereza de la PWA.
 - **Alcance de Dominio:** Cobertura de técnicas correspondientes a todos los niveles de graduación de Brazilian Jiu-Jitsu (cinturones Blanco, Azul, Morado, Marrón y Negro), con capacidad de extensión a otras disciplinas de artes marciales a través del mecanismo de ingesta dinámica de fuentes de conocimiento (Open-Domain).
 - **Alcance Metodológico:** Modelado lógico, diseño orientado a objetos y especificación arquitectónica del Proceso Unificado (UP) hasta la fase de Elaboración inclusive, y la aplicación de los patrones GRASP de Craig Larman (2ª Edición).
 - **Alcance de Despliegue:** Aplicación Web Progresiva (PWA) responsiva compatible con dispositivos móviles y ordenadores de escritorio mediante navegadores modernos con soporte WebGL.
@@ -257,9 +257,9 @@ La aplicación web inteligente proporciona los siguientes servicios clave como e
 
 ## **3.1 Conceptos y definiciones**
 - **Inteligencia Artificial Generativa Multimodal:** Modelos fundacionales entrenados con múltiples modalidades de datos (texto, audio, imagen, video) capaces de razonar contextualmente sobre la semántica de una secuencia visual, detectando acciones y posturas en lenguaje natural.
-- **Arquitectura Cliente-Ligero (Client-Side Light Architecture):** Patrón de despliegue donde la carga computacional biomecánica se delega al cliente web mediante WebAssembly y WebGL, mientras que el almacenamiento vectorial, indexación semántica y la persistencia de datos maestros se centralizan en el nodo servidor local (laptop del investigador) accesible vía API.
+- **Arquitectura Cliente-Ligero (Client-Side Light Architecture):** Patrón de despliegue donde la carga computacional biomecánica se delega al cliente web mediante WebAssembly y WebGL, mientras que el almacenamiento vectorial, indexación semántica y la persistencia de datos maestros se centralizan en el Nodo Servidor Local accesible vía API.
 - **RAG Centralizado y Grounding:** Arquitectura que optimiza la generación de respuestas de un LLM al recuperar fragmentos de texto relevantes de documentos externos validados por similitud semántica en tiempo de ejecución desde el servidor principal.
-- **RAG Vivo (Dynamic Knowledge Ingestion):** Mecanismo de ingesta que asimila nuevos manuales y videos sin requerir reentrenamiento del modelo (Zero-Shot Learning). La adición de un PDF técnico actualiza inmediatamente el corpus indexado vectorialmente en la base de datos centralizada del servidor principal, quedando disponible para contrastar cinemáticas en la próxima inferencia.
+- **RAG Vivo (Dynamic Knowledge Ingestion y Aprendizaje Colectivo):** Mecanismo de ingesta que asimila nuevos manuales, videos y técnicas desconocidas sin requerir reentrenamiento del modelo (Zero-Shot Learning). Si un Practicante sube un video ejecutando una técnica no registrada en el sistema (ej. "Técnica D"), la API de Gemini Vision en el Servidor Local analiza el video para generar una descripción semántica y biomecánica detallada de sus movimientos, creando automáticamente una nueva entidad `Tecnica` en la base de datos centralizada e indexándola en la base de datos vectorial (Vector DB). Gracias a este descubrimiento autónomo y aprendizaje colectivo, cuando cualquier otro Practicante suba un video de la "Técnica D" posteriormente, el sistema ya la conocerá y podrá evaluarla contra la descripción semántica previamente indexada.
 - **Embeddings Vectoriales:** Vectores matemáticos densos generados por redes neuronales (como BERT o MobileBERT) que encapsulan el significado semántico de fragmentos de texto dentro de un espacio de alta dimensionalidad.
 - **Biomecánica Computacional:** Disciplina que aplica principios mecánicos a la biología y estructura de los seres vivos mediante análisis numérico computerizado.
 - **Estimación de Pose Monocular:** Algoritmo que reconstruye la topología del esqueleto humano en 3D (33 landmarks) a partir de una única transmisión de video en 2D en color (RGB), sin recurrir a sensores de profundidad físicos ni marcadores reflectivos.
@@ -283,15 +283,15 @@ El siguiente cuadro analiza comparativamente las soluciones respecto a la propue
 | **Seguridad y Privacidad** | Media (Datos en nube) | Alta (No graba) | Baja (Video enviado a servidores) | Alta (Procesamiento local client-side) |
 | **Costo Operativo de GPU** | Alto | Nulo | Alto (Servidores en la nube) | Nulo para la nube (Carga cinemática en cliente y procesamiento RAG optimizado en servidor local) |
 | **Autodetección Multimodal** | No (Selección manual) | No | No (Selección manual) | Sí (Detección por Gemini Vision) |
-| **Open-Domain (Sin prompts fijos)**| No | No | No (Hardcoded) | Sí (Dynamic Prompt Builder) |
+| **Open-Domain (Sin prompts fijos)** | No | No | No (Hardcoded) | Sí (Dynamic Prompt Builder) |
 
 ## **3.3 Modelos y teorías relevantes**
 - **Proceso Unificado (UP):** Metodología iterativa e incremental guiada por casos de uso y centrada en la arquitectura lógicamente consistente. Permite mitigar los riesgos principales (técnicos y de rendimiento) en las primeras fases del desarrollo.
 - **Patrones GRASP (General Responsibility Assignment Software Patterns) de Larman:** Colección de principios de diseño estructurados (Experto, Creador, Controlador, Bajo Acoplamiento, Alta Cohesión, Fabricación Pura, Polimorfismo, Variaciones Protegidas) para guiar la asignación sistemática de responsabilidades en la orientación a objetos.
 - **Scrum adaptado:** Marco de trabajo ágil iterativo modificado para integrar los entregables de modelado de software universitarios de manera adaptada al ritmo de iteraciones académicas.
 
-- **Privacidad Controlada de Datos:** Al procesarse el video localmente mediante MediaPipe, el video original no se expone a servidores externos públicos. Los metadatos cinemáticos y de perfil se transmiten de forma segura y controlada al servidor del investigador (laptop central), manteniéndose alejados de nubes públicas de terceros.
-- **Soberanía de Infraestructura:** El uso de un servidor central local (la laptop del investigador) garantiza la soberanía de los datos maestros y vectoriales de la academia, evitando depender de APIs y servicios de pago comerciales para la persistencia vectorial.
+- **Privacidad Controlada de Datos:** Al procesarse el video localmente mediante MediaPipe, el video original no se expone a servidores externos públicos. Los metadatos cinemáticos y de perfil se transmiten de forma segura y controlada al Servidor Local, manteniéndose alejados de nubes públicas de terceros.
+- **Soberanía de Infraestructura:** El uso de un Servidor Local garantiza la soberanía de los datos maestros y vectoriales de la academia, evitando depender de APIs y servicios de pago comerciales para la persistencia vectorial.
 - **Inferencia en Dominio Abierto (Zero-Shot RAG):** Se pueden asimilar nuevas artes marciales inyectando manuales directamente en la base de datos centralizada del servidor. El prompt builder dinámico nutre al LLM con este contexto semántico instantáneamente, sin requerir reentrenamiento del modelo.
 
 ## **3.6 Limitaciones**
@@ -321,7 +321,7 @@ El sistema OpenBJJ es una aplicación web inteligente que actúa como tutor depo
 - **PWA:** Aplicación Web Progresiva (Progressive Web App).
 - **LLM:** Modelo de Lenguaje de Gran Escala (Large Language Model).
 - **WebGL:** Librería gráfica para la renderización acelerada por GPU en navegadores web.
-- **Base de Datos Centralizada:** Repositorio vectorial y de datos maestros alojado en el servidor principal del investigador (laptop) para almacenar el corpus de grounding y los metadatos.
+- **Base de Datos Centralizada:** Repositorio vectorial y de datos maestros alojado en el Servidor Local para almacenar el corpus de grounding y los metadatos.
 
 ### **4.1.4 Referencias**
 1. **IEEE Std 830-1998:** Prácticas recomendadas por IEEE para especificaciones de requisitos de software.
@@ -334,7 +334,7 @@ Las secciones subsecuentes detallan la perspectiva del producto en términos arq
 ## **4.2 Descripción General**
 
 ### **4.2.1 Perspectiva del Producto**
-OpenBJJ opera bajo una topología de arquitectura híbrida cliente-servidor. El procesamiento de fotogramas y cálculo de landmarks 3D ocurre localmente en el dispositivo cliente, mientras que la base de datos vectorial de grounding, perfiles e indexación semántica residen de forma centralizada en el servidor principal (la laptop del investigador).
+OpenBJJ opera bajo una topología de arquitectura híbrida cliente-servidor. El procesamiento de fotogramas y cálculo de landmarks 3D ocurre localmente en el dispositivo cliente, mientras que la base de datos vectorial de grounding, perfiles e indexación semántica residen de forma centralizada en el Servidor Local.
 
 ### **4.2.2 Funciones del Producto**
 - **Autodetección Multimodal de Técnicas:** Clasificación analítica del video para detectar la disciplina y movimiento ejecutado.
@@ -347,9 +347,9 @@ El sistema define dos actores formales:
 1. **Practicante (Alumno):** Usuario atleta que sube videos, registra sus datos antropométricos (altura/peso) en la app y sigue las recomendaciones pedagógicas adaptativas.
 2. **Instructor:** Director técnico y pedagógico que sube manuales oficiales y supervisa el progreso general de los alumnos.
 
-Al operar bajo una arquitectura cliente-servidor centralizada en la laptop del investigador, no se requiere la presencia de un Administrador humano local, delegando las tareas de calibración de almacenamiento e integridad a procesos automatizados del sistema.
+Al operar bajo una arquitectura cliente-servidor centralizada en el Servidor Local, no se requiere la presencia de un Administrador humano local, delegando las tareas de calibración de almacenamiento e integridad a procesos automatizados del sistema.
 
-**Gestión de Acceso y Perfiles:** La plataforma autentica y gestiona los perfiles de usuario de forma centralizada en la base de datos del servidor principal (laptop), donde se consolidan las credenciales y configuraciones de perfiles de Practicantes e Instructores.
+**Gestión de Acceso y Perfiles:** La plataforma autentica y gestiona los perfiles de usuario de forma centralizada en la base de datos del Servidor Local, donde se consolidan las credenciales y configuraciones de perfiles de Practicantes e Instructores.
 
 ### **4.2.4 Restricciones**
 - La API de MediaPipe client-side exige soporte WebGL activo en el navegador para acelerar el procesamiento de fotogramas.
@@ -358,7 +358,7 @@ Al operar bajo una arquitectura cliente-servidor centralizada en la laptop del i
 
 **Gestión de Riesgos del Proyecto (Risk List):**
 Siguiendo las directrices del UP, se identifican y priorizan los riesgos técnicos críticos que restringen el diseño y desarrollo:
-- **R-01 (Riesgo Técnico - Carga de Memoria y CPU en el Cliente):** El análisis biomecánico continuo en el navegador mediante MediaPipe puede causar congelamiento de la pestaña o fatiga de la CPU en dispositivos móviles de gama media/baja si los videos son extensos.
+- **R-01 (Riesgo Técnico - Carga de Memoria y CPU en el Cliente):** El análisis biomecánico continuo en el navegador mediante MediaPipe puede causar congelamiento de la pestaña o fatiga de la CPU en dispositivos móviles de gama media/baja si los videos son extensos. Para mitigar esto, se aplica una restricción de tiempo máximo de duración de 45 segundos al video que el practicante graba o sube para su análisis.
   - *Mitigación:* Se implementa un límite estricto de duración de video a 45 segundos en el cliente y se realiza un submuestreo de fotogramas clave en lugar de procesar los 30 fps continuos.
 - **R-02 (Riesgo Técnico - Alucinaciones y Desviación del LLM):** El modelo de lenguaje generativo (Gemini) puede inventar detalles biomecánicos erróneos o alucinar técnicas no presentes en el Jiu-Jitsu.
   - *Mitigación:* Se implementa un prompt de grounding rígido con inyección RAG de manuales validados (calidad de datos) y se restringe la respuesta a un esquema JSON estricto mediante la configuración de la API de Gemini.
@@ -368,22 +368,22 @@ Siguiendo las directrices del UP, se identifican y priorizan los riesgos técnic
   - *Mitigación:* Se implementa un temporizador de cuenta regresiva (ej. 5 o 10 segundos) visible y con alertas sonoras previo al inicio de la captura de video, permitiendo al practicante colocarse en posición antes de iniciar la estimación de landmarks.
 
 ### **4.2.5 Suposiciones y Dependencias**
-El cliente requiere conectividad a internet para interactuar con el backend de inferencia Gemini API y para resolver la redirección de videos de YouTube, además de conexión por red local con el servidor principal.
+El cliente requiere conectividad por red local con el Servidor Local. Toda petición de inferencia con Gemini API (visión multimodal y generación de texto) y la interacción con la base de datos vectorial se enrutan obligatoriamente a través del API Gateway del Servidor Local, el cual actúa como intermediario seguro ante la API externa de Gemini. Se requiere conexión a internet en el Servidor Local para comunicarse con la API de Gemini y en el cliente para resolver la redirección de videos de YouTube.
 
 ## **4.3 Requisitos Específicos**
 
 ### **4.3.1 Interfaces Externas**
 - **Interfaz de Usuario (UI):** Responsiva, con diseño glassmorphic de alta visibilidad, con interfaz optimizada para iniciar la captura mediante un temporizador simple.
 - **Interfaz de Hardware:** Cámara integrada (móvil o laptop) y GPU compatible con WebGL.
-- **Interfaz de Software:** SDK de Google Gemini, API REST del servidor central (laptop del investigador).
+- **Interfaz de Software:** SDK de Google Gemini, API REST del Servidor Local.
 - **Interfaz de Comunicaciones:** Protocolo HTTPS/REST para el envío de payloads resumen de landmarks y comunicación de datos maestros con el servidor central.
 
 ### **4.3.2 Requisitos Funcionales**
-- **RF01: Autodetección Multimodal de la técnica/deporte:** El sistema debe procesar el archivo de video y, utilizando capacidades multimodales de la API de Gemini, detectar la técnica y disciplina realizada sin intervención manual del usuario.
+- **RF01: Autodetección Multimodal de la técnica/deporte:** El sistema debe procesar el archivo de video y, utilizando capacidades multimodales de la API de Gemini, detectar la técnica y disciplina realizada sin intervención manual del usuario. El video grabado o subido por el practicante para este análisis biomecánico tiene una restricción de tiempo máximo de duración de 45 segundos.
 - **RF02: Extracción de Landmarks 3D y cálculo cinemático local:** El sistema debe procesar localmente el video en el navegador mediante MediaPipe, extrayendo los 33 landmarks corporales y derivando ángulos, velocidad y aceleración de articulaciones en WebGL.
-- **RF03: Ingesta y vectorización de fuentes externas (RAG Vivo Centralizado):** El sistema debe permitir a los usuarios enviar archivos PDF y transcripciones de YouTube hacia la API del servidor central (laptop). El servidor procesará el texto, generará los embeddings vectoriales y los persistirá en la base de datos vectorial centralizada. Si el material describe una técnica nueva y es validado por la IA, el contexto RAG se actualizará inmediatamente en el servidor para todas las futuras inferencias de la comunidad.
+- **RF03: Ingesta y vectorización de fuentes externas (RAG Vivo Centralizado):** El sistema debe permitir a los usuarios enviar archivos PDF y transcripciones de YouTube hacia la API del Servidor Local. El servidor procesará el texto, generará los embeddings vectoriales y los persistirá en la base de datos vectorial centralizada. Si el material describe una técnica nueva y es validado por la IA, el contexto RAG se actualizará inmediatamente en el servidor para todas las futuras inferencias de la comunidad.
 - **RF04: Motor de Tutoría Adaptativa:** El sistema debe contrastar la cinemática del video analizado con la verdad de grounding vectorial. Si detecta desviaciones reiteradas de forma sistemática en el historial, debe alterar la estrategia didáctica.
-- **RF05: Perfil de Competencia del Usuario Centralizado:** El sistema debe mantener un perfil en la base de datos del servidor central que consolide históricamente las técnicas practicadas por el estudiante, la frecuencia de sus errores cinemáticos, la lista de videos vistos y su estrategia pedagógica activa.
+- **RF05: Perfil de Competencia del Usuario Centralizado:** El sistema debe mantener un perfil en la base de datos del Servidor Local que consolide históricamente las técnicas practicadas por el estudiante, la frecuencia de sus errores cinemáticos, el historial de intentos, los videos vistos y la efectividad de dichos videos (evaluación cinemática posterior) para personalizar dinámicamente su estrategia pedagógica y ruta de aprendizaje activa.
 - **RF06: Dynamic Prompt Builder:** El sistema debe compilar en tiempo real el prompt del LLM inyectando dinámicamente las métricas biomecánicas calculadas locales y los fragmentos textuales semánticamente coincidentes del RAG centralizado, evitando prompts estáticos (hardcoded).
 - **RF07: Sistema de Recomendación de Videos de YouTube:** El sistema debe redirigir al usuario a URLs específicas de YouTube (deep link) para práctica técnica. Ante fallas recurrentes (más de 3 intentos en el mismo error), debe alternar la recomendación hacia videos alternativos o drills de aislamiento/fortalecimiento.
 
@@ -407,9 +407,9 @@ Los requisitos no funcionales se estructuran bajo el estándar de calidad FURPS+
 
 ### **4.3.4 Restricciones de Diseño**
 - El desarrollo de cliente se restringe a PWA responsiva programada sobre React y TypeScript de alta cohesión.
-- La persistencia vectorial y de datos maestros reside en una base de datos centralizada alojada en el servidor principal (la laptop del investigador), a la cual los clientes se conectan a través de una API.
-- El cliente se comunica con el servidor central mediante llamadas HTTPS API para sincronización, persistencia e ingesta de conocimiento, interactuando de forma híbrida con la API del backend y la API de Gemini.
-- No se permite el almacenamiento de video bruto; la persistencia de perfiles y resúmenes cinemáticos filtrados (payloads de 3KB) se realiza de manera centralizada en la base de datos del servidor principal a través de la API.
+- La persistencia vectorial y de datos maestros reside en una base de datos centralizada alojada en el Servidor Local, a la cual los clientes se conectan a través de una API.
+- El cliente (PWA) nunca se comunica de forma directa con la API de Gemini. Toda interacción con la API de Gemini para visión de video o generación de texto pasa obligatoriamente por el API Gateway del Servidor Local, el cual enruta de forma segura estas peticiones.
+- No se permite el almacenamiento de video bruto; la persistencia de perfiles y resúmenes cinemáticos filtrados (payloads de 3KB) se realiza de manera centralizada en la base de datos del Servidor Local a través de la API.
 
 
 ### **4.3.5 Atributos del Sistema de Software**
@@ -623,7 +623,7 @@ flowchart TD
     *   **Instructor:** Desea que la app actúe como un validador de los patrones biomecánicos del dojo.
     *   **API Gemini:** Requiere datos depurados locales para estructurar la respuesta en JSON.
 *   **Precondiciones:**
-    *   Soporte WebGL activo y cámara/acceso a disco funcional.
+    *   Soporte WebGL activo, cámara/acceso a disco funcional, y el video grabado o subido para su análisis debe tener un tiempo máximo de duración de 45 segundos.
 *   **Garantías de Éxito (Postcondiciones):**
     *   Landmarks 3D extraídos en cliente, técnica clasificada automáticamente, RAG consultado, prompt dinámico estructurado, evaluación devuelta y persistida localmente.
 *   **Escenario Principal de Éxito (Flujo Básico):**
@@ -637,7 +637,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    subgraph "Capas del Servidor Central (Laptop)"
+    subgraph "Capas del Servidor Central (Servidor Local)"
         API[Express API Gateway]
         VDB[CentralVectorDBAdapter]
         DB[(Base de Datos Vectorial)]
@@ -666,6 +666,11 @@ flowchart TD
     *   *6a. Gemini no identifica la técnica:*
         1. Gemini devuelve "Técnica Desconocida / Estilo Libre".
         2. El sistema conmuta a un prompt de evaluación basado en principios universales de balance, postura y palanca.
+    *   *6b. La técnica detectada no está registrada en el sistema (Descubrimiento Zero-Shot / Técnica D):*
+        1. El sistema identifica que la técnica analizada es desconocida (ej. "Técnica D").
+        2. Gemini Vision en el Servidor Local analiza detalladamente el video para generar una descripción semántica y biomecánica formal (ángulos, fases y posturas de la técnica).
+        3. El sistema crea automáticamente una nueva entidad `Tecnica` en la base de datos relacional y genera los embeddings vectoriales de su descripción para indexarla de inmediato en el Vector DB.
+        4. Gracias a este aprendizaje colectivo, si mañana el Practicante G (o cualquier otro usuario) carga un video ejecutando la "Técnica D", el sistema la reconocerá en el paso 6 y podrá evaluarla con el RAG utilizando el registro recién creado.
     *   *9a. Error de conexión de red:*
         1. El envío del prompt al LLM falla.
         2. El sistema almacena localmente el resumen biomecánico numérico y agenda la inferencia diferida para cuando se restablezca la conexión.
@@ -675,10 +680,10 @@ flowchart TD
 ##### **Caso de Uso CU02: Ingestar Nueva Fuente de Conocimiento (RAG)**
 **Actor Principal:** Practicante.
 **Intereses de las Partes Involucradas:**
-*   **Practicante:** Desea aportar manuales o videos técnicos para enriquecer el motor de grounding de la IA, sin necesidad de esperar aprobación humana manual.
+*   **Practicante:** Desea aportar material de estudio propio o de la comunidad (PDFs, manuales técnicos o videos explicativos) para enriquecer el motor de grounding de la IA, sin necesidad de esperar aprobación humana manual. El Practicante tiene la facultad de subir este contenido, pero el sistema actúa como filtro autónomo: Gemini valida de forma automática si el contenido pertenece estrictamente al dominio del Brazilian Jiu-Jitsu. Si es válido, se indexa para toda la comunidad; si no, se rechaza.
 *   **Sistema/IA:** Requiere evaluar de manera autónoma si el material pertenece al dominio deportivo del Jiu-Jitsu, y de ser así, fragmentarlo, vectorizarlo y persistirlo en la base de datos centralizada para habilitar el motor RAG de inmediato a toda la comunidad.
 **Precondiciones:**
-*   El usuario se encuentra conectado a internet y tiene acceso mediante red local/API al servidor principal del investigador (laptop).
+*   El usuario se encuentra conectado a internet y tiene acceso mediante red local/API al Servidor Local.
 *   El archivo PDF o la URL de YouTube están en un formato legible.
 **Garantías de Éxito (Postcondiciones):**
 *   Si la IA clasifica positivamente la pertinencia, se crea una instancia de `FuenteConocimiento` con el estado "Aceptado", persistiendo sus chunks y embeddings en la base de datos centralizada.
@@ -716,7 +721,7 @@ flowchart TD
 **Intereses de las Partes Involucradas:**
 *   **Practicante:** Desea comprender su evolución técnica a lo largo del tiempo y recibir orientaciones pedagógicas personalizadas que aborden sus errores recurrentes de forma específica.
 *   **Instructor:** Desea que el sistema identifique patrones de fallo persistentes en sus alumnos para poder intervenir de manera focalizada durante las sesiones presenciales.
-*   **Sistema/IA:** Requiere acceder al historial completo de `ErrorBiomecanico` y `PerfilCompetencia` para determinar si la estrategia pedagógica actual es efectiva o debe conmutarse.
+*   **Sistema/IA:** Requiere acceder al historial completo de `ErrorBiomecanico` y `PerfilCompetencia` (que rastrea el historial de intentos, videos vistos y la efectividad de las recomendaciones de video) para determinar si la estrategia pedagógica actual es efectiva o debe conmutarse.
 **Precondiciones:**
 *   El Practicante ha realizado al menos una sesión de análisis biomecánico (CU01) cuyos resultados están persistidos en la base de datos centralizada.
 *   Existe una instancia de `PerfilCompetencia` inicializada para el usuario.
@@ -731,7 +736,7 @@ flowchart TD
 4.  El Sistema procesa la frecuencia y consecutividad de las desviaciones detectadas en análisis previos.
 5.  El Sistema identifica los errores recurrentes donde `vecesDetectadoConsecutivas > 3` (ej. ángulo de codo incorrecto persistente en guardia cerrada).
 6.  El Sistema evalúa si la estrategia pedagógica actual ha producido mejoría cinemática comparando métricas de las últimas tres sesiones.
-7.  Si no hay mejoría, el Sistema activa el cambio de estrategia instruccional: conmuta de recomendaciones de videos técnicos estándar a drills de fortalecimiento muscular o videos con enfoque pedagógico alternativo.
+7.  Si no hay mejoría cinemática (el practicante vio el video sugerido, volvió a grabar la técnica y el error biomecánico persiste), el Sistema activa el cambio de estrategia instruccional: es lo suficientemente inteligente para cambiar la estrategia pedagógica, sugiriendo un video de YouTube alternativo (que muestre la técnica desde otro ángulo, de otra academia, o en cámara lenta) o bien un drill físico de aislamiento diseñado para corregir la biomecánica de la articulación afectada.
 8.  El Sistema compila un reporte visual de evolución con gráficos de progreso por articulación y técnica.
 9.  El Sistema despliega la ruta de aprendizaje personalizada, incluyendo los enlaces de YouTube actualizados y los drills anatómicos recomendados.
 **Extensiones (Flujos Alternativos):**
@@ -794,7 +799,7 @@ flowchart TD
     2.  El `AdaptationController` busca en la base de datos centralizada videos instructivos para la técnica y el error específico.
     3.  El controlador contrasta los videos disponibles contra el `HistorialVisualizacion` del usuario y su recurrencia de fallos.
     4.  Si el usuario ya vio el video técnico estándar pero ha fallado más de 3 veces consecutivas en la misma articulación, el sistema marca el video como "Visto sin mejora".
-    5.  El sistema conmuta de estrategia pedagógica y recomienda un video alternativo (ej. video explicativo a cámara lenta o drill específico de aislamiento muscular).
+    5.  El sistema detecta mediante el PerfilCompetencia que no hubo mejora cinemática tras ver el video anterior; conmuta de estrategia pedagógica y recomienda un video de YouTube alternativo (por ejemplo, con otro ángulo de cámara, de una academia diferente, o reproducido a cámara lenta) o bien un drill físico de aislamiento diseñado para corregir la biomecánica de la articulación afectada.
     6.  El sistema muestra la tarjeta de YouTube con redirección directa (deep link).
     7.  El Practicante hace clic en el enlace, abriendo YouTube externamente.
     8.  El Practicante confirma su visualización y la app registra el consumo en su historial.
@@ -981,7 +986,7 @@ sequenceDiagram
     participant Sistema as Sistema (Caja Negra)
     
     Practicante->>Sistema: ingestarFuenteConocimiento(archivoBlob, metadata)
-    Note over Sistema: 1. Validación de pertinencia de Jiu-Jitsu via Gemini API<br/>2. Envío a API del servidor central (laptop)<br/>3. Segmentación y cálculo de embeddings en servidor<br/>4. Almacenamiento en base de datos vectorial centralizada
+    Note over Sistema: 1. Validación de pertinencia de Jiu-Jitsu via Gemini API<br/>2. Envío a API del Servidor Local<br/>3. Segmentación y cálculo de embeddings en Servidor Local<br/>4. Almacenamiento en base de datos vectorial centralizada
     Sistema-->>Practicante: confirmarIngestaExitosa(fuenteId, totalChunks)
 ```
 
@@ -1050,7 +1055,7 @@ sequenceDiagram
 *   **Operación:** `ingestarFuenteConocimiento(archivo: Blob, metadata: Metadata): void`
 *   **Referencias Cruzadas:** Caso de Uso CU02.
 *   **Precondiciones:**
-    *   El usuario se encuentra conectado a internet y tiene comunicación activa con la API del servidor central (laptop).
+    *   El usuario se encuentra conectado a internet y tiene comunicación activa con la API del Servidor Local.
 *   **Postcondiciones:**
     *   Si el análisis de pertinencia de IA clasifica la fuente como Jiu-Jitsu (estado "Aceptado"):
         *   Se creó una instancia `fc` de `FuenteConocimiento` (o de sus subclases `ManualPDF` o `VideoYouTube`).
@@ -1129,7 +1134,7 @@ La asignación de responsabilidades de las capas lógicas se detalla a continuac
 | :--- | :--- | :--- |
 | **Presentación** | Capturar los eventos del usuario, renderizar el reproductor de video con el esqueleto 3D superpuesto y gestionar los botones táctiles y el temporizador inicial. | `HistoryView`, `PoseAnimator`, `DojoDashboard` |
 | **Dominio** | Coordinar los flujos del caso de uso, invocar las operaciones cinemáticas, evaluar la recurrencia de errores y decidir el plan de adaptación pedagógica. | `SesionEntrenamientoController`, `RetrievalAugmentedController`, `AdaptationController` |
-| **Servicios Técnicos**| Proveer adaptadores especializados de bajo nivel que aíslan las APIs externas del motor del navegador. | `MediaPipePoseAdapter`, `GeminiServiceAdapter`, `CentralVectorDBAdapter`, `DynamicPromptBuilder` |
+| **Servicios Técnicos** | Proveer adaptadores especializados de bajo nivel que aíslan las APIs externas del motor del navegador. | `MediaPipePoseAdapter`, `GeminiServiceAdapter`, `CentralVectorDBAdapter`, `DynamicPromptBuilder` |
 
 ---
 
@@ -1154,6 +1159,8 @@ sequenceDiagram
     participant ADC as AdaptationController
     participant VDB as CentralVectorDBAdapter
     participant TPB as DynamicPromptBuilder
+    participant API as API Gateway (Servidor Local)
+    participant Gemini as Gemini API (Google Cloud)
     
     Practicante->>UI: iniciarCapturaConTemporizador()
     Note over UI: Cuenta regresiva de 5 segundos
@@ -1164,23 +1171,30 @@ sequenceDiagram
     MPA-->>SEC: landmarks3DVector
     SEC->>SEC: calcularMetricasLocales(landmarks3DVector)
     
-    Note over SEC,GSA: Autodetección Multimodal de la técnica (Gemini SDK)
+    Note over SEC,GSA: Autodetección Multimodal de la técnica (Vía API Gateway)
     SEC->>GSA: clasificarTecnicaVideo(keyframesSummary)
+    GSA->>API: POST /api/classify (keyframesSummary)
+    API->>Gemini: Inferencia Multimodal (Video Keyframes)
+    Gemini-->>API: Respuesta de Clasificación
+    API-->>GSA: tecnicaId, disciplina
     GSA-->>SEC: tecnicaId, disciplina
     
     Note over SEC,RAC: Consulta RAG centralizada (CentralVectorDBAdapter)
     SEC->>RAC: obtenerGrounding(tecnicaId, metricasCalculadas)
     RAC->>VDB: buscarSimilitud(tecnicaId, metricasCalculadas)
     VDB-->>RAC: chunksAceptadosText
-
     
     Note over RAC,TPB: Ensamblado de Prompt Dinámico (Cero Prompts Fijos)
     RAC->>TPB: compilarPrompt(metricasCalculadas, chunksAceptadosText)
     TPB-->>RAC: promptEnsambladoJSON
     RAC-->>SEC: promptEnsambladoJSON
     
-    Note over SEC,GSA: Inferencia y Diagnóstico final de IA
+    Note over SEC,GSA: Inferencia y Diagnóstico final de IA (Vía API Gateway)
     SEC->>GSA: evaluarMovimiento(promptEnsambladoJSON)
+    GSA->>API: POST /api/evaluate (promptEnsambladoJSON)
+    API->>Gemini: Inferencia de Texto (Prompt Grounding)
+    Gemini-->>API: Respuesta de Evaluación
+    API-->>GSA: reporteEvaluacionJSON
     GSA-->>SEC: reporteEvaluacionJSON
     
     Note over SEC,ADC: Adaptabilidad de la Tutoría Pedagógica (fallos > 3)
@@ -1208,7 +1222,7 @@ La asignación de responsabilidades del diseño dinámico expuesto se fundamenta
 | **Experto en Información** | `AdaptationController` | Posee el acceso directo a las entidades de `PerfilCompetencia` e `HistorialVisualizacion`, resultando idóneo para estimar los fallos recurrentes y readaptar la ruta de estudio. |
 | **Fabricación Pura** | `MediaPipePoseAdapter`, `DynamicPromptBuilder` | Clases construidas artificialmente para aislar al dominio de detalles de bajo nivel (cálculo de pose en WebAssembly y parseo del prompt de Gemini) maximizando la cohesión. |
 | **Bajo Acoplamiento** | Inyección de interfaces (`IPoseEstimator`, `IVectorStore`) | Los controladores de dominio interactúan con interfaces abstractas y no con implementaciones concretas, blindando el sistema ante cambios tecnológicos de las APIs. |
-| **Variaciones Protegidas** | `GeminiServiceAdapter` | Protege al núcleo de dominio de las variaciones de la API externa del modelo multimodal, encapsulando las claves de desarrollo y serialización JSON. |
+| **Variaciones Protegidas** | `GeminiServiceAdapter` | Protege al núcleo de dominio de las variaciones de la API externa de Gemini, encapsulando las peticiones serializadas en formato JSON que se envían de forma segura a través del API Gateway del Servidor Local. |
 
 ---
 
@@ -1354,7 +1368,7 @@ classDiagram
 
 ---
 
-El despliegue del sistema sigue un modelo cliente-servidor centralizado híbrido. El procesamiento de video y cálculo cinemático 3D se ejecutan localmente en el dispositivo cliente para optimizar la latencia, mientras que la base de datos vectorial y los datos maestros se almacenan de manera centralizada en el servidor principal (la laptop del investigador), a la cual los clientes acceden mediante una API segura.
+El despliegue del sistema sigue un modelo cliente-servidor centralizado híbrido. El procesamiento de video y cálculo cinemático 3D se ejecutan localmente en el dispositivo cliente para optimizar la latencia, mientras que la base de datos vectorial y los datos maestros se almacenan de manera centralizada en el Servidor Local, al cual los clientes acceden mediante una API segura.
 
 <a id="figura-10"></a>
 **Figura 10**  
@@ -1369,7 +1383,7 @@ flowchart TD
         LS[localStorage - Token de Sesión JWT]
     end
     
-    subgraph ServerNode ["Nodo Servidor (Laptop del Investigador)"]
+    subgraph ServerNode ["Nodo Servidor (Servidor Local)"]
         direction TB
         API[Express API Gateway]
         EmbeddingEngine[Transformers.js Web Service]
@@ -1384,16 +1398,15 @@ flowchart TD
     App --> Engine3D
     App --> LS
     
-    App -- "HTTPS / API (Datos de Sesión / Ingesta)" --> API
+    App -- "HTTPS / API (Datos de Sesión / Inferencia / Ingesta)" --> API
     API --> EmbeddingEngine
     API --> CentralDB
     
-    App -- "HTTPS / JSON (Resumen Cinemático 3KB)" --> Gemini
-    API -- "HTTPS (Filtro de Pertinencia)" --> Gemini
+    API -- "HTTPS (Peticiones de Inferencia y Filtros Gemini)" --> Gemini
 ```
 
 > [!IMPORTANT]
-> **Nota de Privacidad Controlada:** El archivo de video original en formato bruto permanece local en el dispositivo del cliente. Hacia el servidor central del investigador viajan únicamente los metadatos cinemáticos y perfiles procesados de forma segura, evitando la exposición de información en nubes públicas comerciales de terceros.
+> **Nota de Privacidad Controlada:** El archivo de video original en formato bruto permanece local en el dispositivo del cliente. Hacia el Servidor Local viajan únicamente los metadatos cinemáticos y perfiles procesados de forma segura, evitando la exposición de información en nubes públicas comerciales de terceros.
 
 ---
 
@@ -1446,3 +1459,10 @@ function recomendarVideoYouTube(
   })[0];
 }
 ```
+
+# Referencias
+
+1. IEEE Computer Society. (1998). *IEEE Std 830-1998: Recommended Practice for Software Requirements Specifications*.
+2. Larman, C. (2003). *UML and Patterns: An Introduction to Object-Oriented Analysis and Design and the Unified Process* (2nd Ed.). Prentice Hall.
+3. Google Developers. (2023). *MediaPipe Pose Landmarker: Framework for ML Pipelines*.
+4. Google Cloud. (2023). *Gemini API: Multimodal AI Platform*.
