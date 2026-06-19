@@ -358,7 +358,7 @@ Al operar bajo una arquitectura cliente-servidor centralizada en el Servidor Loc
 
 **Gestión de Riesgos del Proyecto (Risk List):**
 Siguiendo las directrices del UP, se identifican y priorizan los riesgos técnicos críticos que restringen el diseño y desarrollo:
-- **R-01 (Riesgo Técnico - Carga de Memoria y CPU en el Cliente):** El análisis biomecánico continuo en el navegador mediante MediaPipe puede causar congelamiento de la pestaña o fatiga de la CPU en dispositivos móviles de gama media/baja si los videos son extensos. Para mitigar esto, se aplica una restricción de tiempo máximo de duración de 45 segundos al video que el practicante graba o sube para su análisis.
+- **R-01 (Riesgo Técnico - Carga de Memoria y CPU en el Cliente):** El análisis biomecánico continuo en el navegador mediante MediaPipe puede causar congelamiento de la pestaña o fatiga de la CPU en dispositivos móviles de gama media/baja si los videos son extensos. Para mitigar esto, se aplica una restricción de tiempo máximo de duración de 45 segundos al video que el practicante graba o sube para su análisis. Para mitigar esto, se aplica una restricción de tiempo máximo de duración de 45 segundos al video que el practicante graba o sube para su análisis.
   - *Mitigación:* Se implementa un límite estricto de duración de video a 45 segundos en el cliente y se realiza un submuestreo de fotogramas clave en lugar de procesar los 30 fps continuos.
 - **R-02 (Riesgo Técnico - Alucinaciones y Desviación del LLM):** El modelo de lenguaje generativo (Gemini) puede inventar detalles biomecánicos erróneos o alucinar técnicas no presentes en el Jiu-Jitsu.
   - *Mitigación:* Se implementa un prompt de grounding rígido con inyección RAG de manuales validados (calidad de datos) y se restringe la respuesta a un esquema JSON estricto mediante la configuración de la API de Gemini.
@@ -379,7 +379,7 @@ El cliente requiere conectividad por red local con el Servidor Local. Toda petic
 - **Interfaz de Comunicaciones:** Protocolo HTTPS/REST para el envío de payloads resumen de landmarks y comunicación de datos maestros con el servidor central.
 
 ### **4.3.2 Requisitos Funcionales**
-- **RF01: Autodetección Multimodal de la técnica/deporte:** El sistema debe procesar el archivo de video y, utilizando capacidades multimodales de la API de Gemini, detectar la técnica y disciplina realizada sin intervención manual del usuario. El video grabado o subido por el practicante para este análisis biomecánico tiene una restricción de tiempo máximo de duración de 45 segundos.
+- **RF01: Autodetección Multimodal de la técnica/deporte:** El sistema debe procesar el archivo de video y, utilizando capacidades multimodales de la API de Gemini, detectar la técnica y disciplina realizada sin intervención manual del usuario. El video grabado o subido por el practicante para este análisis biomecánico tiene una restricción de tiempo máximo de duración de 45 segundos. El video grabado o subido por el practicante para este análisis biomecánico tiene una restricción de tiempo máximo de duración de 45 segundos.
 - **RF02: Extracción de Landmarks 3D y cálculo cinemático local:** El sistema debe procesar localmente el video en el navegador mediante MediaPipe, extrayendo los 33 landmarks corporales y derivando ángulos, velocidad y aceleración de articulaciones en WebGL.
 - **RF03: Ingesta y vectorización de fuentes externas (RAG Vivo Centralizado):** El sistema debe permitir a los usuarios enviar archivos PDF y transcripciones de YouTube hacia la API del Servidor Local. El servidor procesará el texto, generará los embeddings vectoriales y los persistirá en la base de datos vectorial centralizada. Si el material describe una técnica nueva y es validado por la IA, el contexto RAG se actualizará inmediatamente en el servidor para todas las futuras inferencias de la comunidad.
 - **RF04: Motor de Tutoría Adaptativa:** El sistema debe contrastar la cinemática del video analizado con la verdad de grounding vectorial. Si detecta desviaciones reiteradas de forma sistemática en el historial, debe alterar la estrategia didáctica.
@@ -617,144 +617,135 @@ flowchart TD
 ---
 
 ##### **Caso de Uso CU01: Analizar Video de Combate**
-*   **Actor Principal:** Practicante.
-*   **Intereses de las Partes Involucradas:**
+*   **Actor Principal:** Practicante
+*   **Interesados y sus Intereses:**
     *   **Practicante:** Desea recibir retroalimentación cinemática rápida, precisa y objetiva de su sparring o drill sin sensores físicos invasivos sobre el tatami.
     *   **Instructor:** Desea que la app actúe como un validador de los patrones biomecánicos del dojo.
-    *   **API Gemini:** Requiere datos depurados locales para estructurar la respuesta en JSON.
+    *   **API Gemini:** Requiere datos cinemáticos depurados para estructurar la respuesta en JSON.
 *   **Precondiciones:**
-    *   Soporte WebGL activo, cámara/acceso a disco funcional, y el video grabado o subido para su análisis debe tener un tiempo máximo de duración de 45 segundos.
-*   **Garantías de Éxito (Postcondiciones):**
-    *   Landmarks 3D extraídos en cliente, técnica clasificada automáticamente, RAG consultado, prompt dinámico estructurado, evaluación devuelta y persistida localmente.
+    *   Soporte WebGL activo en el dispositivo.
+    *   Acceso a cámara o almacenamiento local concedido y funcional.
+    *   El video grabado o subido para su análisis debe tener un tiempo máximo de duración de 45 segundos.
+*   **Garantía de Éxito / Postcondiciones:**
+    *   Los landmarks 3D son extraídos de forma local en el cliente web, la técnica es clasificada automáticamente, la base de datos vectorial de grounding (RAG) en el Servidor Local es consultada, el prompt dinámico es estructurado por el backend y la evaluación cinemática en JSON es devuelta y persistida localmente.
 *   **Escenario Principal de Éxito (Flujo Básico):**
-    1.  El Practicante graba o carga un video (máx. 45 seg) de su combate o drill técnico.
+    1.  El Practicante graba o carga un video (máximo de 45 segundos de duración) de su combate o drill técnico.
     2.  El Sistema valida el límite de duración local y procesa el video mediante submuestreo de fotogramas clave.
-    3.  El `MediaPipePoseAdapter` de visión computacional extrae los landmarks 3D $(x,y,z)$ locales.
-    4.  El controlador calcula métricas cinemáticas locales (ángulos críticos, velocidad de extremidades).
-    5.  El Sistema envía un resumen visual (keyframes) a la `GeminiServiceAdapter` para clasificar la técnica del video (Autodetección Multimodal).
-    6.  La API de Gemini responde con el ID de la técnica e identificador de disciplina (ej. "Guardia Cerrada").
-    7.  El `RetrievalAugmentedController` realiza una petición HTTP a la API del servidor central, delegando en el `CentralVectorDBAdapter` la búsqueda de fragmentos semánticamente equivalentes en la base de datos vectorial centralizada para esa técnica.
-
-```mermaid
-flowchart TD
-    subgraph "Capas del Servidor Central (Servidor Local)"
-        API[Express API Gateway]
-        VDB[CentralVectorDBAdapter]
-        DB[(Base de Datos Vectorial)]
-    end
-    
-    subgraph "Capas del Cliente (PWA)"
-        SEC[SesionEntrenamientoController]
-        RAC[RetrievalAugmentedController]
-    end
-
-    SEC --> RAC
-    RAC -- "Petición HTTPS (tecnicaId)" --> API
-    API --> VDB
-    VDB --> DB
-```
-
-
-    8.  El `DynamicPromptBuilder` fusiona los fragmentos RAG con las métricas biomecánicas calculadas en un prompt JSON de contexto (cero prompts fijos).
-    9.  El prompt estructurado es enviado a la API de Gemini para la evaluación cognitiva final.
-    10. El Sistema recibe y parsea la evaluación, identificando desviaciones angulares mayores a la tolerancia fija de $\pm 15^{\circ}$ normalizada por las dimensiones antropométricas del usuario.
-    11. El Sistema guarda los resultados en el historial del `PerfilCompetencia` y despliega la línea de tiempo 3D del esqueleto con el informe de fallas y recomendaciones de YouTube.
+    3.  El `MediaPipePoseAdapter` de visión computacional extrae los landmarks 3D $(x,y,z)$ locales en el cliente.
+    4.  El controlador local calcula las métricas cinemáticas locales (ángulos críticos, velocidad de extremidades).
+    5.  El Sistema envía un resumen visual (keyframes) al API Gateway del Servidor Local, el cual realiza una llamada interna a `GeminiServiceAdapter` para clasificar la técnica del video de manera autónoma (Autodetección Multimodal).
+    6.  El Servidor Local (a través de Gemini) responde con el ID de la técnica y el identificador de la disciplina (ej. "Guardia Cerrada").
+    7.  El `RetrievalAugmentedController` del cliente realiza una petición HTTP al API Gateway del Servidor Local, delegando en el `CentralVectorDBAdapter` la búsqueda de fragmentos semánticamente equivalentes en la base de datos vectorial centralizada para esa técnica.
+    8.  El `DynamicPromptBuilder` del cliente fusiona los fragmentos RAG con las métricas biomecánicas calculadas locales en un prompt JSON de contexto.
+    9.  El prompt estructurado se envía al API Gateway del Servidor Local, el cual realiza la llamada a la API externa de Gemini para la evaluación cognitiva final.
+    10. El API Gateway del Servidor Local devuelve el reporte al cliente; el Sistema en el cliente recibe y parsea la evaluación, identificando desviaciones angulares mayores a la tolerancia fija de $\pm 15^{\circ}$ normalizada por las dimensiones antropométricas del usuario.
+    11. El Sistema guarda los resultados en el historial del `PerfilCompetencia` en el Servidor Local y despliega la línea de tiempo 3D del esqueleto con el informe de fallas y recomendaciones adaptativas de YouTube.
 *   **Extensiones (Flujos Alternativos):**
-    *   *3a. Fallo en estimación de landmarks (oclusión severa):*
-        1. MediaPipe reporta confianza media inferior a 0.5.
-        2. El sistema alerta al usuario y detiene el análisis sugiriendo mejor iluminación o encuadre.
-    *   *6a. Gemini no identifica la técnica:*
+    *   **3.a. Fallo en estimación de landmarks (oclusión severa):**
+        1. MediaPipe reporta una confianza media inferior a 0.5.
+        2. El sistema alerta al Practicante y detiene el análisis sugiriendo mejor iluminación o encuadre.
+    *   **6.a. Gemini no identifica la técnica:**
         1. Gemini devuelve "Técnica Desconocida / Estilo Libre".
         2. El sistema conmuta a un prompt de evaluación basado en principios universales de balance, postura y palanca.
-    *   *6b. La técnica detectada no está registrada en el sistema (Descubrimiento Zero-Shot / Técnica D):*
-        1. El sistema identifica que la técnica analizada es desconocida (ej. "Técnica D").
-        2. Gemini Vision en el Servidor Local analiza detalladamente el video para generar una descripción semántica y biomecánica formal (ángulos, fases y posturas de la técnica).
-        3. El sistema crea automáticamente una nueva entidad `Tecnica` en la base de datos relacional y genera los embeddings vectoriales de su descripción para indexarla de inmediato en el Vector DB.
-        4. Gracias a este aprendizaje colectivo, si mañana el Practicante G (o cualquier otro usuario) carga un video ejecutando la "Técnica D", el sistema la reconocerá en el paso 6 y podrá evaluarla con el RAG utilizando el registro recién creado.
-    *   *9a. Error de conexión de red:*
-        1. El envío del prompt al LLM falla.
-        2. El sistema almacena localmente el resumen biomecánico numérico y agenda la inferencia diferida para cuando se restablezca la conexión.
-
----
+    *   **6.b. Técnica Desconocida (Zero-Shot Discovery / Técnica D):**
+        1. El sistema identifica que la técnica analizada no está registrada en el sistema (ej. "Técnica D").
+        2. El Servidor Local (vía Gemini Vision) analiza detalladamente el video para generar una descripción semántica y biomecánica formal (ángulos, fases y posturas de la técnica).
+        3. El Servidor Local crea automáticamente una nueva entidad `Tecnica` en la base de datos relacional y genera los embeddings vectoriales de su descripción para indexarla de inmediato en el Vector DB.
+        4. Gracias a este aprendizaje colectivo, si cualquier otro Practicante (o el mismo) sube mañana un video ejecutando la "Técnica D", el sistema la reconocerá en el paso 6 y podrá evaluarla con el RAG utilizando el registro recién creado.
+    *   **9.a. Error de conexión de red:**
+        1. El envío del prompt al Servidor Local falla.
+        2. El sistema almacena localmente el resumen biomecánico numérico y programa la inferencia diferida para cuando se restablezca la conexión.
+*   **Requisitos Especiales:**
+    *   El video cargado o grabado debe tener un límite estricto de duración máxima de 45 segundos.
+    *   El cálculo biomecánico y la renderización en el reproductor 3D deben ser fluidos (tasa de refresco superior a 15 FPS en WebGL).
+*   **Lista de Variaciones de Tecnología y Datos:**
+    *   Entrada de video en formato MP4, WebM o MOV.
+    *   Inferencia de landmarks usando modelos MediaPipe Pose en WebAssembly (WASM).
+*   **Frecuencia de Ocurrencia:**
+    *   Alta (múltiples veces al día por practicante).
+*   **Problemas Abiertos:**
+    *   Optimizar la precisión de estimación z de landmarks bajo kimonos holgados.
 
 ##### **Caso de Uso CU02: Ingestar Nueva Fuente de Conocimiento (RAG)**
-**Actor Principal:** Practicante.
-**Intereses de las Partes Involucradas:**
-*   **Practicante:** Desea aportar material de estudio propio o de la comunidad (PDFs, manuales técnicos o videos explicativos) para enriquecer el motor de grounding de la IA, sin necesidad de esperar aprobación humana manual. El Practicante tiene la facultad de subir este contenido, pero el sistema actúa como filtro autónomo: Gemini valida de forma automática si el contenido pertenece estrictamente al dominio del Brazilian Jiu-Jitsu. Si es válido, se indexa para toda la comunidad; si no, se rechaza.
-*   **Sistema/IA:** Requiere evaluar de manera autónoma si el material pertenece al dominio deportivo del Jiu-Jitsu, y de ser así, fragmentarlo, vectorizarlo y persistirlo en la base de datos centralizada para habilitar el motor RAG de inmediato a toda la comunidad.
-**Precondiciones:**
-*   El usuario se encuentra conectado a internet y tiene acceso mediante red local/API al Servidor Local.
-*   El archivo PDF o la URL de YouTube están en un formato legible.
-**Garantías de Éxito (Postcondiciones):**
-*   Si la IA clasifica positivamente la pertinencia, se crea una instancia de `FuenteConocimiento` con el estado "Aceptado", persistiendo sus chunks y embeddings en la base de datos centralizada.
-*   Si la IA detecta que el contenido está fuera de dominio, se destruye la instancia temporal y no se guarda ningún dato en base de datos.
-**Escenario Principal de Éxito (Flujo Básico):**
-1.  El Practicante selecciona la opción "Ingestar Fuente de Conocimiento" en el panel de la aplicación.
-2.  El Sistema presenta las opciones de carga: archivo PDF técnico o enlace de YouTube.
-3.  El Practicante carga un archivo PDF desde su dispositivo o pega una URL de YouTube.
-4.  El Sistema valida el formato básico y accesibilidad del archivo.
-5.  El Sistema (a través de `RetrievalAugmentedController`) extrae una muestra de texto o transcripción y la envía a `GeminiServiceAdapter` con un prompt estricto de clasificación de dominio.
-6.  La API de Gemini evalúa la muestra y determina que el contenido pertenece estrictamente al dominio de Brazilian Jiu-Jitsu (estado "Aceptado").
-7.  El Sistema (en el servidor principal) segmenta la fuente en chunks de texto lógicos y genera sus correspondientes vectores de embeddings mediante el servicio centralizado.
-8.  El Sistema persiste los fragmentos y vectores en la base de datos vectorial centralizada con el estado "Aceptado", quedando disponible de forma inmediata para el motor RAG de todos los usuarios.
-9.  El Sistema confirma al Practicante que el contenido fue validado y aceptado automáticamente.
-**Extensiones (Flujos Alternativos):**
-*   **4a. El archivo no es un PDF válido o la URL de YouTube es inaccesible:**
-    1.  El Sistema detecta que el formato no es soportado o el enlace no responde.
-    2.  El Sistema muestra un mensaje de error descriptivo al usuario y retorna al paso 3.
-*   **5-6a. El motor de IA (Gemini) clasifica el contenido como Fuera de Dominio (ej. Boxeo, Cocina, etc.):**
-    1.  El Sistema detecta la clasificación negativa de la IA.
-    2.  El Sistema rechaza la ingesta, destruye cualquier instancia de la fuente en memoria y purga los datos temporales.
-    3.  El Sistema notifica al Practicante: "Contenido rechazado: El material no está relacionado con el Jiu-Jitsu".
-    4.  El caso de uso finaliza sin persistir datos en el servidor central.
-*   **7a. Fallo de red en la comunicación con el servidor central:**
-    1.  El envío de chunks o embeddings al servidor central falla por desconexión.
-    2.  El Sistema notifica al Practicante que la base de datos central no está disponible y sugiere reintentar.
-**Requisitos Especiales:**
-*   El filtro autónomo de pertinencia de la IA debe responder en menos de 5 segundos para no ralentizar la experiencia de carga del usuario.
-*   La base de datos centralizada en el servidor principal debe indexar los embeddings en tiempo real para que estén disponibles inmediatamente después de confirmada la ingesta.
-
----
+*   **Actor Principal:** Practicante
+*   **Interesados y sus Intereses:**
+    *   **Practicante:** Desea aportar material de estudio propio o de la comunidad (PDFs, manuales técnicos o videos explicativos de YouTube) para enriquecer el motor de grounding de la IA, sin necesidad de esperar aprobación humana manual. El Practicante tiene la facultad de subir este contenido, pero el sistema actúa como filtro autónomo: Gemini valida de forma automática si el contenido pertenece estrictamente al dominio del Brazilian Jiu-Jitsu. Si es válido, se indexa para toda la comunidad; si no, se rechaza sin guardar ningún dato.
+    *   **Sistema/IA:** Requiere filtrar de manera autónoma contenido basura o de otros deportes para mantener la especialización técnica de grounding del sistema.
+    *   **Comunidad de la Academia:** Se beneficia de una base de datos de conocimiento técnico adaptativa y colaborativa en tiempo real (RAG Vivo).
+*   **Precondiciones:**
+    *   El usuario se encuentra conectado a internet y tiene acceso activo por red local/API al Servidor Local.
+    *   El archivo PDF o la URL de YouTube están en un formato legible.
+*   **Garantía de Éxito / Postcondiciones:**
+    *   Si la IA clasifica positivamente la pertinencia, se crea una instancia de `FuenteConocimiento` con el estado "Aceptado", persistiendo sus chunks y embeddings en la base de datos centralizada del Servidor Local. Si es inválido, es rechazado y eliminado sin persistir ningún dato.
+*   **Escenario Principal de Éxito (Flujo Básico):**
+    1.  El Practicante selecciona la opción "Ingestar Fuente de Conocimiento" en el panel.
+    2.  El Sistema presenta las opciones de carga: archivo PDF técnico o enlace de YouTube.
+    3.  El Practicante carga un archivo PDF desde su dispositivo o pega una URL de YouTube.
+    4.  El Sistema valida el formato básico y accesibilidad del archivo.
+    5.  El Sistema (a través de `RetrievalAugmentedController`) extrae una muestra de texto o transcripción y la envía al API Gateway del Servidor Local.
+    6.  El Servidor Local (a través de Gemini Service) evalúa la muestra y determina de forma autónoma que pertenece estrictamente al dominio de Brazilian Jiu-Jitsu (estado "Aceptado").
+    7.  El Servidor Local segmenta la fuente en chunks de texto lógicos y genera sus correspondientes embeddings vectoriales.
+    8.  El Servidor Local persiste los fragmentos y vectores en la base de datos vectorial centralizada con el estado "Aceptado", quedando disponible de forma inmediata para el motor RAG de todos los usuarios.
+    9.  El Sistema en la PWA confirma al Practicante que el contenido fue validado y aceptado automáticamente.
+*   **Extensiones (Flujos Alternativos):**
+    *   **4.a. El archivo no es un PDF válido o la URL de YouTube es inaccesible:**
+        1.  El Sistema detecta la anomalía de formato.
+        2.  El Sistema muestra un mensaje de error y retorna al paso 3.
+    *   **6.a. El motor de IA (Gemini) clasifica el contenido como Fuera de Dominio (ej. Boxeo, Cocina, etc.):**
+        1.  El Servidor Local identifica la clasificación negativa de la IA.
+        2.  El Servidor Local rechaza la ingesta y destruye cualquier instancia del material en memoria volátil.
+        3.  El Sistema notifica al Practicante: "Contenido rechazado: El material no está relacionado con el Jiu-Jitsu".
+        4.  El caso de uso finaliza sin guardar ni persistir ningún dato en el Servidor Local.
+    *   **7.a. Fallo de red en la comunicación con el Servidor Local:**
+        1.  El envío de chunks o embeddings al Servidor Local falla.
+        2.  El Sistema notifica al Practicante que la base de datos central no está disponible y sugiere reintentar.
+*   **Requisitos Especiales:**
+    *   El filtro autónomo de pertinencia de la IA debe responder en menos de 5 segundos.
+    *   El Servidor Local debe indexar los embeddings en tiempo real para disponibilidad inmediata.
+*   **Lista de Variaciones de Tecnología y Datos:**
+    *   Carga de PDF a través de API multipart/form-data.
+    *   Subtítulos de YouTube recuperados mediante API de transcripción externa.
+*   **Frecuencia de Ocurrencia:**
+    *   Baja a Media (depende del dinamismo y aportes de la comunidad).
+*   **Problemas Abiertos:**
+    *   Manejo de transcripciones en idiomas diferentes al del dojo (requiere traducción en tiempo real).
 
 ##### **Caso de Uso CU03: Consultar Progreso y Recibir Tutoría Adaptativa**
-**Actor Principal:** Practicante.
-**Intereses de las Partes Involucradas:**
-*   **Practicante:** Desea comprender su evolución técnica a lo largo del tiempo y recibir orientaciones pedagógicas personalizadas que aborden sus errores recurrentes de forma específica.
-*   **Instructor:** Desea que el sistema identifique patrones de fallo persistentes en sus alumnos para poder intervenir de manera focalizada durante las sesiones presenciales.
-*   **Sistema/IA:** Requiere acceder al historial completo de `ErrorBiomecanico` y `PerfilCompetencia` (que rastrea el historial de intentos, videos vistos y la efectividad de las recomendaciones de video) para determinar si la estrategia pedagógica actual es efectiva o debe conmutarse.
-**Precondiciones:**
-*   El Practicante ha realizado al menos una sesión de análisis biomecánico (CU01) cuyos resultados están persistidos en la base de datos centralizada.
-*   Existe una instancia de `PerfilCompetencia` inicializada para el usuario.
-**Garantías de Éxito (Postcondiciones):**
-*   Se generó un reporte de evolución cinemática basado en el historial de análisis del usuario.
-*   Se evaluó la recurrencia de errores biomecánicos y, si se detectaron fallos consecutivos (> 3 veces), se modificó el plan pedagógico en `RutaAprendizaje`.
-*   Se desplegaron las recomendaciones adaptativas actualizadas (drills de fortalecimiento, videos alternativos con enfoque pedagógico distinto).
-**Escenario Principal de Éxito (Flujo Básico):**
-1.  El Practicante navega a la sección "Progreso y Ruta de Aprendizaje" desde el panel principal.
-2.  El Sistema carga el `PerfilCompetencia` del usuario desde la base de datos centralizada.
-3.  El `AdaptationController` consulta el historial de `ErrorBiomecanico` asociado al perfil del Practicante.
-4.  El Sistema procesa la frecuencia y consecutividad de las desviaciones detectadas en análisis previos.
-5.  El Sistema identifica los errores recurrentes donde `vecesDetectadoConsecutivas > 3` (ej. ángulo de codo incorrecto persistente en guardia cerrada).
-6.  El Sistema evalúa si la estrategia pedagógica actual ha producido mejoría cinemática comparando métricas de las últimas tres sesiones.
-7.  Si no hay mejoría cinemática (el practicante vio el video sugerido, volvió a grabar la técnica y el error biomecánico persiste), el Sistema activa el cambio de estrategia instruccional: es lo suficientemente inteligente para cambiar la estrategia pedagógica, sugiriendo un video de YouTube alternativo (que muestre la técnica desde otro ángulo, de otra academia, o en cámara lenta) o bien un drill físico de aislamiento diseñado para corregir la biomecánica de la articulación afectada.
-8.  El Sistema compila un reporte visual de evolución con gráficos de progreso por articulación y técnica.
-9.  El Sistema despliega la ruta de aprendizaje personalizada, incluyendo los enlaces de YouTube actualizados y los drills anatómicos recomendados.
-**Extensiones (Flujos Alternativos):**
-*   **3a. No existe historial de análisis previo:**
-    1.  El Sistema detecta que `PerfilCompetencia` no contiene entradas de `ErrorBiomecanico`.
-    2.  El Sistema muestra un mensaje indicando que aún no hay datos de progreso disponibles e invita al Practicante a realizar su primer análisis (CU01).
-*   **6a. El usuario ha mostrado mejoría cinemática en las últimas tres sesiones:**
-    1.  El Sistema determina que las métricas angulares se han acercado al rango de tolerancia.
-    2.  El Sistema mantiene la estrategia pedagógica actual y felicita al Practicante por su progreso.
-    3.  El flujo continúa al paso 8 con la visualización del reporte de evolución.
-*   **8a. Error al generar el reporte visual:**
-    1.  El Sistema falla al compilar los gráficos de progreso.
-    2.  El Sistema despliega la información en formato tabular como fallback y registra el incidente para diagnóstico.
-**Requisitos Especiales:**
-*   El cálculo de recurrencia de errores debe considerar solo análisis de la misma técnica para evitar falsos positivos entre disciplinas diferentes.
-*   La visualización del reporte debe ser responsiva y legible en pantallas móviles de al menos 320px de ancho.
-
----
+*   **Actor Principal:** Practicante
+*   **Interesados y sus Intereses:**
+    *   **Practicante:** Desea comprender su evolución técnica a lo largo del tiempo y recibir orientaciones pedagógicas personalizadas que aborden sus errores recurrentes de forma específica.
+    *   **Instructor:** Desea que el sistema identifique patrones de fallo persistentes en sus alumnos para intervenir de manera focalizada presencialmente.
+    *   **Sistema/IA:** Requiere acceder al historial completo de `ErrorBiomecanico` y `PerfilCompetencia` (que rastrea el historial de intentos, videos vistos y la efectividad de las recomendaciones de video) para determinar si la estrategia pedagógica actual es efectiva o debe conmutarse.
+*   **Precondiciones:**
+    *   El Practicante ha realizado al menos una sesión de análisis biomecánico (CU01) cuyos resultados están persistidos en la base de datos centralizada del Servidor Local.
+    *   Existe una instancia de `PerfilCompetencia` inicializada para el usuario.
+*   **Garantía de Éxito / Postcondiciones:**
+    *   Se calcula la evolución cinemática histórica del Practicante, se evalúa la recurrencia de desviaciones y se actualiza el plan pedagógico en `RutaAprendizaje`, sugiriendo drills o videos de YouTube alternativos si no se detectó mejoría cinemática.
+*   **Escenario Principal de Éxito (Flujo Básico):**
+    1.  El Practicante navega a la sección "Progreso y Ruta de Aprendizaje" en la PWA.
+    2.  El Sistema carga el `PerfilCompetencia` del usuario desde la base de datos centralizada del Servidor Local.
+    3.  El `AdaptationController` consulta el historial de `ErrorBiomecanico` y la efectividad de las tutorías pasadas asociadas al Practicante.
+    4.  El Sistema procesa la frecuencia de las desviaciones y detecta errores recurrentes donde `vecesDetectadoConsecutivas > 3`.
+    5.  El Sistema evalúa si la estrategia pedagógica actual ha producido mejoría cinemática comparando las métricas de las últimas tres sesiones.
+    6.  Si no hay mejoría cinemática (el practicante vio el video sugerido, volvió a grabar la técnica y el error biomecánico persiste), el Sistema activa el cambio de estrategia instruccional: es lo suficientemente inteligente para cambiar la estrategia pedagógica, sugiriendo un video de YouTube alternativo (que muestre la técnica desde otro ángulo, de otra academia, o en cámara lenta) o bien un drill físico de aislamiento diseñado para corregir la biomecánica de la articulación afectada.
+    7.  El Sistema actualiza la entidad `RutaAprendizaje` y genera los reportes cinemáticos gráficos.
+    8.  El Sistema despliega la ruta de aprendizaje personalizada, incluyendo los enlaces de YouTube actualizados y los drills anatómicos recomendados.
+*   **Extensiones (Flujos Alternativos):**
+    *   **3.a. No existe historial de análisis previo:**
+        1.  El Sistema detecta que `PerfilCompetencia` no contiene entradas de `ErrorBiomecanico`.
+        2.  El Sistema muestra un mensaje indicando que aún no hay datos de progreso e invita al Practicante a realizar su primer análisis (CU01).
+    *   **5.a. El usuario ha mostrado mejoría cinemática en las últimas tres sesiones:**
+        1.  El Sistema determina que las desviaciones se han reducido por debajo del umbral de $15^{\circ}$.
+        2.  El Sistema mantiene la estrategia pedagógica y felicita al Practicante.
+        3.  El flujo continúa al paso 7.
+*   **Requisitos Especiales:**
+    *   La comparación cinemática de recurrencia de errores debe aplicarse estrictamente a la misma técnica para evitar falsos positivos.
+*   **Lista de Variaciones de Tecnología y Datos:**
+    *   Visualización de datos usando SVG responsivos o gráficos basados en Chart.js.
+*   **Frecuencia de Ocurrencia:**
+    *   Alta (cada vez que el Practicante consulta su perfil en la aplicación).
+*   **Problemas Abiertos:**
+    *   Definir umbrales dinámicos de normalización para personas de complexión asimétrica.
 
 ##### **Caso de Uso CU04: Gestionar Datos Antropométricos del Usuario**
 **Actor Principal:** Practicante.
@@ -789,22 +780,36 @@ flowchart TD
 
 
 ##### **Caso de Uso CU10: Recibir Recomendación de Video de YouTube**
-*   **Actor Principal:** Practicante.
+*   **Actor Principal:** Practicante
+*   **Interesados y sus Intereses:**
+    *   **Practicante:** Desea un enlace preciso a un video de YouTube que lo guíe a corregir el error biomecánico detectado en su sparring.
+    *   **Servidor Local (IA):** Desea realizar un seguimiento de los videos consumidos por el usuario y evaluar su efectividad biomecánica en los siguientes intentos.
 *   **Precondiciones:**
-    *   Se ha ejecutado una sesión de análisis cinemático con detección de desviaciones técnicas.
-*   **Garantías de Éxito:**
-    *   El usuario recibe una recomendación de video de YouTube con redirección externa para su corrección.
-*   **Escenario Principal de Éxito:**
-    1.  El Practicante finaliza un análisis donde se identificó un `ErrorBiomecanico` crítico.
-    2.  El `AdaptationController` busca en la base de datos centralizada videos instructivos para la técnica y el error específico.
+    *   Se ha finalizado un análisis biomecánico con detección de desviaciones técnicas.
+*   **Garantía de Éxito / Postcondiciones:**
+    *   El usuario recibe una recomendación de video de YouTube (deep link) adaptada y el intento de tutoría se registra en `HistorialVisualizacion` de su `PerfilCompetencia` para su posterior evaluación cinemática.
+*   **Escenario Principal de Éxito (Flujo Básico):**
+    1.  El Practicante finaliza un análisis de video donde se identificó un `ErrorBiomecanico`.
+    2.  El `AdaptationController` busca en la base de datos centralizada del Servidor Local videos instructivos para la técnica y el error específico.
     3.  El controlador contrasta los videos disponibles contra el `HistorialVisualizacion` del usuario y su recurrencia de fallos.
     4.  Si el usuario ya vio el video técnico estándar pero ha fallado más de 3 veces consecutivas en la misma articulación, el sistema marca el video como "Visto sin mejora".
     5.  El sistema detecta mediante el PerfilCompetencia que no hubo mejora cinemática tras ver el video anterior; conmuta de estrategia pedagógica y recomienda un video de YouTube alternativo (por ejemplo, con otro ángulo de cámara, de una academia diferente, o reproducido a cámara lenta) o bien un drill físico de aislamiento diseñado para corregir la biomecánica de la articulación afectada.
     6.  El sistema muestra la tarjeta de YouTube con redirección directa (deep link).
     7.  El Practicante hace clic en el enlace, abriendo YouTube externamente.
-    8.  El Practicante confirma su visualización y la app registra el consumo en su historial.
-
----
+    8.  El Practicante confirma su visualización y la app registra el consumo en su historial en el Servidor Local.
+*   **Extensiones (Flujos Alternativos):**
+    *   **2.a. No existen videos tutoriales en el Servidor Local para esa técnica:**
+        1.  El sistema emite un aviso para realizar una búsqueda semántica de fallback en el corpus o indica que se requiere drill físico.
+    *   **8.a. El Practicante no confirma la visualización:**
+        1.  El Sistema guarda la recomendación como pendiente y se validará en la próxima sesión cinemática.
+*   **Requisitos Especiales:**
+    *   El enlace debe estar en formato universal de YouTube compatible con la app móvil.
+*   **Lista de Variaciones de Tecnología y Datos:**
+    *   Shorts de YouTube y videos estándar de YouTube de alta resolución.
+*   **Frecuencia de Ocurrencia:**
+    *   Muy Alta (en cada reporte con desviaciones biomecánicas).
+*   **Problemas Abiertos:**
+    *   Establecer la efectividad relativa de videos explicativos en cámara lenta frente a videos con diferente perspectiva.
 
 ##### **Caso de Uso CU06: Gestionar Sesiones de Entrenamiento**
 **Actor Principal:** Practicante.
