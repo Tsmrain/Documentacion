@@ -587,7 +587,7 @@ flowchart TD
     Practicante((Practicante))
     Instructor((Instructor))
     
-    subgraph Sistema OpenBJJ
+    subgraph "Sistema OpenBJJ"
         CU01(CU01: Analizar Video de Combate)
         CU02(CU02: Ingestar Nueva Fuente de Conocimiento - RAG)
         CU03(CU03: Consultar Progreso y Recibir Tutoría Adaptativa)
@@ -903,18 +903,18 @@ El sistema se estructura bajo el patrón de arquitectura lógica por capas, aisl
 
 ```mermaid
 flowchart TD
-    subgraph Capa de Presentación (React / PWA)
+    subgraph "Capa de Presentación (React / PWA)"
         UI[Componentes de Interfaz de Usuario UI]
         GLRender[WebGL Skeleton Renderer]
     end
     
-    subgraph Capa de Dominio (Controladores GRASP)
+    subgraph "Capa de Dominio (Controladores GRASP)"
         SEC[SesionEntrenamientoController]
         RAC[RetrievalAugmentedController]
         ADC[AdaptationController]
     end
     
-    subgraph Capa de Servicios Técnicos (Adapters)
+    subgraph "Capa de Servicios Técnicos (Adapters)"
         MPA[MediaPipePoseAdapter]
         GSA[GeminiServiceAdapter]
         VDB[LocalVectorDBAdapter / IndexedDB]
@@ -1172,7 +1172,7 @@ El despliegue del sistema sigue la filosofía cliente-ligero. La totalidad del p
 
 ```mermaid
 flowchart TD
-    subgraph Dispositivo Cliente (Móvil / PC - PWA)
+    subgraph "Dispositivo Cliente (Móvil / PC - PWA)"
         direction TB
         App[React PWA App Bundle]
         Engine3D[MediaPipe WASM Engine]
@@ -1181,7 +1181,7 @@ flowchart TD
         LS[localStorage - PIN Cifrado]
     end
     
-    subgraph Nube (Google Cloud Platform)
+    subgraph "Nube (Google Cloud Platform)"
         direction TB
         Gemini[Google Gemini Multimodal API]
     end
