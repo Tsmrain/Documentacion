@@ -219,6 +219,8 @@ El Proceso Unificado (UP) rige la arquitectura técnica, el modelado y la docume
 ### **1.3.2 Gestión del Proyecto (Scrum)**
 Se utiliza Scrum para organizar el esfuerzo temporal y el backlog del proyecto a través de iteraciones fijas (*Sprints*) de 3 semanas, facilitando la inspección y adaptación constante ante impedimentos técnicos o cambios de API. Los roles clave de Product Owner, Scrum Master y Development Team se definen dentro del contexto académico para la estructuración y revisión de entregables incrementales de diseño.
 
+El trabajo correspondiente al presente documento (Fases de Inicio y Elaboración) se estructuró en dos Sprints de 3 semanas. El **Sprint 1** abordó la mitigación del riesgo R-01 (viabilidad de extracción de landmarks client-side con MediaPipe). El **Sprint 2** se enfocó en el riesgo R-02 y R-03, desarrollando el diseño del motor RAG local y la integración estructurada con la API de Gemini.
+
 ---
 
 # **CAPÍTULO II: DESCRIPCIÓN DE LA ENTIDAD (CORPO & MENTE)**
@@ -435,6 +437,12 @@ El sistema debe estar disponible en modo offline para la visualización del perf
 | **ErrorBiomecanico** | `severidad` | Enumerado | `{Leve, Moderado, Crítico}` | Leve: desv. $\le 15^{\circ}$; Moderado: desv. entre $15^{\circ}$ y $30^{\circ}$; Crítico: desv. $> 30^{\circ}$ o error recurrente. |
 | **FuenteConocimiento** | `estadoValidacion` | Enumerado | `{Pendiente, Validado, Rechazado}` | Por defecto se crea en "Pendiente". Solo "Validado" pasa al RAG activo. |
 | **VideoRecomendado** | `youtubeVideoId` | Cadena | Alfanumérico ID de YouTube | Longitud exacta de 11 caracteres. Obligatorio para deep link. |
+| **Tecnica** | `tecnicaId` | Cadena | UUID v4 | Identificador único. Obligatorio. |
+| **Tecnica** | `nombre` | Cadena | Alfanumérico | Obligatorio. Nombre descriptivo de la técnica (ej. "Guardia Cerrada"). |
+| **Tecnica** | `categoria` | Enumerado | `{Guardia, Pasaje, Sumisión, Derribo, Transición}` | Obligatorio. Define la categoría táctica del movimiento. |
+| **CheckpointTecnico** | `anguloArticularIdeal` | Decimal | `[0.00, 180.00]` grados | Ángulo objetivo para la articulación en una fase determinada. |
+| **CheckpointTecnico** | `toleranciaGrados` | Decimal | `[0.00, 45.00]` grados | Margen de desviación permitido antes de registrar un error biomecánico. |
+| **RutaAprendizaje** | `progresoGeneral` | Decimal | `[0.00, 100.00]` % | Porcentaje acumulado de maestría del nivel actual. |
 
 ---
 
@@ -450,12 +458,12 @@ El modelo de dominio representa las abstracciones significativas de la tutoría 
 ```mermaid
 classDiagram
     Usuario "1" -- "1" PerfilCompetencia : posee
-    Usuario "1" -- "*" SesionAnalisis : ejecuta
+    Usuario "1" -- "*" SesionEntrenamiento : ejecuta
     
     PerfilCompetencia "1" -- "*" HistorialVisualizacion : registra
     PerfilCompetencia "1" -- "*" ErrorBiomecanico : rastrea
     
-    SesionAnalisis "1" -- "1" AnalisisBiomecanico : genera
+    SesionEntrenamiento "1" -- "*" AnalisisBiomecanico : contiene
     AnalisisBiomecanico "1" -- "*" MetricaCinematica : calcula
     AnalisisBiomecanico "1" -- "*" ErrorBiomecanico : identifica
     AnalisisBiomecanico "1" -- "0..1" RutaAprendizaje : actualiza
@@ -487,7 +495,7 @@ classDiagram
         estrategiaPedagogicaPreferida
         nivelAdaptativo
     }
-    class SesionAnalisis {
+    class SesionEntrenamiento {
         fecha
         videoBlobLocal
         tecnicaDetectadaAuto
@@ -824,7 +832,7 @@ flowchart TD
 *   **Practicante:** Desea organizar su historial de entrenamientos, eliminando videos obsoletos o clasificando sesiones por fecha, técnica o nivel de intensidad para facilitar la consulta retrospectiva de su progreso.
 *   **Sistema/IA:** Requiere mantener el almacenamiento local de IndexedDB optimizado, eliminando registros que el usuario ya no considera relevantes para liberar espacio y mejorar el rendimiento de las consultas.
 **Precondiciones:**
-*   El Practicante ha realizado al menos una sesión de análisis biomecánico (CU01) que está almacenada como instancia de `SesionEntrenamiento` o `SesionAnalisis` en IndexedDB.
+*   El Practicante ha realizado al menos una sesión de entrenamiento (CU01) que está almacenada como instancia de `SesionEntrenamiento` en IndexedDB.
 **Garantías de Éxito (Postcondiciones):**
 *   Se modificó, eliminó o reclasificó al menos una instancia de `SesionEntrenamiento` en el historial local del Practicante según la operación CRUD solicitada.
 *   El espacio de almacenamiento liberado por sesiones eliminadas está disponible para nuevas ingestas de conocimiento o análisis.
@@ -978,7 +986,7 @@ sequenceDiagram
     actor Practicante
     participant Sistema as Sistema (Caja Negra)
     
-    Practicante->>Sistema: procesarAnalisisVideo(videoBlob)
+    Practicante->>Sistema: analizarVideo(videoBlob)
     Note over Sistema: 1. Extracción landmarks 3D en cliente (MediaPipe)<br/>2. Clasificación de la técnica por Gemini Multimodal<br/>3. Grounding RAG Vivo local (IndexedDB)<br/>4. Inferencia estructurada (Gemini API)
     Sistema-->>Practicante: mostrarAnalisisYReporte(reporteJSON, landmarks3D)
 ```
@@ -1045,13 +1053,13 @@ sequenceDiagram
 
 ## **5.4 Contratos de las Operaciones del Sistema**
 
-### **Contrato CO01: `procesarAnalisisVideo`**
-*   **Operación:** `procesarAnalisisVideo(videoBlob: Blob): AnalisisReporte`
+### **Contrato CO01: `analizarVideo`**
+*   **Operación:** `analizarVideo(videoBlob: Blob): AnalisisReporte`
 *   **Referencias Cruzadas:** Caso de Uso CU01 (Analizar Video de Combate).
 *   **Precondiciones:**
     *   La GPU tiene soporte WebGL habilitado y el tamaño del archivo no excede 50MB (duración < 45 segundos).
 *   **Postcondiciones:**
-    *   Se creó una instancia `s` de la entidad `SesionAnalisis`.
+    *   Se creó una instancia `s` de la entidad `SesionEntrenamiento`.
     *   `s.fecha` se estableció con la fecha actual del sistema.
     *   `s.videoBlobLocal` se enlazó con el archivo físico cargado.
     *   Se calculó y almacenó una colección de instancias de `MetricaCinematica` asociadas a `s`.
@@ -1184,7 +1192,7 @@ sequenceDiagram
     
     Practicante->>UI: iniciarCapturaConTemporizador()
     Note over UI: Cuenta regresiva de 5 segundos
-    UI->>SEC: iniciarSesionAnalisis(videoBlob)
+    UI->>SEC: iniciarSesionEntrenamiento(videoBlob)
     
     Note over SEC,MPA: Extracción cinemática client-side (Fabricación Pura)
     SEC->>MPA: extraerLandmarks3D(videoBlob)
@@ -1249,7 +1257,7 @@ La máquina de estados del objeto `SesionEntrenamientoController` coordina el ci
 ```mermaid
 stateDiagram-v2
     [*] --> Idle
-    Idle --> CapturingVideo : procesarAnalisisVideo (Inicia temporizador)
+    Idle --> CapturingVideo : analizarVideo (Inicia temporizador)
     CapturingVideo --> ExtractingLandmarks : videoCargado
     ExtractingLandmarks --> DetectingTechnique : landmarks3DExtraidos
     DetectingTechnique --> AnalyzingBiomechanics : tecnicaIdentificada
@@ -1356,7 +1364,7 @@ classDiagram
         -classifier: ITechniqueClassifier
         -ragController: RetrievalAugmentedController
         -adaptationController: AdaptationController
-        +iniciarSesionAnalisis(videoBlob: Blob) void
+        +iniciarSesionEntrenamiento(videoBlob: Blob) void
         -calcularMetricasLocales(landmarks: List~Landmark3D~) List~MetricaCinematica~
     }
     class RetrievalAugmentedController {
