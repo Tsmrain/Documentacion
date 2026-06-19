@@ -185,7 +185,7 @@ El objeto de este estudio es el modelado y diseño de una arquitectura de softwa
 
 ### **1.1.4 Alcance**
 El proyecto OpenBJJ se delimita bajo los siguientes criterios:
-- **Alcance Técnico:** Extracción de landmarks corporales en 3D en el lado del cliente (navegador web) a través de MediaPipe y TensorFlow.js, eliminando la transmisión del video original a servidores externos de terceros. La persistencia de datos y el motor RAG (generación de embeddings y almacenamiento vectorial) se gestionan de forma centralizada en el servidor principal (laptop del investigador), interactuando el cliente con el backend central mediante una API, lo que elimina el uso exclusivo de Transformers.js e IndexedDB para almacenamiento y vectorización local.
+- **Alcance Técnico:** Extracción de landmarks corporales en 3D en el lado del cliente (navegador web) a través de MediaPipe y TensorFlow.js, eliminando la transmisión del video original a servidores externos de terceros. La persistencia de datos maestros, perfiles de competencia e indexación semántica/vectorial del motor RAG se gestionan de forma centralizada en el servidor principal (laptop del investigador), interactuando el cliente con el backend central mediante una API HTTPS. Esto elimina el uso de procesamiento vectorial o almacenamiento IndexedDB en el dispositivo cliente, garantizando la ligereza de la PWA.
 - **Alcance de Dominio:** Cobertura de técnicas correspondientes a todos los niveles de graduación de Brazilian Jiu-Jitsu (cinturones Blanco, Azul, Morado, Marrón y Negro), con capacidad de extensión a otras disciplinas de artes marciales a través del mecanismo de ingesta dinámica de fuentes de conocimiento (Open-Domain).
 - **Alcance Metodológico:** Modelado lógico, diseño orientado a objetos y especificación arquitectónica del Proceso Unificado (UP) hasta la fase de Elaboración inclusive, y la aplicación de los patrones GRASP de Craig Larman (2ª Edición).
 - **Alcance de Despliegue:** Aplicación Web Progresiva (PWA) responsiva compatible con dispositivos móviles y ordenadores de escritorio mediante navegadores modernos con soporte WebGL.
@@ -381,9 +381,9 @@ El cliente requiere conectividad a internet para interactuar con el backend de i
 ### **4.3.2 Requisitos Funcionales**
 - **RF01: Autodetección Multimodal de la técnica/deporte:** El sistema debe procesar el archivo de video y, utilizando capacidades multimodales de la API de Gemini, detectar la técnica y disciplina realizada sin intervención manual del usuario.
 - **RF02: Extracción de Landmarks 3D y cálculo cinemático local:** El sistema debe procesar localmente el video en el navegador mediante MediaPipe, extrayendo los 33 landmarks corporales y derivando ángulos, velocidad y aceleración de articulaciones en WebGL.
-- **RF03: Ingesta y vectorización de fuentes externas (RAG Vivo):** El sistema debe enviar archivos PDF y transcripciones de YouTube a la API del servidor central para su segmentación, cálculo de embeddings y persistencia en la base de datos centralizada. Si el manual describe una técnica nueva, el RAG inyectará inmediatamente esta verdad a la IA sin reentrenamiento del modelo.
+- **RF03: Ingesta y vectorización de fuentes externas (RAG Vivo Centralizado):** El sistema debe permitir a los usuarios enviar archivos PDF y transcripciones de YouTube hacia la API del servidor central (laptop). El servidor procesará el texto, generará los embeddings vectoriales y los persistirá en la base de datos vectorial centralizada. Si el material describe una técnica nueva y es validado por la IA, el contexto RAG se actualizará inmediatamente en el servidor para todas las futuras inferencias de la comunidad.
 - **RF04: Motor de Tutoría Adaptativa:** El sistema debe contrastar la cinemática del video analizado con la verdad de grounding vectorial. Si detecta desviaciones reiteradas de forma sistemática en el historial, debe alterar la estrategia didáctica.
-- **RF05: Perfil de Competencia del Usuario basado en historial:** El sistema debe mantener un perfil centralizado del estudiante que consolide las técnicas practicadas, la frecuencia de errores cinemáticos detectados, la lista de videos vistos y la estrategia pedagógica preferida.
+- **RF05: Perfil de Competencia del Usuario Centralizado:** El sistema debe mantener un perfil en la base de datos del servidor central que consolide históricamente las técnicas practicadas por el estudiante, la frecuencia de sus errores cinemáticos, la lista de videos vistos y su estrategia pedagógica activa.
 - **RF06: Dynamic Prompt Builder:** El sistema debe compilar en tiempo real el prompt del LLM inyectando dinámicamente las métricas biomecánicas calculadas locales y los fragmentos textuales semánticamente coincidentes del RAG centralizado, evitando prompts estáticos (hardcoded).
 - **RF07: Sistema de Recomendación de Videos de YouTube:** El sistema debe redirigir al usuario a URLs específicas de YouTube (deep link) para práctica técnica. Ante fallas recurrentes (más de 3 intentos en el mismo error), debe alternar la recomendación hacia videos alternativos o drills de aislamiento/fortalecimiento.
 
@@ -419,7 +419,7 @@ El sistema debe estar disponible en modo offline para el cálculo biomecánico m
 #### **4.3.5.2 Reglas de Dominio (Reglas de Negocio)**
 - **RD-01 (Jerarquía de Graduación):** Un practicante solo puede recibir tutoría de técnicas correspondientes a su cinturón actual o inferior, salvo autorización explícita del instructor.
 - **RD-02 (Tolerancia de Rango Articular):** El umbral de error para ángulos articulares ideales se establece en un margen fijo de tolerancia de $\pm 15^{\circ}$, ajustándose en base a las proporciones físicas ingresadas por el usuario, sin requerir pruebas de movilidad previas.
-- **RD-03 (Filtro Autónomo de Pertinencia):** Todo material suministrado al sistema debe ser evaluado y clasificado en tiempo real por el motor de IA (Gemini) como perteneciente estrictamente al dominio del Jiu-Jitsu. Si se detecta un dominio ajeno (ej. Boxeo), el sistema descartará el material automáticamente sin intervención humana para prevenir la corrupción del contexto RAG.
+- **RD-03 (Filtro Autónomo y Moderación Híbrida):** Todo material suministrado al sistema mediante el CU02 es evaluado en primera instancia por el motor multimodal de Gemini en el servidor para verificar su pertinencia al Jiu-Jitsu. Una vez aceptado por la IA, el material queda indexado. El Instructor de la academia cuenta con la facultad de auditar el repositorio central desde su perfil para purgar o recategorizar fuentes si fuera necesario, garantizando la soberanía pedagógica del dojo.
 
 #### **4.3.5.3 Diccionario de Datos (Especificaciones de Atributos)**
 
@@ -632,7 +632,27 @@ flowchart TD
     4.  El controlador calcula métricas cinemáticas locales (ángulos críticos, velocidad de extremidades).
     5.  El Sistema envía un resumen visual (keyframes) a la `GeminiServiceAdapter` para clasificar la técnica del video (Autodetección Multimodal).
     6.  La API de Gemini responde con el ID de la técnica e identificador de disciplina (ej. "Guardia Cerrada").
-    7.  El `RetrievalAugmentedController` busca fragmentos semánticamente equivalentes en la `CentralVectorDBAdapter` centralizada (en el servidor principal) para esa técnica.
+    7.  El `RetrievalAugmentedController` realiza una petición HTTP a la API del servidor central, delegando en el `CentralVectorDBAdapter` la búsqueda de fragmentos semánticamente equivalentes en la base de datos vectorial centralizada para esa técnica.
+
+```mermaid
+flowchart TD
+    subgraph "Capas del Servidor Central (Laptop)"
+        API[Express API Gateway]
+        VDB[CentralVectorDBAdapter]
+        DB[(Base de Datos Vectorial)]
+    end
+    
+    subgraph "Capas del Cliente (PWA)"
+        SEC[SesionEntrenamientoController]
+        RAC[RetrievalAugmentedController]
+    end
+
+    SEC --> RAC
+    RAC -- "Petición HTTPS (tecnicaId)" --> API
+    API --> VDB
+    VDB --> DB
+```
+
 
     8.  El `DynamicPromptBuilder` fusiona los fragmentos RAG con las métricas biomecánicas calculadas en un prompt JSON de contexto (cero prompts fijos).
     9.  El prompt estructurado es enviado a la API de Gemini para la evaluación cognitiva final.
@@ -1287,9 +1307,11 @@ classDiagram
     }
     class CentralVectorDBAdapter {
         -apiEndpoint: String
+        -authToken: String
         +buscarSimilitud(tecnicaId: String, queryVector: List~float~) List~ChunkText~
         +ingestarChunk(chunk: ChunkText) boolean
     }
+
 
     class GeminiServiceAdapter {
         -apiKey: String
@@ -1386,38 +1408,37 @@ El diseño de la interfaz de usuario se rige bajo tres principios ergonómicos f
 Para complementar la lógica del diseño adaptativo del Capítulo V, se especifica el algoritmo del controlador encargado de conmutar las estrategias didácticas y las redirecciones a YouTube:
 
 ```typescript
-// Controlador de adaptación e inyección pedagógica adaptativa
+// Controlador de adaptación e inyección pedagógica centralizada
 function recomendarVideoYouTube(
   errorBiomecanico: ErrorBiomecanico, 
   historialUsuario: PerfilCompetencia
 ): VideoRecomendado | DrillAlternativo {
   
-  // 1. Realizar búsqueda vectorial RAG local para videos asociados al error cinemático
-  const videosRelevantes: List<VideoRecomendado> = ragSearchLocal({
+  // 1. Realizar petición a la API del servidor central para buscar videos asociados al error
+  const videosRelevantes: List<VideoRecomendado> = ragSearchCentralServer({
     tipoRecurso: "video_tutorial",
     tecnicaId: errorBiomecanico.tecnicaId,
     articulacionAfectada: errorBiomecanico.tipoError
   });
   
-  // 2. Filtrar videos que el practicante ya haya visualizado sin mostrar mejora posterior
+  // 2. Filtrar videos que el practicante ya haya visualizado en el servidor sin mostrar mejora
   const videosNoVistosSinProgreso = videosRelevantes.filter(video => {
     const visualizado = historialUsuario.videosVisualizados.find(v => v.videoId === video.youtubeVideoId);
     return !(visualizado && visualizado.mejoraPosterior === false);
   });
   
-  // 3. Si se han acumulado más de 3 fallos consecutivos en el mismo error, cambiar estrategia pedagógica
+  // 3. Si se han acumulado más de 3 fallos consecutivos, conmutar la estrategia pedagógica en el backend
   if (errorBiomecanico.vecesDetectadoConsecutivas > 3 || videosNoVistosSinProgreso.length === 0) {
-    // Cambiar estrategia (ej. de video explicativo a drill físico de aislamiento de fuerza o flexibilidad)
-    const estrategiaAlternativa: EstrategiaPedagogica = cambiarEstrategiaPedagogica(
+    const estrategiaAlternativa: EstrategiaPedagogica = cambiarEstrategiaPedagogicaCentral(
       errorBiomecanico, 
       historialUsuario
     );
     
-    // Retornar primer drill físico de la nueva estrategia pedagógica del manual de la academia
-    return obtenerDrillAislamientoFisico(estrategiaAlternativa);
+    // Retornar drill físico de aislamiento extraído del manual oficial indexado en el servidor
+    return obtenerDrillAislamientoFisicoServer(estrategiaAlternativa);
   }
   
-  // 4. Ordenar y recomendar el video óptimo basado en la efectividad histórica general del dojo
+  // 4. Ordenar y recomendar el video óptimo basado en la efectividad histórica registrada en el dojo
   return videosNoVistosSinProgreso.sort((a, b) => {
     return b.efectividadHistorica - a.efectividadHistorica;
   })[0];
