@@ -648,62 +648,155 @@ flowchart TD
 ---
 
 ##### **Caso de Uso CU02: Ingestar Nueva Fuente de Conocimiento (RAG)**
-*   **Actor Principal:** Instructor.
-*   **Intereses de las Partes Involucradas:**
-    *   **Instructor:** Desea expandir los manuales y videos de su academia para fundamentar las respuestas de la IA sin reentrenamiento de red (RAG Vivo).
-*   **Precondiciones:**
-    *   El usuario ha ingresado el PIN maestro local, conmutando a "Modo Instructor".
-*   **Garantías de Éxito:**
-    *   Archivo PDF o URL de YouTube segmentada, vectorizada mediante `Transformers.js` en local y persistida en IndexedDB, quedando disponible inmediatamente para inferencias Zero-Shot.
-*   **Escenario Principal de Éxito:**
-    1.  El Instructor selecciona la opción "Ingestar Fuente de Conocimiento".
-    2.  El Instructor carga un archivo PDF técnico o ingresa un enlace de YouTube.
-    3.  El Sistema segmenta el texto (PDF) o descarga la transcripción del video en fragmentos (chunks) lógicos.
-    4.  El Sistema invoca a `Transformers.js` localmente usando Web Workers en segundo plano.
-    5.  Se calculan los embeddings vectoriales de cada chunk.
-    6.  El Sistema persiste los fragmentos y sus correspondientes vectores en IndexedDB (`VectorDBAdapter`), etiquetándolos con el estado "Pendiente de Validación".
+**Actor Principal:** Instructor.
+**Intereses de las Partes Involucradas:**
+*   **Instructor:** Desea expandir el corpus de manuales técnicos y videos de su academia para fundamentar las respuestas de la IA con conocimiento curado, sin depender de reentrenamiento de red (RAG Vivo).
+*   **Sistema/IA:** Requiere que los nuevos documentos se fragmenten, vectoricen y persistan correctamente para poder ser recuperados por similitud semántica en consultas futuras.
+**Precondiciones:**
+*   El usuario ha ingresado el PIN maestro local, conmutando la interfaz a "Modo Instructor".
+*   El dispositivo cuenta con espacio disponible en IndexedDB para almacenar los nuevos embeddings.
+*   El archivo PDF o la URL de YouTube son accesibles y están en un formato soportado por el parser local.
+**Garantías de Éxito (Postcondiciones):**
+*   Se creó una instancia de `FuenteConocimiento` (o su subclase `ManualPDF` / `VideoYouTube`) con sus metadatos inicializados.
+*   El contenido del archivo fue segmentado en chunks lógicos de texto.
+*   Se generaron los embeddings vectoriales de cada chunk mediante `Transformers.js` en un Web Worker local.
+*   Se persistieron los chunks y sus vectores correspondientes en IndexedDB a través de `VectorDBAdapter`, etiquetados con el estado "Pendiente de Validación".
+**Escenario Principal de Éxito (Flujo Básico):**
+1.  El Instructor selecciona la opción "Ingestar Fuente de Conocimiento" en el panel de administración.
+2.  El Sistema presenta las opciones de carga: archivo PDF técnico o enlace de YouTube.
+3.  El Instructor carga un archivo PDF desde su dispositivo o pega una URL de YouTube.
+4.  El Sistema valida el formato del archivo o la accesibilidad del enlace.
+5.  El Sistema segmenta el contenido en fragmentos (chunks) lógicos de texto (páginas del PDF o transcripción del video).
+6.  El Sistema invoca a `Transformers.js` localmente mediante un Web Worker en segundo plano para calcular los embeddings vectoriales de cada chunk.
+7.  El Sistema persiste los fragmentos de texto y sus correspondientes vectores en IndexedDB a través de `VectorDBAdapter`, asignando el estado "Pendiente de Validación".
+8.  El Sistema confirma al Instructor que la ingesta se completó exitosamente, mostrando el número total de chunks procesados.
+**Extensiones (Flujos Alternativos):**
+*   **4a. El archivo no es un PDF válido o la URL de YouTube es inaccesible:**
+    1.  El Sistema detecta que el formato no es soportado o el enlace no responde.
+    2.  El Sistema muestra un mensaje de error descriptivo al Instructor.
+    3.  El flujo retorna al paso 3 para que el Instructor seleccione otro archivo o enlace.
+*   **6a. El Web Worker de Transformers.js falla por memoria insuficiente:**
+    1.  El Sistema detecta que el dispositivo no dispone de RAM suficiente para procesar todos los embeddings de una vez.
+    2.  El Sistema divide los chunks en lotes más pequeños y procesa secuencialmente con pausas intermedias.
+    3.  Si aún así falla, el Sistema notifica al Instructor y sugiere liberar recursos o utilizar un dispositivo con mayor capacidad.
+*   **7a. IndexedDB alcanza su cuota de almacenamiento:**
+    1.  El Sistema detecta que la base de datos local ha alcanzado su límite de almacenamiento.
+    2.  El Sistema notifica al Instructor y ofrece la opción de purgar fuentes antiguas no validadas o cancelar la operación.
+    3.  Si el Instructor acepta purgar, el Sistema elimina los chunks más antiguos y reintenta la persistencia.
+**Requisitos Especiales:**
+*   El procesamiento de embeddings debe realizarse completamente en el cliente sin transmitir el contenido original del PDF o la transcripción de YouTube a servidores externos.
+*   La ingesta de un PDF de hasta 50 páginas debe completarse en un tiempo razonable (menos de 5 minutos en un dispositivo móvil de gama media).
 
 ---
 
 ##### **Caso de Uso CU03: Consultar Progreso y Recibir Tutoría Adaptativa**
-*   **Actor Principal:** Practicante.
-*   **Precondiciones:**
-    *   Existe un historial de análisis cinemáticos guardados en el perfil de competencia del usuario.
-*   **Garantías de Éxito:**
-    *   Se despliega el reporte de la evolución cinemática y la estrategia pedagógica adaptativa si el error persiste por más de 3 intentos.
-*   **Escenario Principal de Éxito:**
-    1.  El Practicante solicita la vista de "Progreso y Ruta de Aprendizaje".
-    2.  El `AdaptationController` consulta en el `PerfilCompetencia` el historial de errores biomecánicos.
-    3.  El sistema procesa la frecuencia de desviaciones y detecta errores recurrentes (ej. ángulo de codo incorrecto detectado de forma consecutiva por más de 3 veces).
-    4.  El sistema activa el cambio de estrategia instruccional de la ruta del alumno.
-    5.  Se conmuta la recomendación: en lugar de sugerir el video técnico instructivo estándar, sugiere un drill de fortalecimiento muscular o un video con diferente enfoque pedagógico.
-    6.  Se despliega la ruta personalizada con los enlaces de YouTube actualizados y drills anatómicos.
+**Actor Principal:** Practicante.
+**Intereses de las Partes Involucradas:**
+*   **Practicante:** Desea comprender su evolución técnica a lo largo del tiempo y recibir orientaciones pedagógicas personalizadas que aborden sus errores recurrentes de forma específica.
+*   **Instructor:** Desea que el sistema identifique patrones de fallo persistentes en sus alumnos para poder intervenir de manera focalizada durante las sesiones presenciales.
+*   **Sistema/IA:** Requiere acceder al historial completo de `ErrorBiomecanico` y `PerfilCompetencia` para determinar si la estrategia pedagógica actual es efectiva o debe conmutarse.
+**Precondiciones:**
+*   El Practicante ha realizado al menos una sesión de análisis biomecánico (CU01) cuyos resultados están persistidos en IndexedDB.
+*   Existe una instancia de `PerfilCompetencia` inicializada para el usuario.
+**Garantías de Éxito (Postcondiciones):**
+*   Se generó un reporte de evolución cinemática basado en el historial de análisis del usuario.
+*   Se evaluó la recurrencia de errores biomecánicos y, si se detectaron fallos consecutivos (> 3 veces), se modificó el plan pedagógico en `RutaAprendizaje`.
+*   Se desplegaron las recomendaciones adaptativas actualizadas (drills de fortalecimiento, videos alternativos con enfoque pedagógico distinto).
+**Escenario Principal de Éxito (Flujo Básico):**
+1.  El Practicante navega a la sección "Progreso y Ruta de Aprendizaje" desde el panel principal.
+2.  El Sistema carga el `PerfilCompetencia` del usuario desde IndexedDB.
+3.  El `AdaptationController` consulta el historial de `ErrorBiomecanico` asociado al perfil del Practicante.
+4.  El Sistema procesa la frecuencia y consecutividad de las desviaciones detectadas en análisis previos.
+5.  El Sistema identifica los errores recurrentes donde `vecesDetectadoConsecutivas > 3` (ej. ángulo de codo incorrecto persistente en guardia cerrada).
+6.  El Sistema evalúa si la estrategia pedagógica actual ha producido mejoría cinemática comparando métricas de las últimas tres sesiones.
+7.  Si no hay mejoría, el Sistema activa el cambio de estrategia instruccional: conmuta de recomendaciones de videos técnicos estándar a drills de fortalecimiento muscular o videos con enfoque pedagógico alternativo.
+8.  El Sistema compila un reporte visual de evolución con gráficos de progreso por articulación y técnica.
+9.  El Sistema despliega la ruta de aprendizaje personalizada, incluyendo los enlaces de YouTube actualizados y los drills anatómicos recomendados.
+**Extensiones (Flujos Alternativos):**
+*   **3a. No existe historial de análisis previo:**
+    1.  El Sistema detecta que `PerfilCompetencia` no contiene entradas de `ErrorBiomecanico`.
+    2.  El Sistema muestra un mensaje indicando que aún no hay datos de progreso disponibles e invita al Practicante a realizar su primer análisis (CU01).
+*   **6a. El usuario ha mostrado mejoría cinemática en las últimas tres sesiones:**
+    1.  El Sistema determina que las métricas angulares se han acercado al rango de tolerancia.
+    2.  El Sistema mantiene la estrategia pedagógica actual y felicita al Practicante por su progreso.
+    3.  El flujo continúa al paso 8 con la visualización del reporte de evolución.
+*   **8a. Error al generar el reporte visual:**
+    1.  El Sistema falla al compilar los gráficos de progreso.
+    2.  El Sistema despliega la información en formato tabular como fallback y registra el incidente para diagnóstico.
+**Requisitos Especiales:**
+*   El cálculo de recurrencia de errores debe considerar solo análisis de la misma técnica para evitar falsos positivos entre disciplinas diferentes.
+*   La visualización del reporte debe ser responsiva y legible en pantallas móviles de al menos 320px de ancho.
 
 ---
 
 ##### **Caso de Uso CU04: Gestionar Datos Antropométricos del Usuario**
-*   **Actor Principal:** Practicante.
-*   **Precondiciones:** Ninguna.
-*   **Garantías de Éxito:**
-    *   Datos de altura y peso del usuario actualizados localmente en su perfil.
-*   **Escenario Principal de Éxito:**
-    1.  El Practicante ingresa a "Ajustes de Perfil".
-    2.  El Practicante registra o modifica manualmente su altura y peso.
-    3.  El sistema valida los rangos numéricos y guarda los atributos directamente en el objeto `Usuario` persistido en IndexedDB.
+**Actor Principal:** Practicante.
+**Intereses de las Partes Involucradas:**
+*   **Practicante:** Desea que las métricas biomecánicas calculadas por el Sistema estén normalizadas según su complexidad física (altura, peso) para recibir evaluaciones justas y comparables a lo largo del tiempo.
+*   **Sistema/IA:** Requiere datos antropométricos actualizados para escalar correctamente los umbrales de tolerancia angular y las velocidades articulares esperadas.
+**Precondiciones:**
+*   El usuario ha creado un perfil de Practicante en la aplicación y su instancia de `Usuario` existe en IndexedDB.
+**Garantías de Éxito (Postcondiciones):**
+*   Se modificó la instancia de `Usuario` asociada al Practicante, actualizando los atributos `altura` y `peso` con los nuevos valores numéricos validados.
+*   Los cambios están disponibles inmediatamente para el siguiente análisis biomecánico (CU01) que utilice estos datos como factor de normalización.
+**Escenario Principal de Éxito (Flujo Básico):**
+1.  El Practicante navega a la sección "Ajustes de Perfil" desde el menú principal.
+2.  El Sistema carga los datos antropométricos actuales del objeto `Usuario` desde IndexedDB y los presenta en un formulario editable.
+3.  El Practicante ingresa o modifica su altura (en cm) y peso (en kg).
+4.  El Sistema valida que los valores se encuentren dentro de rangos numéricos aceptables (altura: 100-220 cm, peso: 30-200 kg).
+5.  El Sistema persiste los nuevos valores en la instancia de `Usuario` en IndexedDB.
+6.  El Sistema confirma al Practicante que sus datos fueron actualizados correctamente.
+**Extensiones (Flujos Alternativos):**
+*   **4a. Los valores ingresados están fuera de rango:**
+    1.  El Sistema detecta que la altura o el peso no se encuentran dentro de los rangos aceptables.
+    2.  El Sistema resalta el campo inválido con un mensaje de error específico (ej. "La altura debe estar entre 100 y 220 cm").
+    3.  El flujo retorna al paso 3 para que el Practicante corrija el valor.
+*   **5a. Error de escritura en IndexedDB:**
+    1.  El Sistema no puede persistir los datos por un fallo de almacenamiento local.
+    2.  El Sistema notifica al Practicante que no se pudieron guardar los cambios y sugiere reintentar.
+    3.  Los datos anteriores se mantienen vigentes hasta que la operación se complete exitosamente.
+**Requisitos Especiales:**
+*   Los datos antropométricos se almacenan exclusivamente en IndexedDB local y nunca se transmiten a servidores externos.
+*   El formulario debe incluir indicadores de unidad de medida (cm, kg) claros para evitar confusión del usuario.
 
 ---
 
 ##### **Caso de Uso CU05: Validar Fuente de Conocimiento**
-*   **Actor Principal:** Instructor.
-*   **Precondiciones:**
-    *   El usuario se encuentra autenticado con rol de Instructor.
-*   **Garantías de Éxito:**
-    *   Estado de la fuente actualizado a "Validado" habilitándola para el motor RAG.
-*   **Escenario Principal de Éxito:**
-    1.  El Instructor accede a la cola de "Fuentes por Validar".
-    2.  El sistema despliega los manuales o transcripciones pendientes cargados por la comunidad.
-    3.  El Instructor lee los fragmentos, confirma su exactitud técnica y selecciona "Validar".
-    4.  El sistema cambia el atributo `estadoValidacion` a `Validado` de la entidad `FuenteConocimiento` en IndexedDB.
+**Actor Principal:** Instructor.
+**Intereses de las Partes Involucradas:**
+*   **Instructor:** Desea garantizar que solo el conocimiento técnicamente preciso y alineado con la metodología de su academia sea utilizado por la IA para evaluar a los alumnos, actuando como curador de calidad.
+*   **Practicante:** Se beneficia indirectamente al recibir evaluaciones basadas en fuentes de conocimiento verificadas por su instructor de confianza.
+*   **Sistema/IA:** Requiere que las fuentes estén marcadas como "Validado" para incluirlas en los fragmentos recuperados durante las consultas semánticas del motor RAG.
+**Precondiciones:**
+*   El usuario se encuentra autenticado con rol de Instructor (ha ingresado el PIN maestro local).
+*   Existen al menos una instancia de `FuenteConocimiento` con `estadoValidacion == "Pendiente"` en IndexedDB, cargada previamente por la comunidad o por el propio Instructor (CU02).
+**Garantías de Éxito (Postcondiciones):**
+*   Se modificó el atributo `estadoValidacion` de la entidad `FuenteConocimiento` asociada, estableciéndolo en "Validado".
+*   Los chunks vectoriales correspondientes a la fuente fueron activados para las consultas semánticas del motor RAG en análisis futuros.
+**Escenario Principal de Éxito (Flujo Básico):**
+1.  El Instructor accede al panel de administración y selecciona la sección "Fuentes por Validar".
+2.  El Sistema consulta en IndexedDB todas las instancias de `FuenteConocimiento` con `estadoValidacion == "Pendiente"`.
+3.  El Sistema despliega la lista de fuentes pendientes con sus metadatos (título, tipo, fecha de carga, autor).
+4.  El Instructor selecciona una fuente de la lista para revisión.
+5.  El Sistema presenta una vista de previsualización con los fragmentos de texto (chunks) de la fuente y sus embeddings asociados.
+6.  El Instructor revisa los fragmentos, confirma su exactitud técnica y coherencia con la metodología de la academia, y selecciona la acción "Validar".
+7.  El Sistema actualiza el atributo `estadoValidacion` de la entidad `FuenteConocimiento` a "Validado" en IndexedDB.
+8.  El Sistema confirma al Instructor que la fuente ha sido validada exitosamente y ya está disponible para el motor RAG.
+**Extensiones (Flujos Alternativos):**
+*   **3a. No existen fuentes pendientes de validación:**
+    1.  El Sistema detecta que no hay instancias de `FuenteConocimiento` con estado "Pendiente".
+    2.  El Sistema muestra un mensaje indicando que no hay fuentes por validar e invita al Instructor a ingerir nuevas fuentes (CU02).
+*   **6a. El Instructor determina que la fuente contiene información técnica incorrecta:**
+    1.  El Instructor selecciona la acción "Rechazar" en lugar de "Validar".
+    2.  El Sistema actualiza el atributo `estadoValidacion` a "Rechazado".
+    3.  Los chunks de la fuente rechazada quedan excluidos permanentemente de las consultas semánticas del motor RAG.
+*   **7a. Error al actualizar el estado en IndexedDB:**
+    1.  El Sistema falla al persistir el cambio de estado.
+    2.  El Sistema notifica al Instructor y reintenta la operación.
+    3.  Si el error persiste, el Sistema mantiene el estado original y registra el incidente.
+**Requisitos Especiales:**
+*   La previsualización de los chunks debe permitir al Instructor navegar entre fragmentos de texto de forma paginada para facilitar la revisión de documentos extensos.
+*   Cada acción de validación o rechazo debe quedar registrada con fecha y autor en el historial de auditoría local del Sistema.
 
 ---
 
@@ -725,13 +818,147 @@ flowchart TD
 
 ---
 
-#### **Casos de Uso Breves (Format Brief)**
+##### **Caso de Uso CU06: Gestionar Sesiones de Entrenamiento**
+**Actor Principal:** Practicante.
+**Intereses de las Partes Involucradas:**
+*   **Practicante:** Desea organizar su historial de entrenamientos, eliminando videos obsoletos o clasificando sesiones por fecha, técnica o nivel de intensidad para facilitar la consulta retrospectiva de su progreso.
+*   **Sistema/IA:** Requiere mantener el almacenamiento local de IndexedDB optimizado, eliminando registros que el usuario ya no considera relevantes para liberar espacio y mejorar el rendimiento de las consultas.
+**Precondiciones:**
+*   El Practicante ha realizado al menos una sesión de análisis biomecánico (CU01) que está almacenada como instancia de `SesionEntrenamiento` o `SesionAnalisis` en IndexedDB.
+**Garantías de Éxito (Postcondiciones):**
+*   Se modificó, eliminó o reclasificó al menos una instancia de `SesionEntrenamiento` en el historial local del Practicante según la operación CRUD solicitada.
+*   El espacio de almacenamiento liberado por sesiones eliminadas está disponible para nuevas ingestas de conocimiento o análisis.
+**Escenario Principal de Éxito (Flujo Básico):**
+1.  El Practicante navega a la sección "Historial de Entrenamientos" desde el panel principal.
+2.  El Sistema carga todas las instancias de `SesionEntrenamiento` asociadas al perfil del Practicante desde IndexedDB.
+3.  El Sistema despliega la lista de sesiones ordenadas cronológicamente, mostrando metadatos resumidos (fecha, técnica detectada, puntuación táctica).
+4.  El Practicante selecciona una sesión específica para gestionar.
+5.  El Sistema presenta las opciones disponibles: ver detalle, renombrar, clasificar por etiqueta o eliminar.
+6.  El Practicante selecciona la operación deseada y confirma la acción.
+7.  El Sistema ejecuta la operación CRUD correspondiente sobre la instancia de `SesionEntrenamiento` en IndexedDB.
+8.  El Sistema confirma al Practicante que la operación se completó exitosamente y actualiza la vista del historial.
+**Extensiones (Flujos Alternativos):**
+*   **3a. No existen sesiones de entrenamiento registradas:**
+    1.  El Sistema detecta que IndexedDB no contiene instancias de `SesionEntrenamiento` para este usuario.
+    2.  El Sistema muestra un mensaje invitando al Practicante a realizar su primer análisis (CU01).
+*   **6a. El Practicante selecciona eliminar una sesión:**
+    1.  El Sistema muestra un diálogo de confirmación advirtiendo que la acción es irreversible.
+    2.  Si el Practicante confirma, el Sistema elimina la instancia de `SesionEntrenamiento` y sus entidades asociadas (`AnalisisBiomecanico`, `MetricaCinematica`) de IndexedDB.
+    3.  Si el Practicante cancela, el flujo retorna al paso 5.
+*   **7a. Error de escritura en IndexedDB durante la operación:**
+    1.  El Sistema falla al persistir la operación CRUD.
+    2.  El Sistema notifica al Practicante que no se pudo completar la acción y sugiere reintentar.
+**Requisitos Especiales:**
+*   La lista de sesiones debe soportar filtrado por rango de fechas, técnica y etiqueta para facilitar la navegación en historiales extensos.
+*   La eliminación de sesiones debe ser lógica (marcado como eliminado) o física según la capacidad del navegador, garantizando que los datos eliminados no sean recuperables por consultas semánticas futuras.
 
-*   **CU06: Gestionar Sesiones de Entrenamiento:** El Practicante realiza operaciones CRUD locales en el historial de sesiones almacenadas en IndexedDB, permitiéndole borrar videos antiguos o clasificar entrenamientos por fecha.
-*   **CU07: Exportar/Compartir Reportes:** El Practicante solicita al sistema la exportación del reporte de análisis biomecánico de Gemini. El sistema genera un archivo en PDF o formato de imagen con el esqueleto 3D superpuesto y la puntuación táctica.
-*   **CU08: Configurar Preferencias del Sistema:** El Practicante configura aspectos básicos de la PWA local, como el idioma de retroalimentación de la IA, el nivel de zoom del esqueleto 3D, y el sistema métrico para la estimación física.
-*   **CU09: Calibrar Entorno de Captura:** El Practicante accede a la funcionalidad de cámara en la app. El sistema analiza el encuadre y niveles de luz de fondo mediante MediaPipe, alertando mediante interfaz si la iluminación es insuficiente o el cuerpo se encuentra fuera de foco para asegurar la consistencia.
-*   **CU11: Registrar Visualización de Video de YouTube:** El Practicante confirma a la aplicación que ha finalizado el video técnico recomendado externamente. El sistema guarda la entidad `HistorialVisualizacion` para asociarla a la efectividad pedagógica en los futuros análisis cinemáticos.
+---
+
+##### **Caso de Uso CU07: Exportar/Compartir Reportes**
+**Actor Principal:** Practicante.
+**Intereses de las Partes Involucradas:**
+*   **Practicante:** Desea generar un archivo portable (PDF o imagen) del reporte de análisis biomecánico para compartirlo con su instructor, documentar su progreso o archivarlo externamente a la aplicación.
+*   **Instructor:** Se beneficia al recibir reportes estructurados de sus alumnos que facilitan la preparación de sesiones de corrección personalizada.
+*   **Sistema/IA:** Requiere componer una representación visual del esqueleto 3D superpuesto al video frame clave junto con la puntuación táctica y las desviaciones detectadas en un formato exportable.
+**Precondiciones:**
+*   Existe al menos una instancia de `AnalisisBiomecanico` completada con resultados de Gemini persistidos en IndexedDB para la sesión seleccionada.
+**Garantías de Éxito (Postcondiciones):**
+*   Se generó un archivo exportable (PDF o imagen) que contiene el esqueleto 3D superpuesto, las métricas cinemáticas, la puntuación táctica y las recomendaciones de corrección.
+*   El archivo fue descargado al dispositivo del Practicante o compartido mediante el mecanismo nativo de la PWA (Web Share API).
+**Escenario Principal de Éxito (Flujo Básico):**
+1.  El Practicante selecciona una sesión de análisis completada desde su historial de entrenamientos.
+2.  El Sistema despliega el detalle del análisis con las métricas cinemáticas y la evaluación de Gemini.
+3.  El Practicante selecciona la opción "Exportar Reporte".
+4.  El Sistema presenta las opciones de formato: PDF o imagen PNG.
+5.  El Practicante selecciona el formato deseado.
+6.  El Sistema compone el reporte renderizando el esqueleto 3D superpuesto al frame clave del video, las métricas cinemáticas calculadas, la puntuación táctica y las desviaciones angulares detectadas.
+7.  El Sistema genera el archivo en el formato seleccionado y lo descarga al dispositivo del Practicante.
+8.  El Sistema ofrece la opción de compartir el archivo directamente mediante la Web Share API.
+**Extensiones (Flujos Alternativos):**
+*   **4a. El navegador no soporta Web Share API:**
+    1.  El Sistema detecta que el dispositivo no soporta compartir nativamente.
+    2.  El Sistema omite la opción de compartir y solo ofrece la descarga del archivo.
+*   **6a. Error al renderizar el esqueleto 3D para exportación:**
+    1.  El Sistema falla al capturar el frame del WebGL Renderer.
+    2.  El Sistema genera el reporte sin la imagen del esqueleto 3D, incluyendo únicamente las métricas numéricas y el texto de evaluación.
+    3.  El Sistema notifica al Practicante que la visualización 3D no pudo incluirse.
+*   **7a. Error de descarga por almacenamiento insuficiente:**
+    1.  El dispositivo no tiene espacio suficiente para guardar el archivo generado.
+    2.  El Sistema notifica al Practicante y sugiere liberar espacio antes de reintentar.
+**Requisitos Especiales:**
+*   El reporte PDF debe incluir la fecha, hora y duración del análisis, así como el nivel de graduación del Practicante para contextualizar la evaluación.
+*   La generación del archivo debe completarse en menos de 10 segundos en un dispositivo móvil de gama media.
+
+---
+
+##### **Caso de Uso CU08: Configurar Preferencias del Sistema**
+**Actor Principal:** Practicante.
+**Intereses de las Partes Involucradas:**
+*   **Practicante:** Desea personalizar la experiencia de uso de la PWA según sus necesidades individuales, como el idioma de retroalimentación de la IA, el nivel de zoom del esqueleto 3D y el sistema métrico para la estimación física.
+*   **Sistema/IA:** Requiere conocer las preferencias del usuario para adaptar la presentación de resultados, el idioma de los prompts enviados a Gemini y la escala de visualización del renderer 3D.
+**Precondiciones:**
+*   El Practicante tiene un perfil activo en la aplicación con una instancia de `Usuario` persistida en IndexedDB.
+**Garantías de Éxito (Postcondiciones):**
+*   Se modificaron las preferencias de configuración del Practicante en su perfil local (`Usuario.preferencias` o entidad asociada `PreferenciasUsuario`).
+*   Los cambios se aplican inmediatamente a la interfaz y al comportamiento del Sistema en la sesión activa.
+**Escenario Principal de Éxito (Flujo Básico):**
+1.  El Practicante navega a la sección "Configuración" desde el menú principal.
+2.  El Sistema carga las preferencias actuales del Practicante desde IndexedDB y las presenta en un formulario con las opciones disponibles.
+3.  El Practicante modifica una o más preferencias: idioma de retroalimentación de la IA (ej. español, inglés, portugués), nivel de zoom predeterminado del esqueleto 3D, sistema métrico (métrico/imperial).
+4.  El Sistema valida que las selecciones sean opciones soportadas.
+5.  El Sistema persiste las nuevas preferencias en el perfil del Practicante en IndexedDB.
+6.  El Sistema aplica los cambios inmediatamente a la interfaz activa y confirma al Practicante que la configuración fue actualizada.
+**Extensiones (Flujos Alternativos):**
+*   **4a. El Practicante selecciona una opción no soportada:**
+    1.  El Sistema detecta una preferencia inválida (posible manipulación del DOM).
+    2.  El Sistema rechaza el cambio y restaura el valor anterior, mostrando un mensaje de error.
+*   **5a. Error de escritura en IndexedDB:**
+    1.  El Sistema no puede persistir las preferencias por un fallo de almacenamiento local.
+    2.  El Sistema notifica al Practicante y mantiene las preferencias anteriores activas hasta que la operación se complete.
+**Requisitos Especiales:**
+*   Las preferencias de idioma deben afectar tanto la interfaz de usuario como el idioma del prompt enviado a la API de Gemini para la generación de retroalimentación en lenguaje natural.
+*   El cambio de sistema métrico debe recalcular y redimensionar las visualizaciones numéricas existentes sin alterar los datos cinemáticos crudos almacenados.
+
+---
+
+##### **Caso de Uso CU09: Calibrar Entorno de Captura**
+**Actor Principal:** Practicante.
+**Intereses de las Partes Involucradas:**
+*   **Practicante:** Desea asegurarse de que las condiciones de iluminación, encuadre y distancia de la cámara sean óptimas antes de iniciar un análisis biomecánico, maximizando la precisión de la estimación de landmarks 3D.
+*   **Sistema/IA:** Requiere que el video de entrada cumpla con condiciones mínimas de calidad visual para que MediaPipe pueda extraer landmarks con un nivel de confianza suficiente (media > 0.5).
+**Precondiciones:**
+*   El dispositivo del Practicante cuenta con una cámara funcional accesible desde el navegador (permiso de cámara concedido).
+*   El soporte WebGL está activo para la ejecución de MediaPipe.
+**Garantías de Éxito (Postcondiciones):**
+*   El Sistema evaluó las condiciones de captura (iluminación, encuadre, distancia) y confirmó que son adecuadas para un análisis biomecánico preciso, o proporcionó indicaciones específicas de mejora.
+*   El Practicante ajustó su posición o el entorno según las indicaciones del Sistema antes de iniciar la grabación del análisis (CU01).
+**Escenario Principal de Éxito (Flujo Básico):**
+1.  El Practicante selecciona la opción "Calibrar Entorno de Captura" desde el panel principal.
+2.  El Sistema activa la cámara del dispositivo y muestra una vista en tiempo real con superposiciones de guía visual (zonas de encuadre, indicador de iluminación).
+3.  El Sistema ejecuta un análisis preliminar con MediaPipe para detectar la presencia del cuerpo completo del Practicante en el encuadre.
+4.  El Sistema evalúa el nivel de iluminación del fondo y la nitidez de la imagen capturada.
+5.  El Sistema verifica que todas las articulaciones clave (hombros, codos, caderas, rodillas, tobillos) sean detectables con un nivel de confianza aceptable.
+6.  El Sistema muestra un indicador de estado (verde/amarillo/rojo) para cada condición evaluada: encuadre, iluminación, detección corporal.
+7.  Si todas las condiciones son adecuadas, el Sistema confirma al Practicante que el entorno está calibrado y listo para grabar.
+**Extensiones (Flujos Alternativos):**
+*   **3a. MediaPipe no detecta un cuerpo completo en el encuadre:**
+    1.  El Sistema identifica que partes del cuerpo (ej. pies o cabeza) están fuera del campo visual.
+    2.  El Sistema muestra una superposición visual indicando la zona donde el Practicante debe posicionarse.
+    3.  El Practicante ajusta su posición y el Sistema reintenta la detección.
+*   **4a. La iluminación es insuficiente:**
+    1.  El Sistema detecta que el nivel de luz de fondo está por debajo del umbral mínimo para una estimación precisa.
+    2.  El Sistema muestra una alerta: "Iluminación insuficiente. Acérquese a una fuente de luz o encienda una lámpara frontal."
+    3.  El Practicante ajusta la iluminación y el Sistema reintenta la evaluación.
+*   **4b. La iluminación es excesiva (sobreexposición):**
+    1.  El Sistema detecta que la imagen está sobreexpuesta, lo que reduce el contraste de las articulaciones.
+    2.  El Sistema sugiere reducir la intensidad de la luz o cambiar el ángulo de la cámara.
+*   **5a. Confianza de detección inferior al umbral mínimo:**
+    1.  El Sistema detecta que las articulaciones clave tienen un nivel de confianza medio inferior a 0.5.
+    2.  El Sistema sugiere alejar la cámara, usar ropa de contraste con el fondo o eliminar obstáculos visuales.
+**Requisitos Especiales:**
+*   La calibración debe completarse en menos de 15 segundos para no interrumpir significativamente la rutina de entrenamiento del Practicante.
+*   Las guías visuales de superposición deben ser claras y visibles incluso en pantallas móviles pequeñas (mínimo 320px de ancho).
+*   La cámara NO debe grabar ni almacenar video durante la calibración; solo se procesan frames en memoria volátil para la evaluación de condiciones.
 
 ---
 
