@@ -300,7 +300,7 @@ El siguiente cuadro analiza comparativamente las soluciones respecto a la propue
 - **Calidad de Clasificación Autónoma:** La consistencia del grounding RAG depende de la precisión del motor de IA al evaluar y clasificar autónomamente la pertinencia de las fuentes en tiempo de ejecución.
 
 ## **3.7 Justificación teórica de la metodología**
-La combinación del Proceso Unificado (UP) y los patrones GRASP de Larman resulta óptima para el proyecto OpenBJJ debido a la alta incertidumbre técnica del desarrollo híbrido (estimación de pose client-side y RAG local). UP promueve la estabilización temprana de la arquitectura física y lógica en la fase de Elaboración, mitigando los riesgos principales mediante casos de uso ejecutables y contratos estructurados. Por su parte, los patrones GRASP resuelven de manera formal el acoplamiento y cohesión del código al aislar la estimación de landmarks, la vectorización local y la comunicación externa de Gemini en Fabricaciones Puras y Variaciones Protegidas independientes.
+La combinación del Proceso Unificado (UP) y los patrones GRASP de Larman resulta óptima para el proyecto OpenBJJ debido a la alta incertidumbre técnica del desarrollo híbrido (estimación de pose client-side y RAG centralizado). UP promueve la estabilización temprana de la arquitectura física y lógica en la fase de Elaboración, mitigando los riesgos principales mediante casos de uso ejecutables y contratos estructurados. Por su parte, los patrones GRASP resuelven de manera formal el acoplamiento y cohesión del código al aislar la estimación de landmarks, la vectorización en el servidor y la comunicación externa de Gemini en Fabricaciones Puras y Variaciones Protegidas independientes.
 
 ---
 
@@ -1244,6 +1244,7 @@ stateDiagram-v2
     DisplayingResults --> Idle : reset
     
     ExtractingLandmarks --> Error : errorMediaPipe
+    ConsultingRAG --> Error : errorConexionServidor
     WaitingForLLM --> Error : timeoutRed
     Error --> Idle : reset
 ```
@@ -1283,7 +1284,7 @@ classDiagram
     }
     class IVectorStore {
         <<interface>>
-        +buscarSimilitud(tecnicaId: String, queryVector: List~float~) List~ChunkText~
+        +buscarSimilitud(tecnicaId: String, queryVector: number[]) List~ChunkText~
         +ingestarChunk(chunk: ChunkText) boolean
     }
     class ILLMProvider {
@@ -1309,7 +1310,7 @@ classDiagram
     class CentralVectorDBAdapter {
         -apiEndpoint: String
         -authToken: String
-        +buscarSimilitud(tecnicaId: String, queryVector: List~float~) List~ChunkText~
+        +buscarSimilitud(tecnicaId: String, queryVector: number[]) List~ChunkText~
         +ingestarChunk(chunk: ChunkText) boolean
     }
 
