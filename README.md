@@ -191,7 +191,7 @@ El proyecto OpenBJJ se delimita bajo los siguientes criterios:
 - **Alcance de Despliegue:** Aplicación Web Progresiva (PWA) responsiva compatible con dispositivos móviles y ordenadores de escritorio mediante navegadores modernos con soporte WebGL.
 
 ### **1.1.5 Justificación**
-- **Tecnológica:** Demuestra la viabilidad de implementar arquitecturas cognitivas complejas (visión 3D + RAG) en navegadores web de consumo mediante ejecución híbrida distribuida, reduciendo la infraestructura centralizada a un backend ligero serverless.
+- **Tecnológica:** Demuestra la viabilidad de implementar arquitecturas cognitivas complejas (visión 3D + RAG) mediante una ejecución híbrida distribuida, demostrando la viabilidad de un modelo híbrido en el borde (Edge AI) para la captura cinemática y un nodo centralizado local para la soberanía del motor RAG corporativo.
 - **Económica:** Suprime la necesidad de servidores de procesamiento de video basados en GPU, delegando la carga computacional pesada al procesador local del cliente. El consumo de APIs se restringe a llamadas de texto y embeddings vectoriales de bajo costo.
 - **Social:** Facilita el acceso democratizado y autónomo a la educación de artes marciales de alta calidad, alineándose con las fuentes bibliográficas de preferencia de cada academia sin intervención del programador.
 
@@ -219,7 +219,7 @@ El Proceso Unificado (UP) rige la arquitectura técnica, el modelado y la docume
 ### **1.3.2 Gestión del Proyecto (Scrum)**
 Se utiliza Scrum para organizar el esfuerzo temporal y el backlog del proyecto a través de iteraciones fijas (*Sprints*) de 3 semanas, facilitando la inspección y adaptación constante ante impedimentos técnicos o cambios de API. Los roles clave de Product Owner, Scrum Master y Development Team se definen dentro del contexto académico para la estructuración y revisión de entregables incrementales de diseño.
 
-El trabajo correspondiente al presente documento (Fases de Inicio y Elaboración) se estructuró en dos Sprints de 3 semanas. El **Sprint 1** abordó la mitigación del riesgo R-01 (viabilidad de extracción de landmarks client-side con MediaPipe). El **Sprint 2** se enfocó en el riesgo R-02 y R-03, desarrollando el diseño del motor RAG local y la integración estructurada con la API de Gemini.
+El trabajo correspondiente al presente documento (Fases de Inicio y Elaboración) se estructuró en dos Sprints de 3 semanas. El **Sprint 1** abordó la mitigación del riesgo R-01 (viabilidad de extracción de landmarks client-side con MediaPipe). El **Sprint 2** se enfocó en el riesgo R-02 y R-03, desarrollando el diseño del motor RAG centralizado y la integración estructurada con la API de Gemini.
 
 ---
 
@@ -257,7 +257,7 @@ La aplicación web inteligente proporciona los siguientes servicios clave como e
 
 ## **3.1 Conceptos y definiciones**
 - **Inteligencia Artificial Generativa Multimodal:** Modelos fundacionales entrenados con múltiples modalidades de datos (texto, audio, imagen, video) capaces de razonar contextualmente sobre la semántica de una secuencia visual, detectando acciones y posturas en lenguaje natural.
-- **Arquitectura Cliente-Ligero (Client-Side Light Architecture):** Patrón de despliegue donde la carga computacional pesada de procesamiento de imagen e indexación vectorial se delega al navegador web mediante WebAssembly y WebGL, limitando el servidor a microservicios serverless de pasarela.
+- **Arquitectura Cliente-Ligero (Client-Side Light Architecture):** Patrón de despliegue donde la carga computacional biomecánica se delega al cliente web mediante WebAssembly y WebGL, mientras que el almacenamiento vectorial, indexación semántica y la persistencia de datos maestros se centralizan en el nodo servidor local (laptop del investigador) accesible vía API.
 - **RAG Centralizado y Grounding:** Arquitectura que optimiza la generación de respuestas de un LLM al recuperar fragmentos de texto relevantes de documentos externos validados por similitud semántica en tiempo de ejecución desde el servidor principal.
 - **RAG Vivo (Dynamic Knowledge Ingestion):** Mecanismo de ingesta que asimila nuevos manuales y videos sin requerir reentrenamiento del modelo (Zero-Shot Learning). La adición de un PDF técnico actualiza inmediatamente el corpus indexado vectorialmente en la base de datos centralizada del servidor principal, quedando disponible para contrastar cinemáticas en la próxima inferencia.
 - **Embeddings Vectoriales:** Vectores matemáticos densos generados por redes neuronales (como BERT o MobileBERT) que encapsulan el significado semántico de fragmentos de texto dentro de un espacio de alta dimensionalidad.
@@ -1164,17 +1164,17 @@ sequenceDiagram
     SEC->>SEC: calcularMetricasLocales(landmarks3DVector)
     
     Note over SEC,GSA: Autodetección Multimodal de la técnica (Gemini SDK)
-    SEC->>GSA: clasificarTecnicaVideo(videoBlob)
+    SEC->>GSA: clasificarTecnicaVideo(keyframesSummary)
     GSA-->>SEC: tecnicaId, disciplina
     
     Note over SEC,RAC: Consulta RAG centralizada (CentralVectorDBAdapter)
     SEC->>RAC: obtenerGrounding(tecnicaId, metricasCalculadas)
     RAC->>VDB: buscarSimilitud(tecnicaId, metricasCalculadas)
-    VDB-->>RAC: chunksValidadosText
+    VDB-->>RAC: chunksAceptadosText
 
     
     Note over RAC,TPB: Ensamblado de Prompt Dinámico (Cero Prompts Fijos)
-    RAC->>TPB: compilarPrompt(metricasCalculadas, chunksValidadosText)
+    RAC->>TPB: compilarPrompt(metricasCalculadas, chunksAceptadosText)
     TPB-->>RAC: promptEnsambladoJSON
     RAC-->>SEC: promptEnsambladoJSON
     
@@ -1364,7 +1364,7 @@ flowchart TD
         direction TB
         App[React PWA App Bundle]
         Engine3D[MediaPipe WASM Engine]
-        LS[localStorage - PIN Cifrado]
+        LS[localStorage - Token de Sesión JWT]
     end
     
     subgraph ServerNode ["Nodo Servidor (Laptop del Investigador)"]
