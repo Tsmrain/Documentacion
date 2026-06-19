@@ -74,7 +74,7 @@ El presente trabajo de investigación se ha desarrollado bajo la metodología de
 
 # **Resumen**
 
-En este trabajo se expone el diseño y modelado orientado a objetos de una plataforma inteligente de asistencia deportiva y tutoría adaptativa para el Brazilian Jiu-Jitsu. La solución supera las rigideces metodológicas de sistemas previos mediante una arquitectura híbrida cliente-ligero. La extracción cinemática tridimensional (landmarks 3D) ocurre directamente en el navegador del cliente mediante modelos monoculares libres de sensores físicos. Para la evaluación táctica y corrección del movimiento, se inyectan dinámicamente manuales técnicos y transcripciones de videos vectorizados localmente. El sistema realiza el seguimiento del progreso histórico del alumno mediante un perfil de competencia y altera la estrategia didáctica ante fallos recurrentes, ofreciendo una ruta de aprendizaje multi-nivel personalizada. La validez de la arquitectura se sustenta en el Proceso Unificado y el diseño orientado a objetos basado en patrones GRASP.
+En este trabajo se expone el diseño y modelado orientado a objetos de una plataforma inteligente de asistencia deportiva y tutoría adaptativa para el Brazilian Jiu-Jitsu. La solución supera las rigideces metodológicas de sistemas previos mediante una arquitectura híbrida cliente-ligero. La extracción cinemática tridimensional (landmarks 3D) ocurre directamente en el navegador del cliente mediante modelos monoculares libres de sensores físicos. Para la evaluación táctica y corrección del movimiento, se inyectan dinámicamente manuales técnicos y transcripciones de videos vectorizados en el servidor central. El sistema realiza el seguimiento del progreso histórico del alumno mediante un perfil de competencia y altera la estrategia didáctica ante fallos recurrentes, ofreciendo una ruta de aprendizaje multi-nivel personalizada. La validez de la arquitectura se sustenta en el Proceso Unificado y el diseño orientado a objetos basado en patrones GRASP.
 
 # **Índice de Contenidos**
 
@@ -414,7 +414,7 @@ Los requisitos no funcionales se estructuran bajo el estándar de calidad FURPS+
 ### **4.3.5 Atributos del Sistema de Software**
 
 #### **4.3.5.1 Confiabilidad y Disponibilidad Local**
-El sistema debe estar disponible en modo offline para la visualización del perfil de competencia y cálculo biomecánico mediante MediaPipe, tolerando la desconexión a internet hasta el envío final a Gemini.
+El sistema debe estar disponible en modo offline para el cálculo biomecánico mediante MediaPipe (cuyos resultados se diferirán), pero la visualización del perfil histórico y el envío final de datos requerirá conexión al servidor central.
 
 #### **4.3.5.2 Reglas de Dominio (Reglas de Negocio)**
 - **RD-01 (Jerarquía de Graduación):** Un practicante solo puede recibir tutoría de técnicas correspondientes a su cinturón actual o inferior, salvo autorización explícita del instructor.
