@@ -158,6 +158,8 @@ En este trabajo se expone el diseño y modelado orientado a objetos de una plata
 - [**Figura 8** *Máquina de Estados de SesionEntrenamientoController*](#figura-8)
 - [**Figura 9** *Diagrama de Clases de Diseño (DCD)*](#figura-9)
 - [**Figura 10** *Diagrama de Despliegue Físico de OpenBJJ*](#figura-10)
+- [**Figura 11** *Diagrama de Secuencia de Diseño (Realización de CU02)*](#figura-11)
+- [**Figura 12** *Diagrama de Secuencia de Diseño (Realización de CU03)*](#figura-12)
 
 ---
 
@@ -1268,9 +1270,11 @@ La asignación de responsabilidades de las capas lógicas se detalla a continuac
 
 ## **5.6 Realización del Caso de Uso con Patrones GRASP**
 
+La realización de los casos de uso demuestra cómo interactúan las clases de diseño asignando responsabilidades según los patrones GRASP de Larman. A continuación, se detallan los diagramas de secuencia de diseño (DSD) para el flujo principal de análisis (CU01), la ingesta y validación de conocimiento (CU02) y la lógica de tutoría adaptativa (CU03), sirviendo estos últimos como ejemplos de aplicación de patrones en escenarios complejos (RAG y Adaptación).
+
 ### **Paso 1: Diagrama de Secuencia de Diseño (DSD) para CU01**
 
-El siguiente diagrama detalla cómo se comunican las clases de diseño asignando responsabilidades según los patrones GRASP:
+El siguiente diagrama detalla cómo se comunican las clases de diseño para el análisis biomecánico en el CU01:
 
 <a id="figura-7"></a>
 **Figura 7**  
@@ -1336,7 +1340,115 @@ sequenceDiagram
 
 ---
 
-### **Paso 2: Justificación del Diseño basada en Patrones GRASP**
+### **Paso 2: Diagrama de Secuencia de Diseño (DSD) para CU02**
+
+El siguiente diagrama ilustra la colaboración entre clases para la validación, segmentación e indexación de nuevas fuentes de conocimiento en el motor RAG:
+
+<a id="figura-11"></a>
+**Figura 11**  
+*Diagrama de Secuencia de Diseño (Realización de CU02)*
+
+```mermaid
+sequenceDiagram
+    actor Practicante
+    participant UI as DojoDashboard
+    participant SEC as SesionEntrenamientoController
+    participant RAC as RetrievalAugmentedController
+    participant GSA as GeminiServiceAdapter
+    participant VDB as CentralVectorDBAdapter
+    participant API as API Gateway (Servidor Local)
+    participant Gemini as Gemini API (Google Cloud)
+    
+    Practicante->>UI: ingestarFuente(archivoBlob, metadata)
+    UI->>SEC: ingestarFuenteConocimiento(archivoBlob, metadata)
+    Note over SEC: Patrón Controlador:<br/>Coordina la solicitud de ingesta y aísla la UI.
+    SEC->>RAC: procesarEIngestarFuente(archivoBlob, metadata)
+    
+    Note over RAC: Patrón Experto:<br/>RAC encapsula la lógica RAG (chunking y coordinación).
+    RAC->>GSA: validarPertinenciaBJJ(muestraTexto)
+    Note over GSA: Patrón Variaciones Protegidas:<br/>Aísla el sistema del comportamiento de la API externa de Gemini.
+    GSA->>API: POST /api/validate-pertinence (muestraTexto)
+    API->>Gemini: Inferencia de Filtro (Pertinencia BJJ)
+    Gemini-->>API: Respuesta de Validación
+    API-->>GSA: esPertinenteBJJ (Boolean)
+    GSA-->>RAC: esPertinenteBJJ (Boolean)
+    
+    alt Si es pertinente (esPertinenteBJJ = true)
+        RAC->>RAC: segmentarTextoEnChunks(archivoBlob)
+        RAC->>RAC: calcularEmbeddingsLocales(chunks)
+        RAC->>VDB: ingestarChunk(chunkVector)
+        Note over VDB: Patrón Bajo Acoplamiento:<br/>Uso de la interfaz abstracta IVectorStore.
+        VDB->>API: POST /api/vector-db/ingest (chunkVector)
+        API-->>VDB: confirmacionIngesta
+        VDB-->>RAC: exitoPersistencia
+        RAC-->>SEC: exitoIngesta
+        SEC-->>UI: mostrarConfirmacionIngesta(fuenteId)
+        UI-->>Practicante: Mensaje de éxito e indexación completada
+    else Si no es pertinente (esPertinenteBJJ = false)
+        RAC-->>SEC: errorFueraDeDominio
+        SEC-->>UI: mostrarAlertaRechazo()
+        UI-->>Practicante: Mensaje: "Contenido no relacionado con BJJ"
+    end
+```
+
+---
+
+### **Paso 3: Diagrama de Secuencia de Diseño (DSD) para CU03**
+
+El siguiente diagrama detalla la interacción dinámica para analizar el rendimiento del alumno, evaluar la persistencia de fallos cinemáticos y recalibrar adaptativamente su plan pedagógico:
+
+<a id="figura-12"></a>
+**Figura 12**  
+*Diagrama de Secuencia de Diseño (Realización de CU03)*
+
+```mermaid
+sequenceDiagram
+    actor Practicante
+    participant UI as DojoDashboard
+    participant SEC as SesionEntrenamientoController
+    participant ADC as AdaptationController
+    participant CPA as CentralDBPersistenceAdapter
+    participant RAC as RetrievalAugmentedController
+    participant VDB as CentralVectorDBAdapter
+    participant API as API Gateway (Servidor Local)
+    
+    Practicante->>UI: solicitarProgreso()
+    UI->>SEC: consultarProgresoAdaptativo()
+    Note over SEC: Patrón Controlador:<br/>Recepción de la consulta del usuario y delegación del flujo.
+    SEC->>ADC: evaluarAdaptabilidad(usuarioId, NULL)
+    
+    Note over ADC: Patrón Experto:<br/>ADC posee el control del PerfilCompetencia e historial de fallos.
+    ADC->>CPA: cargarPerfil(usuarioId)
+    Note over CPA: Patrón Bajo Acoplamiento:<br/>Interacción blindada mediante interfaz IPersistenceService.
+    CPA->>API: GET /api/profile/:usuarioId
+    API-->>CPA: perfilCompetenciaJSON
+    CPA-->>ADC: perfilCompetencia (incluye HistorialVisualizacion)
+    
+    ADC->>ADC: analizarFallosRecurrentes(perfilCompetencia)
+    
+    alt Si hay fallo recurrente (> 3 intentos sin mejoría)
+        Note over ADC,RAC: Loop de adaptación: Cambio de estrategia al superar tolerancia
+        ADC->>RAC: obtenerGrounding(tecnicaId, metricasCalculadas)
+        RAC->>VDB: buscarSimilitud(tecnicaId, metricasCalculadas)
+        VDB->>API: POST /api/vector-db/query (tecnicaId)
+        API-->>VDB: chunksEstrategiaAlternativa
+        VDB-->>RAC: chunksEstrategiaText
+        RAC-->>ADC: drillAislamiento / videoYouTubeAlternativo
+        
+        ADC->>CPA: registrarVisualizacion(visualizacion)
+        CPA->>API: POST /api/profile/visualization
+        API-->>CPA: confirmacionGuardado
+        CPA-->>ADC: guardado
+    end
+    
+    ADC-->>SEC: rutaAprendizajePersonalizada
+    SEC-->>UI: desplegarRutaAdaptativa(rutaAprendizajePersonalizada)
+    UI-->>Practicante: Gráfico de progreso y tarjeta con nueva recomendación instructiva
+```
+
+---
+
+### **Paso 4: Justificación del Diseño basada en Patrones GRASP**
 
 La asignación de responsabilidades del diseño dinámico expuesto se fundamenta en los patrones GRASP de Craig Larman:
 
