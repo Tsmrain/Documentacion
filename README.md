@@ -616,362 +616,465 @@ flowchart TD
 
 ---
 
-##### **Caso de Uso CU01: Analizar Video de Combate**
-*   **Actor Principal:** Practicante
-*   **Interesados y sus Intereses:**
-    *   **Practicante:** Desea recibir retroalimentación cinemática rápida, precisa y objetiva de su sparring o drill sin sensores físicos invasivos sobre el tatami.
-    *   **Instructor:** Desea que la app actúe como un validador de los patrones biomecánicos del dojo.
-    *   **API Gemini:** Requiere datos cinemáticos depurados para estructurar la respuesta en JSON.
-*   **Precondiciones:**
-    *   Soporte WebGL activo en el dispositivo.
-    *   Acceso a cámara o almacenamiento local concedido y funcional.
-    *   El video grabado o subido para su análisis debe tener un tiempo máximo de duración de 45 segundos.
-*   **Garantía de Éxito / Postcondiciones:**
-    *   Los landmarks 3D son extraídos de forma local en el cliente web, la técnica es clasificada automáticamente, la base de datos vectorial de grounding (RAG) en el Servidor Local es consultada, el prompt dinámico es estructurado por el backend y la evaluación cinemática en JSON es devuelta y persistida localmente.
-*   **Escenario Principal de Éxito (Flujo Básico):**
-    1.  El Practicante graba o carga un video (máximo de 45 segundos de duración) de su combate o drill técnico.
-    2.  El Sistema valida el límite de duración local y procesa el video mediante submuestreo de fotogramas clave.
-    3.  El `MediaPipePoseAdapter` de visión computacional extrae los landmarks 3D $(x,y,z)$ locales en el cliente.
-    4.  El controlador local calcula las métricas cinemáticas locales (ángulos críticos, velocidad de extremidades).
-    5.  El Sistema envía un resumen visual (keyframes) al API Gateway del Servidor Local, el cual realiza una llamada interna a `GeminiServiceAdapter` para clasificar la técnica del video de manera autónoma (Autodetección Multimodal).
-    6.  El Servidor Local (a través de Gemini) responde con el ID de la técnica y el identificador de la disciplina (ej. "Guardia Cerrada").
-    7.  El `RetrievalAugmentedController` del cliente realiza una petición HTTP al API Gateway del Servidor Local, delegando en el `CentralVectorDBAdapter` la búsqueda de fragmentos semánticamente equivalentes en la base de datos vectorial centralizada para esa técnica.
-*   **Extensiones (Flujos Alternativos):**
-    *   **3.a. Fallo en estimación de landmarks (oclusión severa):**
-        1. MediaPipe reporta una confianza media inferior a 0.5.
-        2. El sistema alerta al Practicante y detiene el análisis sugiriendo mejor iluminación o encuadre.
-    *   **6.a. Gemini no identifica la técnica:**
-        1. Gemini devuelve "Técnica Desconocida / Estilo Libre".
-        2. El sistema conmuta a un prompt de evaluación basado en principios universales de balance, postura y palanca.
-    *   **6.b. Técnica Desconocida (Zero-Shot Discovery / Técnica D):**
-        1. El sistema identifica que la técnica analizada no está registrada en el sistema (ej. "Técnica D").
-        2. El Servidor Local (vía Gemini Vision) analiza detalladamente el video para generar una descripción semántica y biomecánica formal (ángulos, fases y posturas de la técnica).
-        3. El Servidor Local crea automáticamente una nueva entidad `Tecnica` en la base de datos relacional y genera los embeddings vectoriales de su descripción para indexarla de inmediato en el Vector DB.
-        4. Gracias a este aprendizaje colectivo, si mañana el Practicante G (o cualquier otro usuario) carga un video ejecutando la "Técnica D", el sistema la reconocerá en el paso 6 y podrá evaluarla con el RAG utilizando el registro recién creado.
-    *   **9.a. Error de conexión de red:**
-        1. El envío del prompt al Servidor Local falla.
-        2. El sistema almacena localmente el resumen biomecánico numérico y programa la inferencia diferida para cuando se restablezca la conexión.
-*   **Requisitos Especiales:**
-    *   El video cargado o grabado debe tener un límite estricto de duración máxima de 45 segundos.
-    *   El cálculo biomecánico y la renderización en el reproductor 3D deben ser fluidos (tasa de refresco superior a 15 FPS en WebGL).
-*   **Lista de Variaciones de Tecnología y Datos:**
-    *   Entrada de video en formato MP4, WebM o MOV.
-    *   Inferencia de landmarks usando modelos MediaPipe Pose en WebAssembly (WASM).
-*   **Frecuencia de Ocurrencia:**
-    *   Alta (múltiples veces al día por practicante).
-*   **Problemas Abiertos:**
-    *   Optimizar la precisión de estimación z de landmarks bajo kimonos holgados.
+### Caso de Uso CU01: Analizar Video de Combate
+
+**Actor Principal:** Practicante
+
+**Interesados y sus Intereses:**
+* **Practicante:** Desea recibir retroalimentación cinemática rápida, precisa y objetiva de su sparring o drill sin sensores físicos invasivos sobre el tatami.
+* **Instructor:** Desea que la app actúe como un validador de los patrones biomecánicos del dojo.
+* **Sistema/IA:** Requiere datos cinemáticos depurados para estructurar la respuesta en JSON a través del backend del Servidor Local.
+
+**Precondiciones:**
+* Soporte WebGL activo en el dispositivo.
+* Acceso a cámara o almacenamiento local concedido y funcional.
+* El video grabado o subido para su análisis debe tener un tiempo máximo de duración de 45 segundos.
+
+**Garantía de Éxito / Postcondiciones:**
+* Los landmarks 3D son extraídos de forma local en el cliente web, la técnica es clasificada automáticamente, la base de datos vectorial de grounding (RAG) en el Servidor Local es consultada, el prompt dinámico es estructurado por el backend y la evaluación cinemática en JSON es devuelta y persistida localmente.
+
+**Escenario Principal de Éxito (Flujo Básico):**
+1. El Practicante graba o carga un video (máximo de 45 segundos de duración) de su combate o drill técnico.
+2. El Sistema valida el límite de duración local y procesa el video mediante submuestreo de fotogramas clave.
+3. El `MediaPipePoseAdapter` de visión computacional extrae los landmarks 3D $(x,y,z)$ locales en el cliente.
+4. El controlador local calcula las métricas cinemáticas locales (ángulos críticos, velocidad de extremidades).
+5. El Sistema envía un resumen visual (keyframes) al API Gateway del Servidor Local, el cual realiza una llamada interna a `GeminiServiceAdapter` para clasificar la técnica del video de manera autónoma (Autodetección Multimodal).
+6. El Servidor Local (a través de Gemini) responde con el ID de la técnica y el identificador de la disciplina (ej. "Guardia Cerrada").
+7. El `RetrievalAugmentedController` del cliente realiza una petición HTTP al API Gateway del Servidor Local, delegando en el `CentralVectorDBAdapter` la búsqueda de fragmentos semánticamente equivalentes en la base de datos vectorial centralizada para esa técnica.
+
+**Extensiones (Flujos Alternativos):**
+* **3.a. Fallo en estimación de landmarks (oclusión severa):**
+  1. MediaPipe reporta una confianza media inferior a 0.5.
+  2. El sistema alerta al Practicante y detiene el análisis sugiriendo mejor iluminación o encuadre.
+* **6.a. Gemini no identifica la técnica:**
+  1. Gemini devuelve "Técnica Desconocida / Estilo Libre".
+  2. El sistema conmuta a un prompt de evaluación basado en principios universales de balance, postura y palanca.
+* **6.b. Técnica Desconocida (Zero-Shot Discovery / Técnica D):**
+  1. El sistema identifica que la técnica analizada no está registrada en el sistema (ej. "Técnica D").
+  2. El Servidor Local (vía Gemini Vision) analiza detalladamente el video para generar una descripción semántica y biomecánica formal (ángulos, fases y posturas de la técnica).
+  3. El Servidor Local crea automáticamente una nueva entidad `Tecnica` en la base de datos relacional y genera los embeddings vectoriales de su descripción para indexarla de inmediato en el Vector DB.
+  4. Gracias a este aprendizaje colectivo, si mañana el Practicante G (o cualquier otro usuario) carga un video ejecutando la "Técnica D", el sistema la reconocerá en el paso 6 y podrá evaluarla con el RAG utilizando el registro recién creado.
+* **9.a. Error de conexión de red:**
+  1. El envío del prompt al Servidor Local falla.
+  2. El sistema almacena localmente el resumen biomecánico numérico y programa la inferencia diferida para cuando se restablezca la conexión.
+
+**Requisitos Especiales:**
+* El video cargado o grabado debe tener un límite estricto de duración máxima de 45 segundos.
+* El cálculo biomecánico y la renderización en el reproductor 3D deben ser fluidos (tasa de refresco superior a 15 FPS en WebGL).
+
+**Lista de Variaciones de Tecnología y Datos:**
+* Entrada de video en formato MP4, WebM o MOV.
+* Inferencia de landmarks usando modelos MediaPipe Pose en WebAssembly (WASM).
+
+**Frecuencia de Ocurrencia:**
+* Alta - Múltiples veces al día por practicante activo para evaluar sus combates o drills técnicos.
+
+**Problemas Abiertos:**
+* Optimizar la precisión de estimación z de landmarks bajo kimonos holgados.
 
 
-##### **Caso de Uso CU02: Ingestar Nueva Fuente de Conocimiento (RAG)**
-*   **Actor Principal:** Practicante
-*   **Interesados y sus Intereses:**
-    *   **Practicante:** Desea aportar material de estudio propio o de la comunidad (PDFs, manuales técnicos o videos explicativos de YouTube) para enriquecer el motor de grounding de la IA, sin necesidad de esperar aprobación humana manual. El Practicante tiene la facultad de subir este contenido, pero el sistema actúa como filtro autónomo: Gemini valida de forma automática si el contenido pertenece estrictamente al dominio del Brazilian Jiu-Jitsu. Si es válido, se indexa para toda la comunidad; si no, se rechaza sin guardar ningún dato.
-    *   **Sistema/IA:** Requiere filtrar de manera autónoma contenido basura o de otros deportes para mantener la especialización técnica de grounding del sistema.
-    *   **Comunidad de la Academia:** Se beneficia de una base de datos de conocimiento técnico adaptativa y colaborativa en tiempo real (RAG Vivo).
-*   **Precondiciones:**
-    *   El usuario se encuentra conectado a internet y tiene acceso activo por red local/API al Servidor Local.
-    *   El archivo PDF o la URL de YouTube están en un formato legible.
-*   **Garantía de Éxito / Postcondiciones:**
-    *   Si la IA clasifica positivamente la pertinencia, se crea una instancia de `FuenteConocimiento` con el estado "Aceptado", persistiendo sus chunks y embeddings en la base de datos centralizada del Servidor Local. Si es inválido, es rechazado y eliminado sin persistir ningún dato.
-*   **Escenario Principal de Éxito (Flujo Básico):**
-    1.  El Practicante selecciona la opción "Ingestar Fuente de Conocimiento" en el panel.
-    2.  El Sistema presenta las opciones de carga: archivo PDF técnico o enlace de YouTube.
-    3.  El Practicante carga un archivo PDF desde su dispositivo o pega una URL de YouTube.
-    4.  El Sistema valida el formato básico y accesibilidad del archivo.
-    5.  El Sistema (a través de `RetrievalAugmentedController`) extrae una muestra de texto o transcripción y la envía al API Gateway del Servidor Local.
-    6.  El Servidor Local (a través de Gemini Service) evalúa la muestra y determina de forma autónoma que pertenece estrictamente al dominio de Brazilian Jiu-Jitsu (estado "Aceptado").
-    7.  El Servidor Local segmenta la fuente en chunks de texto lógicos y genera sus correspondientes embeddings vectoriales.
-    8.  El Servidor Local persiste los fragmentos y vectores en la base de datos vectorial centralizada con el estado "Aceptado", quedando disponible de forma inmediata para el motor RAG de todos los usuarios.
-    9.  El Sistema en la PWA confirma al Practicante que el contenido fue validado y aceptado automáticamente.
-*   **Extensiones (Flujos Alternativos):**
-    *   **4.a. El archivo no es un PDF válido o la URL de YouTube es inaccesible:**
-        1.  El Sistema detecta la anomalía de formato.
-        2.  El Sistema muestra un mensaje de error y retorna al paso 3.
-    *   **6.a. El motor de IA (Gemini) clasifica el contenido como Fuera de Dominio (ej. Boxeo, Cocina, etc.):**
-        1.  El Servidor Local identifica la clasificación negativa de la IA.
-        2.  El Servidor Local rechaza la ingesta y descarta el contenido sin almacenar ningún dato en la base de datos centralizada.
-        3.  El Sistema notifica al Practicante: "Contenido rechazado: El material no está relacionado con el Jiu-Jitsu".
-        4.  El caso de uso finaliza sin guardar ni persistir ningún dato en el Servidor Local.
-    *   **7.a. Fallo de red en la comunicación con el Servidor Local:**
-        1.  El envío de chunks o embeddings al Servidor Local falla.
-        2.  El Sistema notifica al Practicante que la base de datos central no está disponible y sugiere reintentar.
-*   **Requisitos Especiales:**
-    *   El filtro autónomo de pertinencia de la IA debe responder en menos de 5 segundos.
-    *   El Servidor Local debe indexar los embeddings en tiempo real para disponibilidad inmediata.
-*   **Lista de Variaciones de Tecnología y Datos:**
-    *   Carga de PDF a través de API multipart/form-data.
-    *   Subtítulos de YouTube recuperados mediante API de transcripción externa.
-*   **Frecuencia de Ocurrencia:**
-    *   Baja a Media (depende del dinamismo y aportes de la comunidad).
-*   **Problemas Abiertos:**
-    *   Manejo de transcripciones en idiomas diferentes al del dojo (requiere traducción en tiempo real).
+### Caso de Uso CU02: Ingestar Nueva Fuente de Conocimiento (RAG)
+
+**Actor Principal:** Practicante
+
+**Interesados y sus Intereses:**
+* **Practicante:** Desea aportar material de estudio propio o de la comunidad (PDFs, manuales técnicos o videos explicativos de YouTube) para enriquecer el motor de grounding de la IA, sin necesidad de esperar aprobación humana manual.
+* **Sistema/IA:** Requiere filtrar de manera autónoma contenido basura o de otros deportes para mantener la especialización técnica de grounding del sistema y evitar la contaminación del Vector DB.
+* **Comunidad de la Academia:** Se beneficia de una base de datos de conocimiento técnico adaptativa y colaborativa en tiempo real (RAG Vivo).
+
+**Precondiciones:**
+* El usuario se encuentra conectado a internet y tiene acceso activo por red local/API al Servidor Local.
+* El archivo PDF o la URL de YouTube están en un formato legible.
+
+**Garantía de Éxito / Postcondiciones:**
+* Si la IA clasifica positivamente la pertinencia, se crea una instancia de `FuenteConocimiento` con el estado "Aceptado", persistiendo sus chunks y embeddings en la base de datos centralizada del Servidor Local. Si es inválido, es rechazado y eliminado sin persistir ningún dato.
+
+**Escenario Principal de Éxito (Flujo Básico):**
+1. El Practicante selecciona la opción "Ingestar Fuente de Conocimiento" en el panel.
+2. El Sistema presenta las opciones de carga: archivo PDF técnico o enlace de YouTube.
+3. El Practicante carga un archivo PDF desde su dispositivo o pega una URL de YouTube.
+4. El Sistema valida el formato básico y accesibilidad del archivo.
+5. El Sistema (a través de `RetrievalAugmentedController`) extrae una muestra de texto o transcripción y la envía al API Gateway del Servidor Local.
+6. El Servidor Local (a través de Gemini Service) evalúa la muestra y determina de forma autónoma que pertenece estrictamente al dominio de Brazilian Jiu-Jitsu (estado "Aceptado").
+7. El Servidor Local segmenta la fuente en chunks de texto lógicos y genera sus correspondientes embeddings vectoriales.
+8. El Servidor Local persiste los fragmentos y vectores en la base de datos vectorial centralizada con el estado "Aceptado", quedando disponible de forma inmediata para el motor RAG de todos los usuarios.
+9. El Sistema en la PWA confirma al Practicante que el contenido fue validado y aceptado automáticamente.
+
+**Extensiones (Flujos Alternativos):**
+* **4.a. El archivo no es un PDF válido o la URL de YouTube es inaccesible:**
+  1. El Sistema detecta la anomalía de formato.
+  2. El Sistema muestra un mensaje de error y retorna al paso 3.
+* **6.a. El motor de IA (Gemini) clasifica el contenido como Fuera de Dominio (ej. Boxeo, Cocina, etc.):**
+  1. El Servidor Local identifica la clasificación negativa de la IA.
+  2. El Servidor Local rechaza la ingesta y descarta el contenido sin almacenar ningún dato en la base de datos centralizada.
+  3. El Sistema notifica al Practicante: "Contenido rechazado: El material no está relacionado con el Jiu-Jitsu".
+  4. El caso de uso finaliza sin guardar ni persistir ningún dato en el Servidor Local.
+* **7.a. Fallo de red en la comunicación con el Servidor Local:**
+  1. El envío de chunks o embeddings al Servidor Local falla.
+  2. El Sistema notifica al Practicante que la base de datos central no está disponible y sugiere reintentar.
+
+**Requisitos Especiales:**
+* El filtro autónomo de pertinencia de la IA debe responder en menos de 5 segundos.
+* El Servidor Local debe indexar los embeddings en tiempo real para disponibilidad inmediata.
+
+**Lista de Variaciones de Tecnología y Datos:**
+* Carga de PDF a través de API multipart/form-data.
+* Subtítulos de YouTube recuperados mediante API de transcripción externa.
+* Protocolo HTTPS para la transferencia segura de documentos y metadatos.
+
+**Frecuencia de Ocurrencia:**
+* Baja a Media - Depende del dinamismo y aportes de la comunidad de la academia para enriquecer la base de conocimiento.
+
+**Problemas Abiertos:**
+* Manejo de transcripciones en idiomas diferentes al del dojo (requiere traducción o soporte multilingüe en tiempo real).
 
 
-##### **Caso de Uso CU03: Consultar Progreso y Recibir Tutoría Adaptativa**
-*   **Actor Principal:** Practicante
-*   **Interesados y sus Intereses:**
-    *   **Practicante:** Desea comprender su evolución técnica a lo largo del tiempo y recibir orientaciones pedagógicas personalizadas que aborden sus errores recurrentes de forma específica.
-    *   **Instructor:** Desea que el sistema identifique patrones de fallo persistentes en sus alumnos para intervenir de manera focalizada presencialmente.
-    *   **Sistema/IA:** Requiere acceder al historial completo de `ErrorBiomecanico` y `PerfilCompetencia` (que rastrea el historial de intentos, videos vistos y la efectividad de las recomendaciones de video) para determinar si la estrategia pedagógica actual es efectiva o debe conmutarse.
-*   **Precondiciones:**
-    *   El Practicante ha realizado al menos una sesión de análisis biomecánico (CU01) cuyos resultados están persistidos en la base de datos centralizada del Servidor Local.
-    *   Existe una instancia de `PerfilCompetencia` inicializada para el usuario.
-*   **Garantía de Éxito / Postcondiciones:**
-    *   Se calcula la evolución cinemática histórica del Practicante, se evalúa la recurrencia de desviaciones y se actualiza el plan pedagógico en `RutaAprendizaje`, sugiriendo drills o videos de YouTube alternativos si no se detectó mejoría cinemática.
-*   **Escenario Principal de Éxito (Flujo Básico):**
-    1.  El Practicante navega a la sección "Progreso y Ruta de Aprendizaje" en la PWA.
-    2.  El Sistema carga el `PerfilCompetencia` del usuario desde la base de datos centralizada del Servidor Local.
-    3.  El `AdaptationController` consulta el historial de `ErrorBiomecanico` y la efectividad de las tutorías pasadas asociadas al Practicante.
-    4.  El Sistema procesa la frecuencia de las desviaciones y detecta errores recurrentes donde `vecesDetectadoConsecutivas > 3`.
-    5.  El Sistema evalúa si la estrategia pedagógica actual ha producido mejoría cinemática comparando las métricas de las últimas tres sesiones.
-    6.  Si no hay mejoría cinemática (el practicante vio el video sugerido, volvió a grabar la técnica y el error biomecánico persiste), el Sistema activa el cambio de estrategia instruccional: es lo suficientemente inteligente para cambiar la estrategia pedagógica, sugiriendo un video de YouTube alternativo (que muestre la técnica desde otro ángulo, de otra academia, o en cámara lenta) o bien un drill físico de aislamiento diseñado para corregir la biomecánica de la articulación afectada.
-    7.  El Sistema actualiza la entidad `RutaAprendizaje` y genera los reportes cinemáticos gráficos.
-    8.  El Sistema despliega la ruta de aprendizaje personalizada, incluyendo los enlaces de YouTube actualizados y los drills anatómicos recomendados.
-*   **Extensiones (Flujos Alternativos):**
-    *   **3.a. No existe historial de análisis previo:**
-        1.  El Sistema detecta que `PerfilCompetencia` no contiene entradas de `ErrorBiomecanico`.
-        2.  El Sistema muestra un mensaje indicando que aún no hay datos de progreso e invita al Practicante a realizar su primer análisis (CU01).
-    *   **5.a. El usuario ha mostrado mejoría cinemática en las últimas tres sesiones:**
-        1.  El Sistema determina que las desviaciones se han reducido por debajo del umbral de $15^{\circ}$.
-        2.  El Sistema mantiene la estrategia pedagógica y felicita al Practicante.
-        3.  El flujo continúa al paso 7.
-*   **Requisitos Especiales:**
-    *   La comparación cinemática de recurrencia de errores debe aplicarse estrictamente a la misma técnica para evitar falsos positivos.
-*   **Lista de Variaciones de Tecnología y Datos:**
-    *   Visualización de datos usando SVG responsivos o gráficos basados en Chart.js.
-*   **Frecuencia de Ocurrencia:**
-    *   Alta (cada vez que el Practicante consulta su perfil en la aplicación).
-*   **Problemas Abiertos:**
-    *   Definir umbrales dinámicos de normalización para personas de complexión asimétrica.
+### Caso de Uso CU03: Consultar Progreso y Recibir Tutoría Adaptativa
+
+**Actor Principal:** Practicante
+
+**Interesados y sus Intereses:**
+* **Practicante:** Desea comprender su evolución técnica a lo largo del tiempo y recibir orientaciones pedagógicas personalizadas que aborden sus errores recurrentes de forma específica.
+* **Instructor:** Desea que el sistema identifique patrones de fallo persistentes en sus alumnos para intervenir de manera focalizada presencialmente.
+* **Sistema/IA:** Requiere acceder al historial completo de `ErrorBiomecanico` y `PerfilCompetencia` (que rastrea el historial de intentos, videos vistos y la efectividad de las recomendaciones de video) para determinar si la estrategia pedagógica actual es efectiva o debe conmutarse.
+
+**Precondiciones:**
+* El Practicante ha realizado al menos una sesión de análisis biomecánico (CU01) cuyos resultados están persistidos en la base de datos centralizada del Servidor Local.
+* Existe una instancia de `PerfilCompetencia` inicializada para el usuario.
+
+**Garantía de Éxito / Postcondiciones:**
+* Se calcula la evolución cinemática histórica del Practicante, se evalúa la recurrencia de desviaciones y se actualiza el plan pedagógico en `RutaAprendizaje`, sugiriendo drills o videos de YouTube alternativos si no se detectó mejoría cinemática.
+
+**Escenario Principal de Éxito (Flujo Básico):**
+1. El Practicante navega a la sección "Progreso y Ruta de Aprendizaje" en la PWA.
+2. El Sistema carga el `PerfilCompetencia` del usuario desde la base de datos centralizada del Servidor Local.
+3. El `AdaptationController` consulta el historial de `ErrorBiomecanico` y la efectividad de las tutorías pasadas asociadas al Practicante.
+4. El Sistema procesa la frecuencia de las desviaciones y detecta errores recurrentes donde `vecesDetectadoConsecutivas > 3`.
+5. El Sistema evalúa si la estrategia pedagógica actual ha producido mejoría cinemática comparando las métricas de las últimas tres sesiones.
+6. Si no hay mejoría cinemática (el practicante vio el video sugerido, volvió a grabar la técnica y el error biomecánico persiste), el Sistema activa el cambio de estrategia instruccional: es lo suficientemente inteligente para cambiar la estrategia pedagógica, sugiriendo un video de YouTube alternativo (que muestre la técnica desde otro ángulo, de otra academia, o en cámara lenta) o bien un drill físico de aislamiento diseñado para corregir la biomecánica de la articulación afectada.
+7. El Sistema actualiza la entidad `RutaAprendizaje` y genera los reportes cinemáticos gráficos.
+8. El Sistema despliega la ruta de aprendizaje personalizada, incluyendo los enlaces de YouTube actualizados y los drills anatómicos recomendados.
+
+**Extensiones (Flujos Alternativos):**
+* **3.a. No existe historial de análisis previo:**
+  1. El Sistema detecta que `PerfilCompetencia` no contiene entradas de `ErrorBiomecanico`.
+  2. El Sistema muestra un mensaje indicando que aún no hay datos de progreso e invita al Practicante a realizar su primer análisis (CU01).
+* **5.a. El usuario ha mostrado mejoría cinemática en las últimas tres sesiones:**
+  1. El Sistema determina que las desviaciones se han reducido por debajo del umbral de $15^{\circ}$.
+  2. El Sistema mantiene la estrategia pedagógica y felicita al Practicante.
+  3. El flujo continúa al paso 7.
+
+**Requisitos Especiales:**
+* La comparación cinemática de recurrencia de errores debe aplicarse estrictamente a la misma técnica para evitar falsos positivos.
+
+**Lista de Variaciones de Tecnología y Datos:**
+* Visualización de datos usando SVG responsivos o gráficos dinámicos basados en Chart.js.
+* Formatos de salida JSON para persistir las estrategias recomendadas en el perfil local.
+
+**Frecuencia de Ocurrencia:**
+* Alta - Cada vez que el Practicante consulta su perfil en la PWA para comprobar su avance y ajustar sus entrenamientos.
+
+**Problemas Abiertos:**
+* Definir umbrales dinámicos de normalización para personas de complexión asimétrica y optimizar el cálculo adaptativo en el cliente móvil.
 
 
-##### **Caso de Uso CU04: Gestionar Datos Antropométricos del Usuario**
-*   **Actor Principal:** Practicante
-*   **Interesados y sus Intereses:**
-    *   **Practicante:** Desea que las métricas biomecánicas calculadas por el Sistema estén normalizadas según su complexidad física (altura, peso) para recibir evaluaciones justas y comparables a lo largo del tiempo.
-    *   **Sistema/IA:** Requiere datos antropométricos actualizados para escalar correctamente los umbrales de tolerancia angular y las velocidades articulares esperadas.
-*   **Precondiciones:**
-    *   El usuario ha creado un perfil de Practicante en la aplicación y su instancia de `Usuario` existe en la base de datos centralizada del Servidor Local.
-*   **Garantía de Éxito / Postcondiciones:**
-    *   Se modificó la instancia de `Usuario` asociada al Practicante, actualizando los atributos `altura` y `peso` con los nuevos valores numéricos validados, quedando disponibles de inmediato para el siguiente análisis biomecánico (CU01).
-*   **Escenario Principal de Éxito (Flujo Básico):**
-    1.  El Practicante navega a la sección "Ajustes de Perfil" desde el menú principal.
-    2.  El Sistema carga los datos antropométricos actuales del objeto `Usuario` desde la base de datos centralizada del Servidor Local y los presenta en un formulario editable.
-    3.  El Practicante ingresa o modifica su altura (en cm) y peso (en kg).
-    4.  El Sistema valida que los valores se encuentren dentro de rangos numéricos aceptables (altura: 100-220 cm, peso: 30-200 kg).
-    5.  El Sistema persiste los nuevos valores en la instancia de `Usuario` en la base de datos centralizada del Servidor Local.
-    6.  El Sistema confirma al Practicante que sus datos fueron actualizados correctamente.
-*   **Extensiones (Flujos Alternativos):**
-    *   **4.a. Los valores ingresados están fuera de rango:**
-        1.  El Sistema detecta que la altura o el peso no se encuentran dentro de los rangos aceptables.
-        2.  El Sistema resalta el campo inválido con un mensaje de error específico.
-        3.  El flujo retorna al paso 3.
-    *   **5.a. Error de escritura en la base de datos centralizada:**
-        1.  El Sistema no puede persistir los datos por un fallo de red o almacenamiento en el Servidor Local.
-        2.  El Sistema notifica al Practicante que no se pudieron guardar los cambios y sugiere reintentar.
-*   **Requisitos Especiales:**
-    *   Los datos antropométricos se almacenan de forma segura en la base de datos centralizada del Servidor Local y no se transmiten a nubes comerciales de terceros.
-    *   El formulario debe incluir indicadores de unidad de medida (cm, kg) claros para evitar confusión del usuario.
-*   **Lista de Variaciones de Tecnología y Datos:**
-    *   Ingreso de datos antropométricos manuales por el usuario.
-*   **Frecuencia de Ocurrencia:**
-    *   Baja (ocasionalmente ante cambios físicos significativos).
-*   **Problemas Abiertos:**
-    *   Manejar la conversión dinámica si el usuario cambia el sistema de unidades del perfil (métrico/imperial).
+### Caso de Uso CU04: Gestionar Datos Antropométricos del Usuario
+
+**Actor Principal:** Practicante
+
+**Interesados y sus Intereses:**
+* **Practicante:** Desea que las métricas biomecánicas calculadas por el Sistema estén normalizadas según su complexidad física (altura, peso) para recibir evaluaciones justas y comparables a lo largo del tiempo.
+* **Sistema/IA:** Requiere datos antropométricos actualizados para escalar correctamente los umbrales de tolerancia angular y las velocidades articulares esperadas.
+* **Instructor:** Desea que los reportes de sus alumnos utilicen métricas ajustadas antropométricamente para evaluar con precisión el esfuerzo articular en relación a la estatura y peso de cada alumno.
+
+**Precondiciones:**
+* El usuario ha creado un perfil de Practicante en la aplicación y su instancia de `Usuario` existe en la base de datos centralizada del Servidor Local.
+
+**Garantía de Éxito / Postcondiciones:**
+* Se modificó la instancia de `Usuario` asociada al Practicante, actualizando los atributos `altura` y `peso` con los nuevos valores numéricos validados, quedando disponibles de inmediato para el siguiente análisis biomecánico (CU01).
+
+**Escenario Principal de Éxito (Flujo Básico):**
+1. El Practicante navega a la sección "Ajustes de Perfil" desde el menú principal.
+2. El Sistema carga los datos antropométricos actuales del objeto `Usuario` desde la base de datos centralizada del Servidor Local y los presenta en un formulario editable.
+3. El Practicante ingresa o modifica su altura (en cm) y peso (en kg).
+4. El Sistema valida que los valores se encuentren dentro de rangos numéricos aceptables (altura: 100-220 cm, peso: 30-200 kg).
+5. El Sistema persiste los nuevos valores en la instancia de `Usuario` en la base de datos centralizada del Servidor Local.
+6. El Sistema confirma al Practicante que sus datos fueron actualizados correctamente.
+
+**Extensiones (Flujos Alternativos):**
+* **4.a. Los valores ingresados están fuera de rango:**
+  1. El Sistema detecta que la altura o el peso no se encuentran dentro de los rangos aceptables.
+  2. El Sistema resalta el campo inválido con un mensaje de error específico.
+  3. El flujo retorna al paso 3.
+* **5.a. Error de escritura en la base de datos centralizada:**
+  1. El Sistema no puede persistir los datos por un fallo de red o almacenamiento en el Servidor Local.
+  2. El Sistema notifica al Practicante que no se pudieron guardar los cambios y sugiere reintentar.
+
+**Requisitos Especiales:**
+* Los datos antropométricos se almacenan de forma segura en la base de datos centralizada del Servidor Local y no se transmiten a nubes comerciales de terceros.
+* El formulario debe incluir indicadores de unidad de medida (cm, kg) claros para evitar confusión del usuario.
+
+**Lista de Variaciones de Tecnología y Datos:**
+* Ingreso de datos antropométricos manuales por el usuario.
+* Soporte para selección de unidades imperiales (pulgadas/libras) con conversión automática.
+
+**Frecuencia de Ocurrencia:**
+* Baja - Ocasionalmente ante cambios físicos significativos o durante el registro inicial del practicante.
+
+**Problemas Abiertos:**
+* Manejar la conversión dinámica si el usuario cambia el sistema de unidades del perfil (métrico/imperial) sin introducir ruido en el historial biomecánico acumulado.
 
 
-##### **Caso de Uso CU06: Gestionar Sesiones de Entrenamiento**
-*   **Actor Principal:** Practicante
-*   **Interesados y sus Intereses:**
-    *   **Practicante:** Desea organizar su historial de entrenamientos, eliminando videos obsoletos o clasificando sesiones por fecha, técnica o nivel de intensidad para facilitar la consulta retrospectiva de su progreso.
-    *   **Sistema/IA:** Requiere mantener la base de datos centralizada optimizada, eliminando registros que el usuario ya no considera relevantes para mejorar el rendimiento de las consultas.
-*   **Precondiciones:**
-    *   El Practicante ha realizado al menos una sesión de entrenamiento (CU01) que está almacenada como instancia de `SesionEntrenamiento` en la base de datos centralizada del Servidor Local.
-*   **Garantía de Éxito / Postcondiciones:**
-    *   Se modificó, eliminó o reclasificó al menos una instancia de `SesionEntrenamiento` en el historial de la base de datos centralizada del Servidor Local.
-*   **Escenario Principal de Éxito (Flujo Básico):**
-    1.  El Practicante navega a la sección "Historial de Entrenamientos" desde el panel principal.
-    2.  El Sistema carga todas las instancias de `SesionEntrenamiento` asociadas al perfil del Practicante desde la base de datos centralizada del Servidor Local.
-    3.  El Sistema despliega la lista de sesiones ordenadas cronológicamente, mostrando metadatos resumidos (fecha, técnica detectada, puntuación táctica).
-    4.  El Practicante selecciona una sesión específica para gestionar.
-    5.  El Sistema presenta las opciones disponibles: ver detalle, renombrar, clasificar por etiqueta o eliminar.
-    6.  El Practicante selecciona la operación deseada y confirma la acción.
-    7.  El Sistema ejecuta la operación CRUD correspondiente sobre la instancia de `SesionEntrenamiento` en la base de datos centralizada del Servidor Local.
-    8.  El Sistema confirma al Practicante que la operación se completó exitosamente y actualiza la vista del historial.
-*   **Extensiones (Flujos Alternativos):**
-    *   **3.a. No existen sesiones de entrenamiento registradas:**
-        1.  El Sistema detecta que la base de datos centralizada no contiene instancias de `SesionEntrenamiento` para este usuario.
-        2.  El Sistema muestra un mensaje invitando al Practicante a realizar su primer análisis (CU01).
-    *   **6.a. El Practicante selecciona eliminar una sesión:**
-        1.  El Sistema muestra un diálogo de confirmación advirtiendo que la acción es irreversible.
-        2.  Si el Practicante confirma, el Sistema elimina la instancia de `SesionEntrenamiento` y sus entidades asociadas (`AnalisisBiomecanico`, `MetricaCinematica`) de la base de datos centralizada del Servidor Local.
-        3.  Si el Practicante cancela, el flujo retorna al paso 5.
-    *   **7.a. Error de escritura en la base de datos centralizada durante la operación:**
-        1.  El Sistema falla al persistir la operación CRUD.
-        2.  El Sistema notifica al Practicante que no se pudo completar la acción y sugiere reintentar.
-*   **Requisitos Especiales:**
-    *   La lista de sesiones debe soportar filtrado por rango de fechas, técnica y etiqueta para facilitar la navegación en historiales extensos.
-    *   La eliminación de sesiones debe ser lógica (marcado como eliminado) o física en la base de datos centralizada, garantizando que los datos eliminados no sean recuperables por consultas semánticas futuras.
-*   **Lista de Variaciones de Tecnología y Datos:**
-    *   Visualización móvil optimizada para interacción táctil rápida.
-*   **Frecuencia de Ocurrencia:**
-    *   Media (al final de cada semana o mes de entrenamiento).
-*   **Problemas Abiertos:**
-    *   Optimizar la velocidad de carga de miniaturas de esqueleto 3D para dispositivos de baja gama.
+### Caso de Uso CU06: Gestionar Sesiones de Entrenamiento
+
+**Actor Principal:** Practicante
+
+**Interesados y sus Intereses:**
+* **Practicante:** Desea organizar su historial de entrenamientos, eliminando videos obsoletos o clasificando sesiones por fecha, técnica o nivel de intensidad para facilitar la consulta retrospectiva de su progreso.
+* **Sistema/IA:** Requiere mantener la base de datos centralizada optimizada, eliminando registros que el usuario ya no considera relevantes para mejorar el rendimiento de las consultas.
+* **Instructor:** Desea que sus alumnos mantengan un registro ordenado y etiquetado para revisar la asistencia y el volumen de drills técnicos realizados en el tatami.
+
+**Precondiciones:**
+* El Practicante ha realizado al menos una sesión de entrenamiento (CU01) que está almacenada como instancia de `SesionEntrenamiento` en la base de datos centralizada del Servidor Local.
+
+**Garantía de Éxito / Postcondiciones:**
+* Se modificó, eliminó o reclasificó al menos una instancia de `SesionEntrenamiento` en el historial de la base de datos centralizada del Servidor Local.
+
+**Escenario Principal de Éxito (Flujo Básico):**
+1. El Practicante navega a la sección "Historial de Entrenamientos" desde el panel principal.
+2. El Sistema carga todas las instancias de `SesionEntrenamiento` asociadas al perfil del Practicante desde la base de datos centralizada del Servidor Local.
+3. El Sistema despliega la lista de sesiones ordenadas cronológicamente, mostrando metadatos resumidos (fecha, técnica detectada, puntuación táctica).
+4. El Practicante selecciona una sesión específica para gestionar.
+5. El Sistema presenta las opciones disponibles: ver detalle, renombrar, clasificar por etiqueta o eliminar.
+6. El Practicante selecciona la operación deseada y confirma la acción.
+7. El Sistema ejecuta la operación CRUD correspondiente sobre la instancia de `SesionEntrenamiento` en la base de datos centralizada del Servidor Local.
+8. El Sistema confirma al Practicante que la operación se completó exitosamente y actualiza la vista del historial.
+
+**Extensiones (Flujos Alternativos):**
+* **3.a. No existen sesiones de entrenamiento registradas:**
+  1. El Sistema detecta que la base de datos centralizada no contiene instancias de `SesionEntrenamiento` para este usuario.
+  2. El Sistema muestra un mensaje invitando al Practicante a realizar su primer análisis (CU01).
+* **6.a. El Practicante selecciona eliminar una sesión:**
+  1. El Sistema muestra un diálogo de confirmación advirtiendo que la acción es irreversible.
+  2. Si el Practicante confirma, el Sistema elimina la instancia de `SesionEntrenamiento` y sus entidades asociadas (`AnalisisBiomecanico`, `MetricaCinematica`) de la base de datos centralizada del Servidor Local.
+  3. Si el Practicante cancela, el flujo retorna al paso 5.
+* **7.a. Error de escritura en la base de datos centralizada durante la operación:**
+  1. El Sistema falla al persistir la operación CRUD.
+  2. El Sistema notifica al Practicante que no se pudo completar la acción y sugiere reintentar.
+
+**Requisitos Especiales:**
+* La lista de sesiones debe soportar filtrado por rango de fechas, técnica y etiqueta para facilitar la navegación en historiales extensos.
+* La eliminación de sesiones debe ser lógica (marcado como eliminado) o física en la base de datos centralizada, garantizando que los datos eliminados no sean recuperables por consultas semánticas futuras.
+
+**Lista de Variaciones de Tecnología y Datos:**
+* Visualización móvil optimizada para interacción táctil rápida.
+* Exportación de metadatos de sesión en formato CSV o JSON.
+
+**Frecuencia de Ocurrencia:**
+* Media - Al final de cada semana o mes de entrenamiento para depurar videos y organizar la base de datos local.
+
+**Problemas Abiertos:**
+* Optimizar la velocidad de carga de miniaturas de esqueleto 3D para dispositivos de baja gama.
 
 
-##### **Caso de Uso CU07: Exportar/Compartir Reportes**
-*   **Actor Principal:** Practicante
-*   **Interesados y sus Intereses:**
-    *   **Practicante:** Desea generar un archivo portable (PDF o imagen) del reporte de análisis biomecánico para compartirlo con su instructor, documentar su progreso o archivarlo externamente a la aplicación.
-    *   **Instructor:** Se beneficia al recibir reportes estructurados de sus alumnos que facilitan la preparación de sesiones de corrección personalizada.
-    *   **Sistema/IA:** Requiere componer una representation visual del esqueleto 3D superpuesto al video frame clave junto con la puntuación táctica y las desviaciones detectadas en un formato exportable.
-*   **Precondiciones:**
-    *   Existe al menos una instancia de `AnalisisBiomecanico` completada con resultados de Gemini persistidos en la base de datos centralizada del Servidor Local para la sesión seleccionada.
-*   **Garantía de Éxito / Postcondiciones:**
-    *   Se generó un archivo exportable (PDF o imagen) que contiene el esqueleto 3D superpuesto, las métricas cinemáticas, la puntuación táctica y las recomendaciones de corrección, el cual fue descargado al dispositivo o compartido.
-*   **Escenario Principal de Éxito (Flujo Básico):**
-    1.  El Practicante selecciona una sesión de análisis completada desde su historial de entrenamientos.
-    2.  El Sistema despliega el detalle del análisis con las métricas cinemáticas y la evaluación de Gemini.
-    3.  El Practicante selecciona la opción "Exportar Reporte".
-    4.  El Sistema presenta las opciones de formato: PDF o imagen PNG.
-    5.  El Practicante selecciona el formato deseado.
-    6.  El Sistema compone el reporte renderizando el esqueleto 3D superpuesto al frame clave del video, las métricas cinemáticas calculadas, la puntuación táctica y las desviaciones angulares detectadas.
-    7.  El Sistema genera el archivo en el formato seleccionado y lo descarga al dispositivo del Practicante.
-    8.  El Sistema ofrece la opción de compartir el archivo directamente mediante la Web Share API.
-*   **Extensiones (Flujos Alternativos):**
-    *   **4.a. El navegador no soporta Web Share API:**
-        1.  El Sistema detecta que el dispositivo no soporta compartir nativamente.
-        2.  El Sistema omite la opción de compartir y solo ofrece la descarga del archivo.
-    *   **6.a. Error al renderizar el esqueleto 3D para exportación:**
-        1.  El Sistema falla al capturar el frame del WebGL Renderer.
-        2.  El Sistema genera el reporte sin la imagen del esqueleto 3D, incluyendo únicamente las métricas numéricas y el texto de evaluación.
-        3.  El Sistema notifica al Practicante que la visualización 3D no pudo incluirse.
-    *   **7.a. Error de descarga por almacenamiento insuficiente:**
-        1.  El dispositivo no tiene espacio suficiente para guardar el archivo generado.
-        2.  El Sistema notifica al Practicante y sugiere liberar espacio antes de reintentar.
-*   **Requisitos Especiales:**
-    *   El reporte PDF debe incluir la fecha, hora y duración del análisis, así como el nivel de graduación del Practicante para contextualizar la evaluación.
-    *   La generación del archivo debe completarse en menos de 10 segundos en un dispositivo móvil de gama media.
-*   **Lista de Variaciones de Tecnología y Datos:**
-    *   Exportación en formato PDF o imagen PNG. Compartir por mensajería a través de Web Share API.
-*   **Frecuencia de Ocurrencia:**
-    *   Media (cada vez que un alumno quiere mostrar avances relevantes o consultar al profesor).
-*   **Problemas Abiertos:**
-    *   Permitir a los profesores agregar comentarios de texto anotados directamente sobre el PDF exportado.
+### Caso de Uso CU07: Exportar/Compartir Reportes
+
+**Actor Principal:** Practicante
+
+**Interesados y sus Intereses:**
+* **Practicante:** Desea generar un archivo portable (PDF o imagen) del reporte de análisis biomecánico para compartirlo con su instructor, documentar su progreso o archivarlo externamente a la aplicación.
+* **Instructor:** Se beneficia al recibir reportes estructurados de sus alumnos que facilitan la preparación de sesiones de corrección personalizada.
+* **Sistema/IA:** Requiere componer una representación visual del esqueleto 3D superpuesto al video frame clave junto con la puntuación táctica y las desviaciones detectadas en un formato exportable.
+
+**Precondiciones:**
+* Existe al menos una instancia de `AnalisisBiomecanico` completada con resultados de Gemini persistidos en la base de datos centralizada del Servidor Local para la sesión seleccionada.
+
+**Garantía de Éxito / Postcondiciones:**
+* Se generó un archivo exportable (PDF o imagen) que contiene el esqueleto 3D superpuesto, las métricas cinemáticas, la puntuación táctica y las recomendaciones de corrección, el cual fue descargado al dispositivo o compartido.
+
+**Escenario Principal de Éxito (Flujo Básico):**
+1. El Practicante selecciona una sesión de análisis completada desde su historial de entrenamientos.
+2. El Sistema despliega el detalle del análisis con las métricas cinemáticas y la evaluación de Gemini.
+3. El Practicante selecciona la opción "Exportar Reporte".
+4. El Sistema presenta las opciones de formato: PDF o imagen PNG.
+5. El Practicante selecciona el formato deseado.
+6. El Sistema compone el reporte renderizando el esqueleto 3D superpuesto al frame clave del video, las métricas cinemáticas calculadas, la puntuación táctica y las desviaciones angulares detectadas.
+7. El Sistema genera el archivo en el formato seleccionado y lo descarga al dispositivo del Practicante.
+8. El Sistema ofrece la opción de compartir el archivo directamente mediante la Web Share API.
+
+**Extensiones (Flujos Alternativos):**
+* **4.a. El navegador no soporta Web Share API:**
+  1. El Sistema detecta que el dispositivo no soporta compartir nativamente.
+  2. El Sistema omite la opción de compartir y solo ofrece la descarga del archivo.
+* **6.a. Error al renderizar el esqueleto 3D para exportación:**
+  1. El Sistema falla al capturar el frame del WebGL Renderer.
+  2. El Sistema genera el reporte sin la imagen del esqueleto 3D, incluyendo únicamente las métricas numéricas y el texto de evaluación.
+  3. El Sistema notifica al Practicante que la visualización 3D no pudo incluirse.
+* **7.a. Error de descarga por almacenamiento insuficiente:**
+  1. El dispositivo no tiene espacio suficiente para guardar el archivo generado.
+  2. El Sistema notifica al Practicante y sugiere liberar espacio antes de reintentar.
+
+**Requisitos Especiales:**
+* El reporte PDF debe incluir la fecha, hora y duración del análisis, así como el nivel de graduación del Practicante para contextualizar la evaluación.
+* La generación del archivo debe completarse en menos de 10 segundos en un dispositivo móvil de gama media.
+
+**Lista de Variaciones de Tecnología y Datos:**
+* Exportación en formato PDF o imagen PNG.
+* Compartir por mensajería a través de Web Share API nativa o enlaces temporales.
+
+**Frecuencia de Ocurrencia:**
+* Media - Cada vez que un alumno quiere mostrar avances relevantes o consultar al profesor de forma remota.
+
+**Problemas Abiertos:**
+* Permitir a los profesores agregar comentarios de texto anotados directamente sobre el PDF exportado antes de su almacenamiento definitivo.
 
 
-##### **Caso de Uso CU08: Configurar Preferencias del Sistema**
-*   **Actor Principal:** Practicante
-*   **Interesados y sus Intereses:**
-    *   **Practicante:** Desea personalizar la experiencia de uso de la PWA según sus necesidades individuales, como el idioma de retroalimentación de la IA, el nivel de zoom del esqueleto 3D y el sistema métrico para la estimación física.
-    *   **Sistema/IA:** Requiere conocer las preferencias del usuario para adaptar la presentación de resultados, el idioma de los prompts enviados a Gemini y la escala de visualización del renderer 3D.
-*   **Precondiciones:**
-    *   El Practicante tiene un perfil activo en la aplicación con una instancia de `Usuario` persistida en la base de datos centralizada del Servidor Local.
-*   **Garantía de Éxito / Postcondiciones:**
-    *   Se modificaron las preferencias de configuración del Practicante en su perfil centralizado y se aplicaron de forma inmediata a la interfaz y comportamiento del Sistema.
-*   **Escenario Principal de Éxito (Flujo Básico):**
-    1.  El Practicante navega a la sección "Configuración" desde el menú principal.
-    2.  El Sistema carga las preferencias actuales del Practicante desde la base de datos centralizada del Servidor Local y las presenta en un formulario con las opciones disponibles.
-    3.  El Practicante modifica una o más preferencias: idioma de retroalimentación de la IA (ej. español, inglés, portugués), nivel de zoom predeterminado del esqueleto 3D, sistema métrico (métrico/imperial).
-    4.  El Sistema valida que las selecciones sean opciones soportadas.
-    5.  El Sistema persiste las nuevas preferencias en el perfil del Practicante en la base de datos centralizada del Servidor Local.
-    6.  El Sistema aplica los cambios inmediatamente a la interfaz activa y confirma al Practicante que la configuración fue actualizada.
-*   **Extensiones (Flujos Alternativos):**
-    *   **4.a. El Practicante selecciona una opción no soportada:**
-        1.  El Sistema detecta una preferencia inválida (posible manipulación del DOM).
-        2.  El Sistema rechaza el cambio y restaura el valor anterior, mostrando un mensaje de error.
-    *   **5.a. Error de escritura en la base de datos centralizada:**
-        1.  El Sistema no puede persistir las preferencias por un fallo de comunicación con el Servidor Local.
-        2.  El Sistema notifica al Practicante y mantiene las preferencias anteriores activas hasta que la operación se complete.
-*   **Requisitos Especiales:**
-    *   Las preferencias de idioma deben afectar tanto la interfaz de usuario como el idioma del prompt enviado a la API de Gemini para la generación de retroalimentación en lenguaje natural.
-    *   El cambio de sistema métrico debe recalcular y redimensionar las visualizaciones numéricas existentes sin alterar los datos cinemáticos crudos almacenados.
-*   **Lista de Variaciones de Tecnología y Datos:**
-    *   Idiomas soportados: Español, Inglés y Portugués.
-*   **Frecuencia de Ocurrencia:**
-    *   Muy Baja (generalmente configurado una sola vez durante el primer inicio).
-*   **Problemas Abiertos:**
-    *   Sincronizar preferencias del usuario entre múltiples dispositivos utilizando almacenamiento local temporal (localStorage) y base de datos centralizada.
+### Caso de Uso CU08: Configurar Preferencias del Sistema
+
+**Actor Principal:** Practicante
+
+**Interesados y sus Intereses:**
+* **Practicante:** Desea personalizar la experiencia de uso de la PWA según sus necesidades individuales, como el idioma de retroalimentación de la IA, el nivel de zoom del esqueleto 3D y el sistema métrico para la estimación física.
+* **Sistema/IA:** Requiere conocer las preferencias del usuario para adaptar la presentación de resultados, el idioma de los prompts enviados a Gemini y la escala de visualización del renderer 3D.
+* **Instructor:** Desea que los reportes de sus alumnos utilicen métricas alineadas con las unidades oficiales de la federación.
+
+**Precondiciones:**
+* El Practicante tiene un perfil activo en la aplicación con una instancia de `Usuario` persistida en la base de datos centralizada del Servidor Local.
+
+**Garantía de Éxito / Postcondiciones:**
+* Se modificaron las preferencias de configuración del Practicante en su perfil centralizado y se aplicaron de forma inmediata a la interfaz y comportamiento del Sistema.
+
+**Escenario Principal de Éxito (Flujo Básico):**
+1. El Practicante navega a la sección "Configuración" desde el menú principal.
+2. El Sistema carga las preferencias actuales del Practicante desde la base de datos centralizada del Servidor Local y las presenta en un formulario con las opciones disponibles.
+3. El Practicante modifica una o más preferencias: idioma de retroalimentación de la IA (ej. español, inglés, portugués), nivel de zoom predeterminado del esqueleto 3D, sistema métrico (métrico/imperial).
+4. El Sistema valida que las selecciones sean opciones soportadas.
+5. El Sistema persiste las nuevas preferencias en el perfil del Practicante en la base de datos centralizada del Servidor Local.
+6. El Sistema aplica los cambios inmediatamente a la interfaz activa y confirma al Practicante que la configuración fue actualizada.
+
+**Extensiones (Flujos Alternativos):**
+* **4.a. El Practicante selecciona una opción no soportada:**
+  1. El Sistema detecta una preferencia inválida (posible manipulación del DOM).
+  2. El Sistema rechaza el cambio y restaura el valor anterior, mostrando un mensaje de error.
+* **5.a. Error de escritura en la base de datos centralizada:**
+  1. El Sistema no puede persistir las preferencias por un fallo de comunicación con el Servidor Local.
+  2. El Sistema notifica al Practicante y mantiene las preferencias anteriores activas hasta que la operación se complete.
+
+**Requisitos Especiales:**
+* Las preferencias de idioma deben afectar tanto la interfaz de usuario como el idioma del prompt enviado a la API de Gemini para la generación de retroalimentación en lenguaje natural.
+* El cambio de sistema métrico debe recalcular y redimensionar las visualizaciones numéricas existentes sin alterar los datos cinemáticos crudos almacenados.
+
+**Lista de Variaciones de Tecnología y Datos:**
+* Idiomas soportados: Español, Inglés y Portugués.
+* Persistencia local en localStorage del navegador y sincronización en la base de datos.
+
+**Frecuencia de Ocurrencia:**
+* Muy Baja - Generalmente configurado una sola vez durante el primer inicio o registro en la aplicación.
+
+**Problemas Abiertos:**
+* Sincronizar preferencias del usuario entre múltiples dispositivos utilizando almacenamiento local temporal (localStorage) y base de datos centralizada de manera consistente.
 
 
-##### **Caso de Uso CU09: Calibrar Entorno de Captura**
-*   **Actor Principal:** Practicante
-*   **Interesados y sus Intereses:**
-    *   **Practicante:** Desea asegurarse de que las condiciones de iluminación, encuadre y distancia de la cámara sean óptimas antes de iniciar un análisis biomecánico, maximizando la precisión de la estimación de landmarks 3D.
-    *   **Sistema/IA:** Requiere que el video de entrada cumpla con condiciones mínimas de calidad visual para que MediaPipe pueda extraer landmarks con un nivel de confianza suficiente (media > 0.5).
-*   **Precondiciones:**
-    *   El dispositivo del Practicante cuenta con una cámara funcional accesible desde el navegador (permiso de cámara concedido).
-    *   El soporte WebGL está activo para la ejecución de MediaPipe.
-*   **Garantía de Éxito / Postcondiciones:**
-    *   El Sistema evalúa las condiciones (iluminación, encuadre, distancia) en memoria volátil sin guardar video, confirmando su idoneidad para un análisis biomecánico preciso.
-*   **Escenario Principal de Éxito (Flujo Básico):**
-    1.  El Practicante selecciona la opción "Calibrar Entorno de Captura" desde el panel principal.
-    2.  El Sistema activa la cámara del dispositivo y muestra una vista en tiempo real con superposiciones de guía visual (zonas de encuadre, indicador de iluminación).
-    3.  El Sistema ejecuta un análisis preliminar con MediaPipe para detectar la presencia del cuerpo completo del Practicante en el encuadre.
-    4.  El Sistema evalúa el nivel de iluminación del fondo y la nitidez de la imagen capturada.
-    5.  El Sistema verifica que todas las articulaciones clave (hombros, codos, caderas, rodillas, tobillos) sean detectables con un nivel de confianza aceptable.
-    6.  El Sistema muestra un indicador de estado (verde/amarillo/rojo) para cada condición evaluada: encuadre, iluminación, detección corporal.
-    7.  Si todas las condiciones son adecuadas, el Sistema confirma al Practicante que el entorno está calibrado y listo para grabar.
-*   **Extensiones (Flujos Alternativos):**
-    *   **3.a. MediaPipe no detecta un cuerpo completo en el encuadre:**
-        1.  El Sistema identifica que partes del cuerpo (ej. pies o cabeza) están fuera del campo visual.
-        2.  El Sistema muestra una superposición visual indicando la zona donde el Practicante debe posicionarse.
-        3.  El Practicante ajusta su posición y el Sistema reintenta la detección.
-    *   **4.a. La iluminación es insuficiente:**
-        1.  El Sistema detecta que el nivel de luz de fondo está por debajo del umbral mínimo para una estimación precisa.
-        2.  El Sistema muestra una alerta: "Iluminación insuficiente. Acérquese a una fuente de luz o encienda una lámpara frontal."
-        3.  El Practicante ajusta la iluminación y el Sistema reintenta la evaluación.
-    *   **4.b. La iluminación es excesiva (sobreexposición):**
-        1.  El Sistema detecta que la imagen está sobreexpuesta, lo que reduce el contraste de las articulaciones.
-        2.  El Sistema sugiere reducir la intensidad de la luz o cambiar el ángulo de la cámara.
-    *   **5.a. Confianza de detección inferior al umbral mínimo:**
-        1.  El Sistema detecta que las articulaciones clave tienen un nivel de confianza medio inferior a 0.5.
-        2.  El Sistema sugiere alejar la cámara, usar ropa de contraste con el fondo o eliminar obstáculos visuales.
-*   **Requisitos Especiales:**
-    *   La calibración debe completarse en menos de 15 segundos para no interrumpir significativamente la rutina de entrenamiento del Practicante.
-    *   Las guías visuales de superposición deben ser claras y visibles incluso en pantallas móviles pequeñas (mínimo 320px de ancho).
-    *   La cámara NO debe grabar ni almacenar video durante la calibración; solo se procesan frames en memoria volátil para la evaluación de condiciones.
-*   **Lista de Variaciones de Tecnología y Datos:**
-    *   Cámara delantera o trasera en dispositivos móviles, webcam en ordenadores de escritorio.
-*   **Frecuencia de Ocurrencia:**
-    *   Alta (se ejecuta antes de iniciar una sesión en nuevos tatamis o con iluminación variable).
-*   **Problemas Abiertos:**
-    *   Implementar alertas hápticas o de voz ante cambios de estado de calibración para que el practicante no tenga que ver la pantalla mientras se posiciona.
+### Caso de Uso CU09: Calibrar Entorno de Captura
+
+**Actor Principal:** Practicante
+
+**Interesados y sus Intereses:**
+* **Practicante:** Desea asegurarse de que las condiciones de iluminación, encuadre y distancia de la cámara sean óptimas antes de iniciar un análisis biomecánico, maximizando la precisión de la estimación de landmarks 3D.
+* **Sistema/IA:** Requiere que el video de entrada cumpla con condiciones mínimas de calidad visual para que MediaPipe pueda extraer landmarks con un nivel de confianza suficiente (media > 0.5).
+* **Instructor:** Desea asegurar que las métricas cinemáticas recogidas en casa o el tatami secundario tengan la misma fidelidad que las grabadas en el dojo central.
+
+**Precondiciones:**
+* El dispositivo del Practicante cuenta con una cámara funcional accesible desde el navegador (permiso de cámara concedido).
+* El soporte WebGL está activo para la ejecución de MediaPipe.
+
+**Garantía de Éxito / Postcondiciones:**
+* El Sistema evalúa las condiciones (iluminación, encuadre, distancia) en memoria volátil sin guardar video, confirmando su idoneidad para un análisis biomecánico preciso.
+
+**Escenario Principal de Éxito (Flujo Básico):**
+1. El Practicante selecciona la opción "Calibrar Entorno de Captura" desde el panel principal.
+2. El Sistema activa la cámara del dispositivo y muestra una vista en tiempo real con superposiciones de guía visual (zonas de encuadre, indicador de iluminación).
+3. El Sistema ejecuta un análisis preliminar con MediaPipe para detectar la presencia del cuerpo completo del Practicante en el encuadre.
+4. El Sistema evalúa el nivel de iluminación del fondo y la nitidez de la imagen capturada.
+5. El Sistema verifica que todas las articulaciones clave (hombros, codos, caderas, rodillas, tobillos) sean detectables con un nivel de confianza aceptable.
+6. El Sistema muestra un indicador de estado (verde/amarillo/rojo) para cada condición evaluada: encuadre, iluminación, detección corporal.
+7. Si todas las condiciones son adecuadas, el Sistema confirma al Practicante que el entorno está calibrado y listo para grabar.
+
+**Extensiones (Flujos Alternativos):**
+* **3.a. MediaPipe no detecta un cuerpo completo en el encuadre:**
+  1. El Sistema identifica que partes del cuerpo (ej. pies o cabeza) están fuera del campo visual.
+  2. El Sistema muestra una superposición visual indicando la zona donde el Practicante debe posicionarse.
+  3. El Practicante ajusta su posición y el Sistema reintenta la detección.
+* **4.a. La iluminación es insuficiente:**
+  1. El Sistema detecta que el nivel de luz de fondo está por debajo del umbral mínimo para una estimación precisa.
+  2. El Sistema muestra una alerta: "Iluminación insuficiente. Acérquese a una fuente de luz o encienda una lámpara frontal."
+  3. El Practicante ajusta la iluminación y el Sistema reintenta la evaluación.
+* **4.b. La iluminación es excesiva (sobreexposición):**
+  1. El Sistema detecta que la imagen está sobreexpuesta, lo que reduce el contraste de las articulaciones.
+  2. El Sistema sugiere reducir la intensidad de la luz o cambiar el ángulo de la cámara.
+* **5.a. Confianza de detección inferior al umbral mínimo:**
+  1. El Sistema detecta que las articulaciones clave tienen un nivel de confianza medio inferior a 0.5.
+  2. El Sistema sugiere alejar la cámara, usar ropa de contraste con el fondo o eliminar obstáculos visuales.
+
+**Requisitos Especiales:**
+* La calibración debe completarse en menos de 15 segundos para no interrumpir significativamente la rutina de entrenamiento del Practicante.
+* Las guías visuales de superposición deben ser claras y visibles incluso en pantallas móviles pequeñas (mínimo 320px de ancho).
+* La cámara NO debe grabar ni almacenar video durante la calibración; solo se procesan frames en memoria volátil para la evaluación de condiciones.
+
+**Lista de Variaciones de Tecnología y Datos:**
+* Cámara delantera o trasera en dispositivos móviles, webcam en ordenadores de escritorio.
+* Inferencia MediaPipe Pose sobre WebAssembly (WASM).
+
+**Frecuencia de Ocurrencia:**
+* Alta - Se ejecuta antes de iniciar una sesión en nuevos tatamis o con iluminación variable.
+
+**Problemas Abiertos:**
+* Implementar alertas hápticas o de voz ante cambios de estado de calibración para que el practicante no tenga que ver la pantalla mientras se posiciona.
 
 
-##### **Caso de Uso CU10: Recibir Recomendación de Video de YouTube**
-*   **Actor Principal:** Practicante
-*   **Interesados y sus Intereses:**
-    *   **Practicante:** Desea un enlace preciso a un video de YouTube que lo guíe a corregir el error biomecánico detectado en su sparring.
-    *   **Servidor Local (IA):** Desea realizar un seguimiento de los videos consumidos por el usuario y evaluar su efectividad biomecánica en los siguientes intentos.
-*   **Precondiciones:**
-    *   Se ha finalizado un análisis biomecánico con detección de desviaciones técnicas.
-*   **Garantía de Éxito / Postcondiciones:**
-    *   El usuario recibe una recomendación de video de YouTube (deep link) adaptada y el intento de tutoría se registra en `HistorialVisualizacion` de su `PerfilCompetencia` para su posterior evaluación cinemática.
-*   **Escenario Principal de Éxito (Flujo Básico):**
-    1.  El Practicante finaliza un análisis de video donde se identificó un `ErrorBiomecanico`.
-    2.  El `AdaptationController` busca en la base de datos centralizada del Servidor Local videos instructivos para la técnica y el error específico.
-    3.  El controlador contrasta los videos disponibles contra el `HistorialVisualizacion` del usuario y su recurrencia de fallos.
-    4.  Si el usuario ya vio el video técnico estándar pero ha fallado más de 3 veces consecutivas en la misma articulación, el sistema marca el video como "Visto sin mejora".
-    5.  El sistema detecta mediante el PerfilCompetencia que no hubo mejora cinemática tras ver el video anterior; conmuta de estrategia pedagógica y recomienda un video de YouTube alternativo (por ejemplo, con otro ángulo de cámara, de una academia diferente, o reproducido a cámara lenta) o bien un drill físico de aislamiento diseñado para corregir la biomecánica de la articulación afectada.
-    6.  El sistema muestra la tarjeta de YouTube con redirección directa (deep link).
-    7.  El Practicante hace clic en el enlace, abriendo YouTube externamente.
-    8.  El Practicante confirma su visualización y la app registra el consumo en su historial en el Servidor Local.
-*   **Extensiones (Flujos Alternativos):**
-    *   **2.a. No existen videos tutoriales en el Servidor Local para esa técnica:**
-        1.  El sistema emite un aviso para realizar una búsqueda semántica de fallback en el corpus o indica que se requiere drill físico.
-    *   **8.a. El Practicante no confirma la visualización:**
-        1.  El Sistema guarda la recomendación como pendiente y se validará en la próxima sesión cinemática.
-*   **Requisitos Especiales:**
-    *   El enlace debe estar en formato universal de YouTube compatible con la app móvil.
-*   **Lista de Variaciones de Tecnología y Datos:**
-    *   Shorts de YouTube y videos estándar de YouTube de alta resolución.
-*   **Frecuencia de Ocurrencia:**
-    *   Muy Alta (en cada reporte con desviaciones biomecánicas).
-*   **Problemas Abiertos:**
-    *   Establecer la efectividad relativa de videos explicativos en cámara lenta frente a videos con diferente perspectiva.
+### Caso de Uso CU10: Recibir Recomendación de Video de YouTube
+
+**Actor Principal:** Practicante
+
+**Interesados y sus Intereses:**
+* **Practicante:** Desea un enlace preciso a un video de YouTube que lo guíe a corregir el error biomecánico detectado en su sparring.
+* **Servidor Local (IA):** Desea realizar un seguimiento de los videos consumidos por el usuario y evaluar su efectividad biomecánica en los siguientes intentos.
+* **Instructor:** Desea que las recomendaciones didácticas de video sean coherentes con la escuela de Brazilian Jiu-Jitsu para no confundir a los practicantes con metodologías de otras academias.
+
+**Precondiciones:**
+* Se ha finalizado un análisis biomecánico con detección de desviaciones técnicas.
+
+**Garantía de Éxito / Postcondiciones:**
+* El usuario recibe una recomendación de video de YouTube (deep link) adaptada y el intento de tutoría se registra en `HistorialVisualizacion` de su `PerfilCompetencia` para su posterior evaluación cinemática.
+
+**Escenario Principal de Éxito (Flujo Básico):**
+1. El Practicante finaliza un análisis de video donde se identificó un `ErrorBiomecanico`.
+2. El `AdaptationController` busca en la base de datos centralizada del Servidor Local videos instructivos para la técnica y el error específico.
+3. El controlador contrasta los videos disponibles contra el `HistorialVisualizacion` del usuario y su recurrencia de fallos.
+4. Si el usuario ya vio el video técnico estándar pero ha fallado más de 3 veces consecutivas en la misma articulación, el sistema marca el video como "Visto sin mejora".
+5. El sistema detecta mediante el PerfilCompetencia que no hubo mejora cinemática tras ver el video anterior; conmuta de estrategia pedagógica y recomienda un video de YouTube alternativo (por ejemplo, con otro ángulo de cámara, de una academia diferente, o reproducido a cámara lenta) o bien un drill físico de aislamiento diseñado para corregir la biomecánica de la articulación afectada.
+6. El sistema muestra la tarjeta de YouTube con redirección directa (deep link).
+7. El Practicante hace clic en el enlace, abriendo YouTube externamente.
+8. El Practicante confirma su visualización y la app registra el consumo en su historial en el Servidor Local.
+
+**Extensiones (Flujos Alternativos):**
+* **2.a. No existen videos tutoriales en el Servidor Local para esa técnica:**
+  1. El sistema emite un aviso para realizar una búsqueda semántica de fallback en el corpus o indica que se requiere drill físico.
+* **8.a. El Practicante no confirma la visualización:**
+  1. El Sistema guarda la recomendación como pendiente y se validará en la próxima sesión cinemática.
+
+**Requisitos Especiales:**
+* El enlace debe estar en formato universal de YouTube compatible con la app móvil.
+
+**Lista de Variaciones de Tecnología y Datos:**
+* Shorts de YouTube y videos estándar de YouTube de alta resolución.
+* Protocolo HTTPS y deep linking nativo.
+
+**Frecuencia de Ocurrencia:**
+* Muy Alta - En cada reporte con desviaciones biomecánicas de los practicantes.
+
+**Problemas Abiertos:**
+* Establecer la efectividad relativa de videos explicativos en cámara lenta frente a videos con diferente perspectiva.
 
 
 ---
