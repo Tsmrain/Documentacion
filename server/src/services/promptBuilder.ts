@@ -98,6 +98,11 @@ ${ragSection}
 3. IMPORTANTE (Regla RD-02): Considera el biotipo del practicante. Si tiene limitaciones de movilidad registradas, flexibiliza el umbral angular hasta un ${ajusteBiotipo}%.
 4. Basa tu evaluación ESTRICTAMENTE en las fuentes RAG y los checkpoints proporcionados arriba. No inventes técnicas ni referencias que no estén en el contexto.
 5. Cita textualmente las recomendaciones de las fuentes RAG cuando sea posible.
+6. CONCISIÓN EXTREMA Y ENFOQUE VISUAL: Los usuarios se guían por lo directo y visual.
+   - En "descripcion" de cada error: Explica el fallo en una sola frase corta y directa (máximo 15 palabras).
+   - En "recomendacion" de cada error: Da una instrucción correctiva muy concisa (máximo 20 palabras).
+   - En "recomendacionAdaptativa.contenido": Escribe un texto pedagógico corto (máximo 2 párrafos breves, no más de 80 palabras en total). Si hay un video de YouTube aplicable del RAG, colócalo claramente en su propia línea al final (ejemplo: "Video de soporte: https://www.youtube.com/watch?v=...").
+   - En "puntosFuertes": Limítate a máximo 3 puntos fuertes de la ejecución, de no más de 10 palabras cada uno.
 ${recurrentSection}
 
 RESPONDE ÚNICAMENTE con el siguiente objeto JSON (sin texto adicional, sin markdown, sin bloques de código). 

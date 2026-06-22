@@ -34,6 +34,7 @@ interface AppContextType {
   clearError: () => void;
   clearAnalisisActual: () => void;
   toggleModoInstructor: (pin: string) => boolean;
+  setAnalisisActual: (analisis: AnalisisBiomecanico | null) => void;
 
   // RAG
   ragController: RetrievalAugmentedController;
@@ -154,6 +155,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     updateProfile,
     clearError: () => setError(null),
     clearAnalisisActual: () => setAnalisisActual(null),
+    setAnalisisActual,
     toggleModoInstructor,
     ragController,
     sessionController

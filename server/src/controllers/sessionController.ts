@@ -344,6 +344,15 @@ Responde únicamente en formato JSON con la siguiente estructura (no agregues te
         tecnicaId
       };
 
+      // Cargar todas las fuentes para asociar sus URLs de YouTube a los chunks del RAG
+      const fuentes = await this.persistence.getFuentes();
+      const urlMap = new Map<number, string>();
+      for (const f of fuentes) {
+        if (f.id && f.youtubeUrl) {
+          urlMap.set(f.id, f.youtubeUrl);
+        }
+      }
+
       if (esErrorRecurrente) {
         const drillResults = await this.vectorStore.querySimilar(queryVector, 3, {
           ...filters,
@@ -354,24 +363,40 @@ Responde únicamente en formato JSON con la siguiente estructura (no agregues te
           tipoRecurso: 'explicacion_anatomica'
         });
 
-        const drillDocuments = drillResults.documents?.[0] || [];
-        const anatomyDocuments = anatomyResults.documents?.[0] || [];
+        const drillDocs = drillResults.documents?.[0] || [];
+        const drillMetas = drillResults.metadatas?.[0] || [];
+        const anatomyDocs = anatomyResults.documents?.[0] || [];
+        const anatomyMetas = anatomyResults.metadatas?.[0] || [];
 
-        const combined = [
-          ...drillDocuments.map(doc => `[Fuente RAG - drill]: ${doc}`),
-          ...anatomyDocuments.map(doc => `[Fuente RAG - explicacion_anatomica]: ${doc}`)
-        ];
+        const drillList = drillDocs.map((doc, idx) => {
+          const meta = (drillMetas[idx] as any) || {};
+          const ytUrl = meta.fuenteId ? urlMap.get(Number(meta.fuenteId)) : undefined;
+          const urlStr = ytUrl ? ` (URL de YouTube: ${ytUrl})` : '';
+          return `[Fuente RAG - drill${urlStr}]: ${doc}`;
+        });
+
+        const anatomyList = anatomyDocs.map((doc, idx) => {
+          const meta = (anatomyMetas[idx] as any) || {};
+          const ytUrl = meta.fuenteId ? urlMap.get(Number(meta.fuenteId)) : undefined;
+          const urlStr = ytUrl ? ` (URL de YouTube: ${ytUrl})` : '';
+          return `[Fuente RAG - explicacion_anatomica${urlStr}]: ${doc}`;
+        });
+
+        const combined = [...drillList, ...anatomyList];
 
         if (combined.length > 0) return combined;
       }
 
       const results = await this.vectorStore.querySimilar(queryVector, 5, filters);
       const docs = results.documents?.[0] || [];
+      const metas = results.metadatas?.[0] || [];
 
       if (docs.length > 0) {
         return docs.map((doc, idx) => {
-          const meta = (results.metadatas?.[0]?.[idx] as any) || {};
-          return `[Fuente RAG - ${meta.tipoRecurso || 'tecnica'}]: ${doc}`;
+          const meta = (metas[idx] as any) || {};
+          const ytUrl = meta.fuenteId ? urlMap.get(Number(meta.fuenteId)) : undefined;
+          const urlStr = ytUrl ? ` (URL de YouTube: ${ytUrl})` : '';
+          return `[Fuente RAG - ${meta.tipoRecurso || 'tecnica'}${urlStr}]: ${doc}`;
         });
       }
 
@@ -379,9 +404,15 @@ Responde únicamente en formato JSON con la siguiente estructura (no agregues te
         estadoValidacion: 'Validado'
       });
       const generalDocs = generalResults.documents?.[0] || [];
+      const generalMetas = generalResults.metadatas?.[0] || [];
 
       if (generalDocs.length > 0) {
-        return generalDocs.map(doc => `[Fuente RAG General]: ${doc}`);
+        return generalDocs.map((doc, idx) => {
+          const meta = (generalMetas[idx] as any) || {};
+          const ytUrl = meta.fuenteId ? urlMap.get(Number(meta.fuenteId)) : undefined;
+          const urlStr = ytUrl ? ` (URL de YouTube: ${ytUrl})` : '';
+          return `[Fuente RAG General${urlStr}]: ${doc}`;
+        });
       }
 
       return [this.getFallbackContext()];
@@ -397,6 +428,7 @@ Responde únicamente en formato JSON con la siguiente estructura (no agregues te
 2. ALINEACIÓN: La columna vertebral debe permanecer alineada, evitando curvaturas excesivas.
 3. PALANCA: Usar los principios de palanca mecánica para maximizar la eficiencia del movimiento.
 4. PRESIÓN: Aplicar presión constante usando el peso corporal de manera eficiente.
-5. FRAMES: Crear estructuras óseas (frames) para mantener distancia o prevenir avances del oponente.`;
+5. FRAMES: Crear estructuras óseas (frames) para mantener distancia o prevenir avances del oponente.
+(Video de Fundamentos Generales de BJJ: https://www.youtube.com/watch?v=0yL15BwS0G4)`;
   }
 }

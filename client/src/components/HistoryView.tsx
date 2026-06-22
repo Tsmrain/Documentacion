@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 import { AnalisisBiomecanico } from '../models/types';
 
 export function HistoryView() {
-  const { historial, loadHistory, deleteAnalysis } = useApp();
+  const { historial, loadHistory, deleteAnalysis, setAnalisisActual, setVistaActual } = useApp();
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
   useEffect(() => {
@@ -59,7 +59,16 @@ export function HistoryView() {
 
       <div className="history-list">
         {historial.map((analisis) => (
-          <div key={analisis.id} className="glass-card history-card">
+          <div
+            key={analisis.id}
+            className="glass-card history-card clickable"
+            onClick={() => {
+              setAnalisisActual(analisis);
+              setVistaActual('analisis');
+            }}
+            title="Clic para ver reporte biomecánico detallado"
+            style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+          >
             <div className="history-card-header">
               <div className="history-score-container">
                 <div className={`history-score ${getScoreColor(analisis.puntuacionGeneral)}`}>
@@ -80,7 +89,10 @@ export function HistoryView() {
               </div>
               <button
                 className={`btn-icon ${confirmDelete === analisis.id ? 'btn-danger' : ''}`}
-                onClick={() => handleDelete(analisis.id!)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(analisis.id!);
+                }}
                 title={confirmDelete === analisis.id ? 'Confirmar eliminación' : 'Eliminar'}
               >
                 <Trash2 size={18} />

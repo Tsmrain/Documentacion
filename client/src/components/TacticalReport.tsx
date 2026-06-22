@@ -17,6 +17,29 @@ export function TacticalReport() {
 
   if (!analisisActual) return null;
 
+  // Extrae la URL de YouTube y el ID del video si existe en el texto
+  const extractYoutubeVideo = (text: string) => {
+    const regex = /(https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11}))/i;
+    const match = text.match(regex);
+    if (match) {
+      // Limpiar texto eliminando la URL y frases introductorias del link al final
+      const clean = text
+        .replace(match[1], '')
+        .replace(/video de soporte:?\s*$/i, '')
+        .replace(/video de apoyo:?\s*$/i, '')
+        .trim();
+      return {
+        url: match[1],
+        id: match[2],
+        cleanText: clean
+      };
+    }
+    return null;
+  };
+
+  const ytVideo = extractYoutubeVideo(analisisActual.recomendacionAdaptativa.contenido);
+  const displayContenido = ytVideo ? ytVideo.cleanText : analisisActual.recomendacionAdaptativa.contenido;
+
   const getSeverityConfig = (severidad: string) => {
     switch (severidad) {
       case Severidad.Critico:
@@ -138,9 +161,32 @@ export function TacticalReport() {
               ? '💪 Drill'
               : '🧠 Explicación Anatómica'}
           </span>
-          <p className="recommendation-text">
-            {analisisActual.recomendacionAdaptativa.contenido}
+          <p className="recommendation-text" style={{ whiteSpace: 'pre-line', lineHeight: '1.5' }}>
+            {displayContenido}
           </p>
+
+          {ytVideo && (
+            <div className="support-video-container" style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="video-responsive" style={{ overflow: 'hidden', paddingBottom: '56.25%', position: 'relative', height: 0, borderRadius: '8px', border: '1px solid var(--border-glass)' }}>
+                <iframe
+                  style={{ left: 0, top: 0, height: '100%', width: '100%', position: 'absolute', border: 'none', borderRadius: '8px' }}
+                  src={`https://www.youtube.com/embed/${ytVideo.id}`}
+                  title="Video de soporte sugerido"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
+              <a
+                href={ytVideo.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-ghost btn-sm"
+                style={{ alignSelf: 'flex-start', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', padding: '6px 12px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)', borderRadius: '6px' }}
+              >
+                🎥 Ver en YouTube ↗
+              </a>
+            </div>
+          )}
         </div>
       </div>
 

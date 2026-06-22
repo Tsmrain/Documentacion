@@ -303,6 +303,12 @@ export class PersistenceService {
     });
   }
 
+  async getFuente(id: number): Promise<any | null> {
+    return await prisma.fuenteConocimiento.findUnique({
+      where: { id }
+    });
+  }
+
   // ========================
   // HISTORIAL DE VISUALIZACIÓN DE VIDEOS (CU10)
   // ========================
