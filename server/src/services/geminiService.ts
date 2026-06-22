@@ -51,7 +51,7 @@ export class GeminiService {
    */
   async classifyTechnique(keyframes: string[]): Promise<string> {
     try {
-      const model = this.getModel(0.2);
+      const model = this.getModel(0.2, 'application/json');
       const contents = keyframes.map((frame) => ({
         inlineData: { data: frame, mimeType: 'image/jpeg' },
       }));

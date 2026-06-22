@@ -27,3 +27,8 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Databases and Vector Store
+chroma-data/
+server/prisma/dev.db
+server/prisma/dev.db-journal
