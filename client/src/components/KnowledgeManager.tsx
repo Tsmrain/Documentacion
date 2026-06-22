@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  BookOpen, Upload, Check, X, AlertTriangle,
-  FileText, Video as YoutubeIcon, Lock, Unlock, Loader
-} from 'lucide-react';
+import { BookOpen, Upload, FileText, Video as YoutubeIcon, Loader, Trash2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import {
   FuenteConocimiento,
@@ -12,21 +9,21 @@ import {
 } from '../models/types';
 
 export function KnowledgeManager() {
-  const { ragController, modoInstructor, toggleModoInstructor } = useApp();
+  const { ragController } = useApp();
   const [fuentes, setFuentes] = useState<FuenteConocimiento[]>([]);
   const [showUpload, setShowUpload] = useState(false);
-  const [pinInput, setPinInput] = useState('');
-  const [pinError, setPinError] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
   const [stats, setStats] = useState({ totalChunks: 0, totalFuentes: 0 });
 
   // Upload form state
-  const [titulo, setTitulo] = useState('');
   const [tipoFuente, setTipoFuente] = useState<TipoFuente>(TipoFuente.ManualPDF);
-  const [tecnicaId, setTecnicaId] = useState(TECNICAS_BJJ[0].id);
-  const [textoContenido, setTextoContenido] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+
+  const [selectedFuente, setSelectedFuente] = useState<FuenteConocimiento | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -45,71 +42,72 @@ export function KnowledgeManager() {
     }
   };
 
-  const handlePinSubmit = () => {
-    const success = toggleModoInstructor(pinInput);
-    if (!success) {
-      setPinError(true);
-      setTimeout(() => setPinError(false), 2000);
-    }
-    setPinInput('');
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePdfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    try {
-      const text = await file.text();
-      setTextoContenido(text);
-      if (!titulo) setTitulo(file.name.replace('.pdf', '').replace('.txt', ''));
-    } catch {
-      setTextoContenido('Error leyendo archivo. Use un archivo de texto plano (.txt).');
-    }
+    setPdfFile(file);
   };
 
   const handleIngest = async () => {
-    if (!titulo.trim() || !textoContenido.trim()) return;
+    if (tipoFuente === TipoFuente.ManualPDF && !pdfFile) return;
+    if (tipoFuente === TipoFuente.VideoYouTube && !youtubeUrl.trim()) return;
 
+    setErrorMsg(null);
     setUploading(true);
-    setUploadProgress('Segmentando texto...');
+    setUploadProgress('Enviando fuente al servidor...');
 
     try {
       const fuente: FuenteConocimiento = {
-        titulo,
+        titulo: '', // Se autodetectará en el servidor
         tipo: tipoFuente,
-        estadoValidacion: modoInstructor
-          ? EstadoValidacion.Validado
-          : EstadoValidacion.Pendiente,
-        tecnicaId,
+        estadoValidacion: EstadoValidacion.Validado,
+        tecnicaId: '', // Se autodetectará en el servidor
         fechaCreacion: new Date(),
         youtubeUrl: tipoFuente === TipoFuente.VideoYouTube ? youtubeUrl : undefined
       };
 
-      setUploadProgress('Generando embeddings y almacenando...');
+      setUploadProgress('Procesando e indexando contenido...');
       await ragController.ingestSource(
         fuente,
-        textoContenido,
+        undefined,
+        pdfFile || undefined,
         (p) => setUploadProgress(`Indexando... ${p}%`)
       );
 
       setUploadProgress('¡Fuente indexada exitosamente!');
       setTimeout(() => {
         setShowUpload(false);
-        setTitulo('');
-        setTextoContenido('');
+        setPdfFile(null);
         setYoutubeUrl('');
         setUploading(false);
         loadData();
       }, 1500);
     } catch (error) {
-      setUploadProgress(`Error: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      const msg = error instanceof Error ? error.message : 'Error desconocido';
+      if (msg.includes('no está relacionado con Brazilian Jiu-Jitsu') || msg.toLowerCase().includes('rechazado')) {
+        setErrorMsg('⚠️ Solo se acepta contenido relacionado a Brazilian Jiu-Jitsu. La Inteligencia Artificial determinó que el recurso provisto no es relevante para el tatami.');
+      } else {
+        setErrorMsg(`Error al procesar: ${msg}`);
+      }
       setUploading(false);
     }
   };
 
-  const handleValidate = async (fuenteId: number, aprobado: boolean) => {
-    await ragController.validateSource(fuenteId, aprobado);
-    loadData();
+  const handleDeleteSource = async (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirmDeleteId === id) {
+      try {
+        await ragController.deleteSource(id);
+        setConfirmDeleteId(null);
+        loadData();
+      } catch (err) {
+        alert(err instanceof Error ? err.message : 'Error al eliminar fuente');
+      }
+    } else {
+      setConfirmDeleteId(id);
+      // Cancel confirm after 4 seconds
+      setTimeout(() => setConfirmDeleteId(null), 4000);
+    }
   };
 
   return (
@@ -130,159 +128,111 @@ export function KnowledgeManager() {
             <span className="stat-value">{stats.totalChunks}</span>
             <span className="stat-label">Chunks Indexados</span>
           </div>
-          <div className="stat-item">
-            <span className={`stat-value ${modoInstructor ? 'text-green' : 'text-muted'}`}>
-              {modoInstructor ? <Unlock size={20} /> : <Lock size={20} />}
-            </span>
-            <span className="stat-label">{modoInstructor ? 'Instructor' : 'Alumno'}</span>
-          </div>
         </div>
       </div>
 
-      {/* Instructor PIN toggle */}
-      {!modoInstructor && (
-        <div className="glass-card pin-card">
-          <h3 className="card-title">
-            <Lock size={18} />
-            Modo Instructor
-          </h3>
-          <p className="pin-description">Ingresa el PIN de instructor para gestionar fuentes</p>
-          <div className="pin-input-group">
-            <input
-              type="password"
-              className={`form-input pin-input ${pinError ? 'error' : ''}`}
-              value={pinInput}
-              onChange={e => setPinInput(e.target.value)}
-              placeholder="PIN"
-              maxLength={8}
-              onKeyDown={e => e.key === 'Enter' && handlePinSubmit()}
-            />
-            <button className="btn btn-primary" onClick={handlePinSubmit}>
-              Acceder
-            </button>
-          </div>
-          {pinError && <span className="pin-error">PIN incorrecto</span>}
-        </div>
-      )}
+      {/* Upload Section */}
+      <button
+        className="btn btn-primary btn-lg btn-full"
+        onClick={() => setShowUpload(!showUpload)}
+      >
+        <Upload size={20} />
+        Agregar Fuente
+      </button>
 
-      {/* Upload Section (Instructor only) */}
-      {modoInstructor && (
-        <>
-          <button
-            className="btn btn-primary btn-lg btn-full"
-            onClick={() => setShowUpload(!showUpload)}
-          >
-            <Upload size={20} />
-            Agregar Fuente
-          </button>
+      {showUpload && (
+        <div className="glass-card upload-form-card">
+          <h3 className="card-title">Nueva Fuente de Conocimiento</h3>
 
-          {showUpload && (
-            <div className="glass-card upload-form-card">
-              <h3 className="card-title">Nueva Fuente de Conocimiento</h3>
-
-              <div className="form-group">
-                <label className="form-label">Tipo de fuente</label>
-                <div className="type-selector">
-                  <button
-                    className={`type-btn ${tipoFuente === TipoFuente.ManualPDF ? 'active' : ''}`}
-                    onClick={() => setTipoFuente(TipoFuente.ManualPDF)}
-                  >
-                    <FileText size={20} />
-                    Manual / PDF
-                  </button>
-                  <button
-                    className={`type-btn ${tipoFuente === TipoFuente.VideoYouTube ? 'active' : ''}`}
-                    onClick={() => setTipoFuente(TipoFuente.VideoYouTube)}
-                  >
-                    <YoutubeIcon size={20} />
-                    YouTube
-                  </button>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Título</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={titulo}
-                  onChange={e => setTitulo(e.target.value)}
-                  placeholder="Ej: Jiu-Jitsu University - Cap. 3"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Técnica asociada</label>
-                <select
-                  className="form-select"
-                  value={tecnicaId}
-                  onChange={e => setTecnicaId(e.target.value)}
-                >
-                  {TECNICAS_BJJ.map(t => (
-                    <option key={t.id} value={t.id}>{t.nombre}</option>
-                  ))}
-                </select>
-              </div>
-
-              {tipoFuente === TipoFuente.VideoYouTube && (
-                <div className="form-group">
-                  <label className="form-label">URL de YouTube</label>
-                  <input
-                    type="url"
-                    className="form-input"
-                    value={youtubeUrl}
-                    onChange={e => setYoutubeUrl(e.target.value)}
-                    placeholder="https://youtube.com/watch?v=..."
-                  />
-                </div>
-              )}
-
-              <div className="form-group">
-                <label className="form-label">
-                  Contenido técnico (texto)
-                </label>
-                <div className="upload-text-area">
-                  <textarea
-                    className="form-textarea"
-                    value={textoContenido}
-                    onChange={e => setTextoContenido(e.target.value)}
-                    placeholder="Pegue aquí el contenido técnico del manual o transcripción del video..."
-                    rows={8}
-                  />
-                  <button
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload size={14} />
-                    Cargar archivo .txt
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".txt,.srt"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                </div>
-              </div>
-
-              {uploading ? (
-                <div className="upload-status">
-                  <Loader size={20} className="spin" />
-                  <span>{uploadProgress}</span>
-                </div>
-              ) : (
-                <button
-                  className="btn btn-primary btn-lg btn-full"
-                  onClick={handleIngest}
-                  disabled={!titulo.trim() || !textoContenido.trim()}
-                >
-                  Indexar Fuente
-                </button>
-              )}
+          {errorMsg && (
+            <div className="glass-card error-banner text-danger" style={{ padding: '12px', marginBottom: '16px', background: 'rgba(230, 57, 70, 0.1)', borderColor: 'rgba(230, 57, 70, 0.3)', borderRadius: '8px', fontSize: '13px', lineHeight: '1.4' }}>
+              {errorMsg}
             </div>
           )}
-        </>
+
+          <div className="form-group">
+            <label className="form-label">Tipo de fuente</label>
+            <div className="type-selector">
+              <button
+                className={`type-btn ${tipoFuente === TipoFuente.ManualPDF ? 'active' : ''}`}
+                onClick={() => {
+                  setTipoFuente(TipoFuente.ManualPDF);
+                }}
+              >
+                <FileText size={20} />
+                Manual / PDF
+              </button>
+              <button
+                className={`type-btn ${tipoFuente === TipoFuente.VideoYouTube ? 'active' : ''}`}
+                onClick={() => {
+                  setTipoFuente(TipoFuente.VideoYouTube);
+                }}
+              >
+                <YoutubeIcon size={20} />
+                YouTube
+              </button>
+            </div>
+          </div>
+
+          {/* Título y técnica se autodetectan de forma inteligente mediante IA */}
+
+          {tipoFuente === TipoFuente.ManualPDF ? (
+            <div className="form-group">
+              <label className="form-label">Archivo PDF del Manual</label>
+              <div className="upload-text-area" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <button
+                  className="btn btn-ghost btn-lg btn-full"
+                  onClick={() => fileInputRef.current?.click()}
+                  type="button"
+                >
+                  <Upload size={18} />
+                  {pdfFile ? `Cambiar archivo PDF` : `Seleccionar archivo PDF`}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf"
+                  onChange={handlePdfChange}
+                  className="hidden"
+                />
+                {pdfFile && (
+                  <div className="file-info text-green" style={{ fontSize: '14px', textAlign: 'center', marginTop: '4px' }}>
+                    📄 {pdfFile.name} ({(pdfFile.size / 1024 / 1024).toFixed(2)} MB)
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="form-group">
+              <label className="form-label">Enlace / URL de YouTube</label>
+              <input
+                type="url"
+                className="form-input"
+                value={youtubeUrl}
+                onChange={e => setYoutubeUrl(e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+            </div>
+          )}
+
+          {uploading ? (
+            <div className="upload-status">
+              <Loader size={20} className="spin" />
+              <span>{uploadProgress}</span>
+            </div>
+          ) : (
+            <button
+              className="btn btn-primary btn-lg btn-full"
+              onClick={handleIngest}
+              disabled={
+                (tipoFuente === TipoFuente.ManualPDF && !pdfFile) ||
+                (tipoFuente === TipoFuente.VideoYouTube && !youtubeUrl.trim())
+              }
+            >
+              Indexar Fuente de Forma Inteligente
+            </button>
+          )}
+        </div>
       )}
 
       {/* Fuentes List */}
@@ -294,7 +244,7 @@ export function KnowledgeManager() {
           </div>
         ) : (
           fuentes.map(f => (
-            <div key={f.id} className="glass-card fuente-card">
+            <div key={f.id} className="glass-card fuente-card clickable" onClick={() => setSelectedFuente(f)} title="Clic para previsualizar">
               <div className="fuente-header">
                 {f.tipo === TipoFuente.ManualPDF
                   ? <FileText size={18} />
@@ -303,39 +253,75 @@ export function KnowledgeManager() {
                 <span className={`validation-badge ${f.estadoValidacion.toLowerCase()}`}>
                   {f.estadoValidacion}
                 </span>
+                {f.id !== undefined && (
+                  <button
+                    className={`btn-icon ${confirmDeleteId === f.id ? 'text-danger' : 'btn-danger-hover'}`}
+                    onClick={(e) => handleDeleteSource(f.id!, e)}
+                    title={confirmDeleteId === f.id ? "Haga clic de nuevo para confirmar eliminación" : "Eliminar fuente"}
+                    style={{ background: 'transparent', border: 'none', color: confirmDeleteId === f.id ? 'var(--severity-critical)' : 'var(--text-muted)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
               <div className="fuente-meta">
                 <span>
-                  Técnica: {TECNICAS_BJJ.find(t => t.id === f.tecnicaId)?.nombre || f.tecnicaId}
+                  Técnicas: {f.tecnicaId ? f.tecnicaId.split(',').map(id => TECNICAS_BJJ.find(t => t.id === id.trim())?.nombre || id.trim()).join(', ') : 'general'}
                 </span>
-                <span>
-                  {new Date(f.fechaCreacion).toLocaleDateString('es-BO')}
-                </span>
+                {confirmDeleteId === f.id ? (
+                  <span className="text-danger" style={{ fontWeight: 600, fontSize: '0.65rem', animation: 'pulse 1s infinite' }}>
+                    ⚠️ ¿Confirmar eliminación?
+                  </span>
+                ) : (
+                  <span>
+                    {new Date(f.fechaCreacion).toLocaleDateString('es-BO')}
+                  </span>
+                )}
               </div>
-
-              {/* Validation buttons (Instructor, CU05) */}
-              {modoInstructor && f.estadoValidacion === EstadoValidacion.Pendiente && (
-                <div className="validation-actions">
-                  <button
-                    className="btn btn-success btn-sm"
-                    onClick={() => handleValidate(f.id!, true)}
-                  >
-                    <Check size={14} />
-                    Aprobar
-                  </button>
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() => handleValidate(f.id!, false)}
-                  >
-                    <X size={14} />
-                    Rechazar
-                  </button>
-                </div>
-              )}
             </div>
           ))
         )}
       </div>
+
+      {selectedFuente && (
+        <div className="modal-overlay" onClick={() => setSelectedFuente(null)}>
+          <div className="glass-card modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">{selectedFuente.titulo}</h3>
+              <button className="btn-close" onClick={() => setSelectedFuente(null)}>×</button>
+            </div>
+            <div className="modal-meta-badges">
+              <span className="badge-type">
+                {selectedFuente.tipo === TipoFuente.ManualPDF ? '📄 PDF' : '🎥 YouTube'}
+              </span>
+              <span className="badge-techniques">
+                Técnicas: {selectedFuente.tecnicaId ? selectedFuente.tecnicaId.split(',').map(id => TECNICAS_BJJ.find(t => t.id === id.trim())?.nombre || id.trim()).join(', ') : 'general'}
+              </span>
+            </div>
+            <div className="modal-body scrollable">
+              {selectedFuente.contenidoOriginal ? (
+                <p className="source-content-text">{selectedFuente.contenidoOriginal}</p>
+              ) : (
+                <p className="no-content-text">No hay contenido de texto disponible para previsualizar.</p>
+              )}
+            </div>
+            {selectedFuente.youtubeUrl && (
+              <div className="modal-footer">
+                <a
+                  href={selectedFuente.youtubeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-primary btn-sm btn-full"
+                  style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                >
+                  <YoutubeIcon size={16} />
+                  Ver video en YouTube
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

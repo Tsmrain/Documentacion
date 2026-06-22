@@ -28,7 +28,6 @@ export class SesionEntrenamientoController {
    */
   async analyzeVideo(
     videoBlob: Blob,
-    tecnicaId: string,
     onProgress?: (stage: string, progress: number) => void
   ): Promise<AnalisisBiomecanico> {
     // 1. Validar video (formato y duración ≤ 45s)
@@ -67,7 +66,6 @@ export class SesionEntrenamientoController {
       const response = await apiClient.post('/session/analyze', {
         frames,
         metrics,
-        tecnicaId,
         userId: usuario.id
       });
 
@@ -263,6 +261,22 @@ export class SesionEntrenamientoController {
     } catch (error: any) {
       console.error('Error actualizando perfil biomecánico:', error);
       throw new Error(error.response?.data?.error || 'Fallo al actualizar el perfil en el servidor.');
+    }
+  }
+
+  /**
+   * Registra la confirmación de visualización de un video (CU10).
+   */
+  async registerVideoView(videoUrl: string, tecnicaId: string): Promise<void> {
+    try {
+      await apiClient.post('/session/video-view', {
+        videoUrl,
+        tecnicaId,
+        userId: 'default'
+      });
+    } catch (error: any) {
+      console.error('Error registrando visualización de video:', error);
+      throw new Error(error.response?.data?.error || 'Error al registrar la visualización de video.');
     }
   }
 

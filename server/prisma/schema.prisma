@@ -22,6 +22,17 @@ model Usuario {
   analisis                AnalisisBiomecanico[]
 }
 
+model Tecnica {
+  id                String                @id
+  nombre            String
+  categoria         String
+  cinturonRequerido String
+  checkpoints       String                // JSON string (Checkpoints biomecánicos)
+  esCustom          Boolean               @default(false)
+  descripcion       String?
+  analisis          AnalisisBiomecanico[]
+}
+
 model AnalisisBiomecanico {
   id                     Int                 @id @default(autoincrement())
   fecha                  DateTime            @default(now())
@@ -34,6 +45,7 @@ model AnalisisBiomecanico {
   recomendacionContenido  String             // Text detail
   usuarioId              String
   usuario                Usuario             @relation(fields: [usuarioId], references: [id])
+  tecnica                Tecnica             @relation(fields: [tecnicaId], references: [id])
   metricas               MetricaCinematica[]
   errores                ErrorBiomecanico[]
 }
@@ -60,7 +72,7 @@ model ErrorBiomecanico {
   esRecurrente     Boolean
   recomendacion    String
   analisisId       Int
-  analisis         AnalisisBiomecanico @relation(fields: [analisisId], references: [id], onDelete: Cascade)
+  analisis          AnalisisBiomecanico @relation(fields: [analisisId], references: [id], onDelete: Cascade)
 }
 
 model FuenteConocimiento {
@@ -76,4 +88,12 @@ model FuenteConocimiento {
   duracionSegundos Int?
   canalAutor       String?
   youtubeUrl       String?
+}
+
+model HistorialVisualizacion {
+  id                 Int      @id @default(autoincrement())
+  usuarioId          String
+  videoUrl           String
+  tecnicaId          String
+  fechaVisualizacion DateTime @default(now())
 }

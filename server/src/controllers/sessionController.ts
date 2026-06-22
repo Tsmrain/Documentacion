@@ -4,7 +4,7 @@ import { EmbeddingService } from '../services/embeddingService';
 import { VectorStore } from '../services/vectorStore';
 import { PersistenceService } from '../services/persistenceService';
 import { PromptBuilder } from '../services/promptBuilder';
-import { TECNICAS_BJJ, ErrorBiomecanico, AnalisisBiomecanico } from '../models/types';
+import { TECNICAS_BJJ, ErrorBiomecanico } from '../models/types';
 
 export class SessionController {
   private geminiService: GeminiService;
@@ -23,65 +23,163 @@ export class SessionController {
 
   /**
    * Procesa la captura de video enviada por el cliente:
-   * 1. Detecta técnica (opcionalmente) o usa la seleccionada.
-   * 2. Recupera grounding RAG desde ChromaDB.
-   * 3. Combina perfil de usuario, historial de errores y métricas locales.
-   * 4. Llama a Gemini.
-   * 5. Persiste en SQLite.
+   * 1. Clasifica y autodetecta la técnica utilizando Gemini Vision (multimodal).
+   * 2. Si es una técnica nueva, aplica el flujo Zero-Shot Discovery para guardarla e indexarla.
+   * 3. Recupera grounding RAG desde ChromaDB.
+   * 4. Combina perfil de usuario, historial de errores y checkpoints técnicos.
+   * 5. Llama a Gemini para evaluar el movimiento.
+   * 6. Persiste el análisis en SQLite.
    */
   analyzeVideo = async (req: Request, res: Response) => {
     try {
-      const { frames, metrics, tecnicaId, userId } = req.body;
+      const { frames, metrics, userId } = req.body;
       const activeUserId = userId || 'default';
 
-      if (!tecnicaId) {
-        return res.status(400).json({ error: 'El parámetro tecnicaId es requerido.' });
+      if (!frames || frames.length === 0) {
+        return res.status(400).json({ error: 'Se requieren fotogramas clave (frames) para la autodetección de la técnica.' });
       }
 
       // 1. Obtener datos del usuario
       const usuario = await this.persistence.getUser(activeUserId);
       const perfil = usuario.perfilBiomecanico;
 
-      const tecnica = TECNICAS_BJJ.find(t => t.id === tecnicaId);
-      const tecnicaNombre = tecnica ? tecnica.nombre : tecnicaId;
+      // 2. Autodetectar técnica usando Gemini Vision
+      console.log('🤖 Clasificando técnica de video usando Gemini Vision...');
+      let techniqueName = '';
+      let techniqueCategory = '';
 
-      // 2. Comprobar historial y detectar recurrencia
+      try {
+        const classificationResponse = await this.geminiService.classifyTechnique(frames);
+        
+        let cleaned = classificationResponse.trim();
+        if (cleaned.startsWith('```json')) cleaned = cleaned.slice(7);
+        if (cleaned.startsWith('```')) cleaned = cleaned.slice(3);
+        if (cleaned.endsWith('```')) cleaned = cleaned.slice(0, -3);
+        cleaned = cleaned.trim();
+
+        const parsedClass = JSON.parse(cleaned);
+        techniqueName = parsedClass.nombre || 'Técnica Desconocida';
+        techniqueCategory = parsedClass.categoria || 'Transición';
+      } catch (e) {
+        console.warn('Fallo al clasificar técnica por Gemini, usando valores por defecto:', e);
+        techniqueName = 'Técnica Desconocida';
+        techniqueCategory = 'Transición';
+      }
+
+      // Crear slug ID para la técnica
+      const tecnicaId = techniqueName
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remover acentos
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+
+      console.log(`🤖 Técnica detectada: "${techniqueName}" (ID: ${tecnicaId}, Categoría: ${techniqueCategory})`);
+
+      // 3. Buscar técnica en SQLite. Si no existe -> Zero-Shot Discovery
+      let tecnica = await this.persistence.getTecnica(tecnicaId);
+
+      if (!tecnica) {
+        console.log(`🔍 Técnica "${techniqueName}" no registrada en SQLite. Iniciando Zero-Shot Discovery...`);
+        let descripcion = '';
+        let checkpoints: any[] = [];
+
+        try {
+          const discoveryPrompt = `Analiza detalladamente este movimiento deportivo de Brazilian Jiu-Jitsu.
+Genera una descripción biomecánica del movimiento y define un array de checkpoints críticos.
+Responde únicamente en formato JSON con la siguiente estructura (no agregues texto adicional ni markdown):
+{
+  "nombre": "${techniqueName}",
+  "categoria": "${techniqueCategory}",
+  "cinturonRequerido": "Blanco",
+  "descripcion": "Descripción detallada del movimiento y sus objetivos...",
+  "checkpoints": [
+    { "fase": "Control", "articulacion": "cadera", "anguloArticularIdeal": 90, "toleranciaGrados": 15 },
+    { "fase": "Base", "articulacion": "rodilla", "anguloArticularIdeal": 45, "toleranciaGrados": 15 }
+  ]
+}`;
+          const discoveryResponse = await this.geminiService.evaluateMovement(discoveryPrompt);
+          
+          let cleanedDisc = discoveryResponse.trim();
+          if (cleanedDisc.startsWith('```json')) cleanedDisc = cleanedDisc.slice(7);
+          if (cleanedDisc.startsWith('```')) cleanedDisc = cleanedDisc.slice(3);
+          if (cleanedDisc.endsWith('```')) cleanedDisc = cleanedDisc.slice(0, -3);
+          cleanedDisc = cleanedDisc.trim();
+
+          const parsedDisc = JSON.parse(cleanedDisc);
+          descripcion = parsedDisc.descripcion || '';
+          checkpoints = parsedDisc.checkpoints || [];
+        } catch (err) {
+          console.error('Zero-Shot Discovery falló, creando datos por defecto:', err);
+          descripcion = `Descripción biomecánica autogenerada para la técnica ${techniqueName}.`;
+          checkpoints = [
+            { fase: 'Postura', articulacion: 'espalda', anguloArticularIdeal: 170, toleranciaGrados: 15 },
+            { fase: 'Base', articulacion: 'cadera', anguloArticularIdeal: 90, toleranciaGrados: 15 }
+          ];
+        }
+
+        // Guardar en la base de datos relacional
+        await this.persistence.saveCustomTecnica({
+          id: tecnicaId,
+          nombre: techniqueName,
+          categoria: techniqueCategory,
+          cinturonRequerido: 'Blanco',
+          checkpoints,
+          descripcion
+        });
+
+        // Indexar en la base de datos vectorial ChromaDB para RAG futuro
+        try {
+          const chunkId = `discovered-${tecnicaId}`;
+          const embedding = await this.embeddingService.generateEmbedding(descripcion);
+          await this.vectorStore.ingestChunk(chunkId, descripcion, embedding, {
+            fuenteId: 9999, // ID convencional para Zero-Shot Discovery
+            tecnicaId,
+            tipoRecurso: 'tecnica',
+            estadoValidacion: 'Validado',
+            titulo: `Autodescubrimiento: ${techniqueName}`
+          });
+        } catch (err) {
+          console.error('Error indexando descripción Zero-Shot en ChromaDB:', err);
+        }
+
+        // Cargar técnica recién creada
+        tecnica = await this.persistence.getTecnica(tecnicaId);
+      }
+
+      // 4. Comprobar historial del usuario y recurrencia de errores
       const historial = await this.persistence.getAnalysisByTecnica(activeUserId, tecnicaId);
       const esRecurrente = this.detectRecurrentErrors(historial, tecnicaId);
       const erroresPrevios = this.getRecentErrors(historial);
 
-      // 3. Recuperar contexto RAG centralizado
+      // 5. Consultar grounding RAG centralizado
       const ragContext = await this.getContextPrompts(tecnicaId, esRecurrente);
 
-      // 4. Construir prompt y evaluar con Gemini
+      // 6. Construir prompt dinámico inyectando checkpoints y RAG
       const prompt = this.promptBuilder.buildPrompt({
         metrics: metrics || [],
         ragContext,
         perfil,
-        tecnicaNombre,
+        tecnicaNombre: techniqueName,
+        checkpoints: tecnica ? tecnica.checkpoints : [],
         esErrorRecurrente: esRecurrente,
         erroresPrevios
       });
 
-      // 5. Inferencia de Gemini
-      let responseText: string;
-      if (frames && frames.length > 0) {
-        // Ejecución multimodal para validar aspectos visuales
-        responseText = await this.geminiService.evaluateMovement(prompt);
-      } else {
-        responseText = await this.geminiService.evaluateMovement(prompt);
-      }
+      // 7. Evaluar con Gemini
+      console.log('🤖 Generando evaluación biomecánica con Gemini...');
+      const responseText = await this.geminiService.evaluateMovement(prompt);
 
-      // 6. Validar y estructurar respuesta
+      // 8. Validar y estructurar respuesta JSON
       const parsed = this.promptBuilder.validateResponse(responseText);
       if (!parsed) {
         return res.status(422).json({ error: 'La respuesta de la IA no pudo ser parseada al esquema JSON esperado.' });
       }
 
-      // 7. Guardar análisis biomecánico en SQLite
+      // 9. Guardar análisis biomecánico en SQLite
       const analisis = await this.persistence.saveAnalysis(activeUserId, {
         tecnicaId,
-        tecnicaNombre,
+        tecnicaNombre: techniqueName,
         puntuacionGeneral: parsed.puntuacionGeneral,
         puntosFuertes: parsed.puntosFuertes,
         proximaTecnicaSugerida: parsed.proximaTecnicaSugerida,
@@ -99,13 +197,13 @@ export class SessionController {
         }))
       });
 
-      // 8. Actualizar ruta de aprendizaje si hay estancamiento / recurrencia
+      // 10. Actualizar ruta de aprendizaje si hay estancamiento
       if (esRecurrente) {
         const rutaActualizada = { ...usuario.rutaAprendizaje };
         if (!rutaActualizada.tecnicasEstancadas.includes(tecnicaId)) {
           rutaActualizada.tecnicasEstancadas.push(tecnicaId);
         }
-        rutaActualizada.estadoPedagogicoActual = `Adaptando: ${tecnicaNombre}`;
+        rutaActualizada.estadoPedagogicoActual = `Adaptando: ${techniqueName}`;
 
         await this.persistence.saveUser(activeUserId, {
           tecnicasEstancadas: rutaActualizada.tecnicasEstancadas,
@@ -117,6 +215,37 @@ export class SessionController {
     } catch (error) {
       console.error('Error procesando análisis de video:', error);
       res.status(500).json({ error: 'Error interno del servidor al analizar la sesión.' });
+    }
+  };
+
+  /**
+   * Registra la confirmación de visualización de un video (CU10).
+   */
+  registerVideoView = async (req: Request, res: Response) => {
+    try {
+      const { videoUrl, tecnicaId, userId } = req.body;
+      const activeUserId = userId || 'default';
+
+      if (!videoUrl || !tecnicaId) {
+        return res.status(400).json({ error: 'Faltan parámetros obligatorios: videoUrl y tecnicaId.' });
+      }
+
+      console.log(`🎥 Registrando visualización de video para usuario "${activeUserId}" en técnica "${tecnicaId}"...`);
+      const record = await this.persistence.saveVideoView(activeUserId, videoUrl, tecnicaId);
+
+      // Si el video fue visto, actualizamos la ruta de aprendizaje
+      const usuario = await this.persistence.getUser(activeUserId);
+      const ruta = usuario.rutaAprendizaje;
+      ruta.estadoPedagogicoActual = `Estudio completado para técnica ${tecnicaId}`;
+      
+      await this.persistence.saveUser(activeUserId, {
+        estadoPedagogicoActual: ruta.estadoPedagogicoActual
+      });
+
+      res.json({ success: true, record });
+    } catch (error) {
+      console.error('Error registrando visualización de video:', error);
+      res.status(500).json({ error: 'Fallo al registrar la visualización.' });
     }
   };
 
@@ -216,7 +345,6 @@ export class SessionController {
       };
 
       if (esErrorRecurrente) {
-        // Recuperar drills y explicaciones anatómicas
         const drillResults = await this.vectorStore.querySimilar(queryVector, 3, {
           ...filters,
           tipoRecurso: 'drill'
@@ -237,7 +365,6 @@ export class SessionController {
         if (combined.length > 0) return combined;
       }
 
-      // Consulta regular
       const results = await this.vectorStore.querySimilar(queryVector, 5, filters);
       const docs = results.documents?.[0] || [];
 
@@ -248,7 +375,6 @@ export class SessionController {
         });
       }
 
-      // General fallback sin filtro de técnica específica
       const generalResults = await this.vectorStore.querySimilar(queryVector, 5, {
         estadoValidacion: 'Validado'
       });

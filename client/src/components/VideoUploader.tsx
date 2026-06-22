@@ -1,25 +1,15 @@
 import React, { useState, useRef } from 'react';
 import { Upload, Camera, Play, AlertTriangle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { TECNICAS_BJJ, Cinturon } from '../models/types';
 import { ProcessingView } from './ProcessingView';
 
 export function VideoUploader() {
-  const { analyzeVideo, procesando, analisisActual, error, clearError, usuario } = useApp();
-  const [selectedTecnica, setSelectedTecnica] = useState(TECNICAS_BJJ[0].id);
+  const { analyzeVideo, procesando, analisisActual, error, clearError } = useApp();
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-
-  // Filtrar técnicas por cinturón del usuario
-  const cinturonOrder = Object.values(Cinturon);
-  const userCinturonIndex = cinturonOrder.indexOf(usuario?.cinturon || Cinturon.Blanco);
-  const tecnicasDisponibles = TECNICAS_BJJ.filter(t => {
-    const tecCinturonIndex = cinturonOrder.indexOf(t.cinturonRequerido);
-    return tecCinturonIndex <= userCinturonIndex;
-  });
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -57,7 +47,7 @@ export function VideoUploader() {
     }
 
     const blob = new Blob([await videoFile.arrayBuffer()], { type: videoFile.type });
-    await analyzeVideo(blob, selectedTecnica);
+    await analyzeVideo(blob);
   };
 
   const handleClear = () => {
@@ -89,23 +79,6 @@ export function VideoUploader() {
         <p className="card-subtitle">
           Carga un video de tu ejecución técnica (máx. 45 seg)
         </p>
-
-        {/* Selector de Técnica */}
-        <div className="form-group">
-          <label className="form-label">Técnica a evaluar</label>
-          <select
-            id="select-tecnica"
-            className="form-select"
-            value={selectedTecnica}
-            onChange={e => setSelectedTecnica(e.target.value)}
-          >
-            {tecnicasDisponibles.map(t => (
-              <option key={t.id} value={t.id}>
-                {t.nombre} ({t.categoria}) — {t.cinturonRequerido}
-              </option>
-            ))}
-          </select>
-        </div>
 
         {/* Zona de Upload */}
         {!videoFile ? (

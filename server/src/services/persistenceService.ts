@@ -1,8 +1,40 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { TECNICAS_BJJ } from '../models/types';
 
 const prisma = new PrismaClient();
 
 export class PersistenceService {
+  constructor() {
+    // Inicializar la base de datos de técnicas (seed automático)
+    this.seedInitialTechniques().catch(err => {
+      console.error('❌ Error al realizar el seed de técnicas:', err);
+    });
+  }
+
+  /**
+   * Pre-pobla la tabla Tecnica con el catálogo original de BJJ si está vacía.
+   */
+  async seedInitialTechniques(): Promise<void> {
+    const count = await prisma.tecnica.count();
+    if (count === 0) {
+      console.log('🌱 Inicializando catálogo de técnicas de BJJ en SQLite...');
+      for (const t of TECNICAS_BJJ) {
+        await prisma.tecnica.create({
+          data: {
+            id: t.id,
+            nombre: t.nombre,
+            categoria: t.categoria,
+            cinturonRequerido: t.cinturonRequerido,
+            checkpoints: JSON.stringify(t.checkpoints),
+            esCustom: false,
+            descripcion: `Especificación biomecánica estándar para ${t.nombre}`
+          }
+        });
+      }
+      console.log('✅ Catálogo de técnicas prepoblado con éxito');
+    }
+  }
+
   /**
    * Obtiene el perfil de un usuario. Si no existe, crea el perfil predeterminado.
    */
@@ -12,7 +44,6 @@ export class PersistenceService {
     });
 
     if (!user) {
-      // Perfil de usuario inicial
       const defaultUser = {
         id,
         nombre: 'Practicante',
@@ -72,12 +103,72 @@ export class PersistenceService {
     return this.parseUser(user);
   }
 
+  // ========================
+  // TÉCNICAS (AUTODETECCIÓN Y ZERO-SHOT)
+  // ========================
+
+  /**
+   * Obtiene una técnica por ID de la base de datos SQLite.
+   */
+  async getTecnica(id: string): Promise<any | null> {
+    const tecnica = await prisma.tecnica.findUnique({
+      where: { id }
+    });
+    if (!tecnica) return null;
+    return {
+      ...tecnica,
+      checkpoints: JSON.parse(tecnica.checkpoints)
+    };
+  }
+
+  /**
+   * Guarda una nueva técnica descubierta dinámicamente (Zero-Shot Discovery).
+   */
+  async saveCustomTecnica(data: {
+    id: string;
+    nombre: string;
+    categoria: string;
+    cinturonRequerido: string;
+    checkpoints: any[];
+    descripcion: string;
+  }): Promise<any> {
+    return await prisma.tecnica.create({
+      data: {
+        id: data.id,
+        nombre: data.nombre,
+        categoria: data.categoria,
+        cinturonRequerido: data.cinturonRequerido,
+        checkpoints: JSON.stringify(data.checkpoints),
+        esCustom: true,
+        descripcion: data.descripcion
+      }
+    });
+  }
+
+  // ========================
+  // ANÁLISIS BIOMECÁNICOS
+  // ========================
+
   /**
    * Guarda un análisis biomecánico completo (métricas y errores en cascada).
    */
   async saveAnalysis(userId: string, data: any): Promise<any> {
-    // Asegurar que el usuario exista
     await this.getUser(userId);
+
+    // Asegurarse de que la técnica esté en SQLite (para evitar fallo de foreign key)
+    const tecnicaExists = await this.getTecnica(data.tecnicaId);
+    if (!tecnicaExists) {
+      // Si la técnica no existe (por ejemplo, autodetectada y no persistida aún),
+      // guardamos una técnica básica por defecto para que funcione la integridad relacional
+      await this.saveCustomTecnica({
+        id: data.tecnicaId,
+        nombre: data.tecnicaNombre || data.tecnicaId,
+        categoria: 'General',
+        cinturonRequerido: 'Blanco',
+        checkpoints: [],
+        descripcion: 'Técnica registrada automáticamente.'
+      });
+    }
 
     const result = await prisma.analisisBiomecanico.create({
       data: {
@@ -213,6 +304,33 @@ export class PersistenceService {
   }
 
   // ========================
+  // HISTORIAL DE VISUALIZACIÓN DE VIDEOS (CU10)
+  // ========================
+
+  /**
+   * Registra una visualización de video de YouTube para el perfil adaptativo.
+   */
+  async saveVideoView(usuarioId: string, videoUrl: string, tecnicaId: string): Promise<any> {
+    return await prisma.historialVisualizacion.create({
+      data: {
+        usuarioId,
+        videoUrl,
+        tecnicaId
+      }
+    });
+  }
+
+  /**
+   * Obtiene la lista de videos vistos por el usuario.
+   */
+  async getWatchedVideos(usuarioId: string): Promise<any[]> {
+    return await prisma.historialVisualizacion.findMany({
+      where: { usuarioId },
+      orderBy: { fechaVisualizacion: 'desc' }
+    });
+  }
+
+  // ========================
   // PARSER UTILITIES
   // ========================
 
@@ -233,7 +351,7 @@ export class PersistenceService {
         progresoGeneral: user.progresoGeneral,
         estadoPedagogicoActual: user.estadoPedagogicoActual,
         tecnicasEstancadas: user.tecnicasEstancadas ? user.tecnicasEstancadas.split(',').filter(Boolean) : [],
-        recomendacionesActivas: [] // Se calculan dinámicamente en el cliente
+        recomendacionesActivas: []
       }
     };
   }

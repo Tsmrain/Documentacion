@@ -2,19 +2,21 @@ import {
   MetricaCinematica,
   ErrorBiomecanico,
   PerfilBiomecanico,
-  GeminiEvaluationResponse
+  GeminiEvaluationResponse,
+  CheckpointTecnico
 } from '../models/types';
 
 export class PromptBuilder {
   /**
    * Construye el prompt estructurado completo para Gemini.
-   * Combina: métricas cinemáticas + contexto RAG + reglas de evaluación BJJ.
+   * Combina: métricas cinemáticas + checkpoints ideales + contexto RAG + reglas de BJJ.
    */
   buildPrompt(params: {
     metrics: MetricaCinematica[];
     ragContext: string[];
     perfil: PerfilBiomecanico;
     tecnicaNombre: string;
+    checkpoints?: CheckpointTecnico[];
     esErrorRecurrente?: boolean;
     erroresPrevios?: ErrorBiomecanico[];
   }): string {
@@ -23,6 +25,7 @@ export class PromptBuilder {
       ragContext,
       perfil,
       tecnicaNombre,
+      checkpoints,
       esErrorRecurrente,
       erroresPrevios
     } = params;
@@ -35,6 +38,12 @@ export class PromptBuilder {
       vel: Math.round(m.velocidadMedida * 10) / 10,
       acc: Math.round(m.aceleracionMedida * 10) / 10
     }));
+
+    // Formatear checkpoints ideales si existen
+    const checkpointsSection = checkpoints && checkpoints.length > 0
+      ? `## CHECKPOINTS BIOMECÁNICOS IDEALES (Verdad del Tatami):
+${checkpoints.map(cp => `- Fase: ${cp.fase}, Articulación: ${cp.articulacion}, Ángulo ideal: ${cp.anguloArticularIdeal}°, Tolerancia estándar: ±${cp.toleranciaGrados}°`).join('\n')}`
+      : '## CHECKPOINTS BIOMECÁNICOS IDEALES: \nNo hay checkpoints numéricos preestablecidos para esta técnica. Evalúa usando principios cinemáticos universales y la literatura RAG.';
 
     // Contexto RAG
     const ragSection = ragContext.length > 0
@@ -74,22 +83,25 @@ Evalúa la ejecución técnica del practicante para la técnica: "${tecnicaNombr
 Las siguientes métricas fueron extraídas localmente del video del practicante mediante landmarks 3D:
 ${JSON.stringify(metricsResumen, null, 2)}
 
+${checkpointsSection}
+
 ## CONTEXTO TÉCNICO DE MANUALES OFICIALES (RAG - FUENTES VALIDADAS)
-Los siguientes fragmentos provienen de manuales oficiales y videos validados por instructores certificados:
+Los siguientes fragmentos provienen de manuales oficiales y videos validados:
 ${ragSection}
 
 ## REGLAS DE EVALUACIÓN BIOMECÁNICA
-1. Identifica desviaciones angulares respecto al patrón ideal definido en las fuentes RAG.
+1. Identifica desviaciones angulares respecto al patrón ideal definido en los checkpoints o en las fuentes RAG.
 2. Clasifica los errores según severidad:
    - **Leve**: desviación ≤ 15° (considerando ajuste de biotipo)
    - **Moderado**: desviación entre 15° y 30°
    - **Crítico**: desviación > 30° o error recurrente en el historial del practicante
 3. IMPORTANTE (Regla RD-02): Considera el biotipo del practicante. Si tiene limitaciones de movilidad registradas, flexibiliza el umbral angular hasta un ${ajusteBiotipo}%.
-4. Basa tu evaluación ESTRICTAMENTE en las fuentes RAG proporcionadas arriba. No inventes técnicas ni referencias que no estén en el contexto.
+4. Basa tu evaluación ESTRICTAMENTE en las fuentes RAG y los checkpoints proporcionados arriba. No inventes técnicas ni referencias que no estén en el contexto.
 5. Cita textualmente las recomendaciones de las fuentes RAG cuando sea posible.
 ${recurrentSection}
 
-RESPONDE ÚNICAMENTE con el siguiente objeto JSON (sin texto adicional, sin markdown, sin bloques de código):
+RESPONDE ÚNICAMENTE con el siguiente objeto JSON (sin texto adicional, sin markdown, sin bloques de código). 
+IMPORTANTE: Asegúrate de que el JSON sea estrictamente válido. Cualquier salto de línea dentro de los valores de texto (como en las explicaciones o recomendaciones) DEBE ser representado con el carácter de escape '\\n' (barra invertida y n) en lugar de un salto de línea físico real, para evitar errores de parseo:
 {
   "puntuacionGeneral": <número de 0 a 100>,
   "errores": [
@@ -106,7 +118,7 @@ RESPONDE ÚNICAMENTE con el siguiente objeto JSON (sin texto adicional, sin mark
   "puntosFuertes": ["<lista de aspectos positivos de la ejecución>"],
   "recomendacionAdaptativa": {
     "tipoEstrategia": "<tecnica|drill|explicacion_anatomica>",
-    "contenido": "<descripción detallada y accionable de lo que debe hacer el practicante>"
+    "contenido": "<descripción detallada y de alta calidad para corregir, incluyendo el enlace de YouTube de soporte si aplica (URL de YouTube del RAG)>"
   },
   "proximaTecnicaSugerida": "<nombre de la siguiente técnica a practicar según progresión>"
 }`;
@@ -185,6 +197,7 @@ RESPONDE ÚNICAMENTE con el siguiente objeto JSON (sin texto adicional, sin mark
       return parsed as GeminiEvaluationResponse;
     } catch (e) {
       console.error('Error parseando respuesta JSON de Gemini:', e);
+      console.error('Respuesta original de Gemini que falló:', jsonString);
       return null;
     }
   }

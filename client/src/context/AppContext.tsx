@@ -27,7 +27,7 @@ interface AppContextType {
 
   // Acciones
   setVistaActual: (vista: AppView) => void;
-  analyzeVideo: (videoBlob: Blob, tecnicaId: string) => Promise<void>;
+  analyzeVideo: (videoBlob: Blob) => Promise<void>;
   loadHistory: () => Promise<void>;
   deleteAnalysis: (id: number) => Promise<void>;
   updateProfile: (data: any) => Promise<void>;
@@ -72,7 +72,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [sessionController]);
 
   // Analizar video (CU01)
-  const analyzeVideo = useCallback(async (videoBlob: Blob, tecnicaId: string) => {
+  const analyzeVideo = useCallback(async (videoBlob: Blob) => {
     try {
       setProcesando(true);
       setError(null);
@@ -81,7 +81,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       const result = await sessionController.analyzeVideo(
         videoBlob,
-        tecnicaId,
         (stage, progress) => {
           setEstadoProcesamiento(stage);
           setProgresoProcesamiento(progress);

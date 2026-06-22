@@ -25,16 +25,43 @@ export class RetrievalAugmentedController {
    */
   async ingestSource(
     fuente: FuenteConocimiento,
-    contenidoTexto: string,
+    contenidoTexto?: string,
+    file?: File,
     onProgress?: (p: number) => void
   ): Promise<number> {
     try {
       if (onProgress) onProgress(20);
       
-      const response = await apiClient.post('/rag/ingest', {
-        fuente,
-        contenidoTexto
-      });
+      let response;
+
+      if (file) {
+        // Enviar como multipart/form-data
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('fuente', JSON.stringify(fuente));
+        if (fuente.youtubeUrl) {
+          formData.append('youtubeUrl', fuente.youtubeUrl);
+        }
+
+        response = await apiClient.post('/rag/ingest', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          },
+          onUploadProgress: (progressEvent) => {
+            if (onProgress && progressEvent.total) {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              onProgress(20 + Math.round(percentCompleted * 0.7));
+            }
+          }
+        });
+      } else {
+        // Enviar como JSON normal
+        response = await apiClient.post('/rag/ingest', {
+          fuente,
+          contenidoTexto,
+          youtubeUrl: fuente.youtubeUrl
+        });
+      }
 
       if (onProgress) onProgress(100);
       return response.data.fuenteId;
@@ -70,6 +97,18 @@ export class RetrievalAugmentedController {
     } catch (error) {
       console.error('Error recuperando fuentes RAG:', error);
       return [];
+    }
+  }
+
+  /**
+   * Elimina una fuente de conocimiento en el servidor.
+   */
+  async deleteSource(id: number): Promise<void> {
+    try {
+      await apiClient.delete(`/rag/fuente/${id}`);
+    } catch (error: any) {
+      console.error('Error eliminando fuente RAG:', error);
+      throw new Error(error.response?.data?.error || 'Error al eliminar la fuente en el servidor.');
     }
   }
 }

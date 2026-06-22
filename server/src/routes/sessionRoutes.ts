@@ -5,6 +5,7 @@ const router = express.Router();
 const controller = new SessionController();
 
 router.post('/analyze', controller.analyzeVideo);
+router.post('/video-view', controller.registerVideoView);
 router.get('/history/:userId', controller.getHistory);
 router.delete('/analysis/:id', controller.deleteAnalysis);
 

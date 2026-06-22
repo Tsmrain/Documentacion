@@ -47,19 +47,25 @@ export class VectorStore {
     await this.init();
     if (!this.collection) throw new Error('ChromaDB collection not initialized');
 
-    const where: Record<string, any> = {};
+    const whereConditions: any[] = [];
     if (filters) {
-      if (filters.estadoValidacion) where['estadoValidacion'] = filters.estadoValidacion;
-      if (filters.tipoRecurso) where['tipoRecurso'] = filters.tipoRecurso;
-      if (filters.tecnicaId) where['tecnicaId'] = filters.tecnicaId;
+      if (filters.estadoValidacion) whereConditions.push({ 'estadoValidacion': filters.estadoValidacion });
+      if (filters.tipoRecurso) whereConditions.push({ 'tipoRecurso': filters.tipoRecurso });
+      if (filters.tecnicaId) whereConditions.push({ 'tecnicaId': filters.tecnicaId });
     }
+
+    const where = whereConditions.length === 1
+      ? whereConditions[0]
+      : whereConditions.length > 1
+        ? { '$and': whereConditions }
+        : undefined;
 
     const queryParams: any = {
       queryEmbeddings: [embedding],
       nResults
     };
 
-    if (Object.keys(where).length > 0) {
+    if (where) {
       queryParams.where = where;
     }
 
