@@ -255,7 +255,7 @@ export function KnowledgeManager() {
                 </span>
                 {f.id !== undefined && (
                   <button
-                    className={`btn-icon ${confirmDeleteId === f.id ? 'text-danger' : 'btn-danger-hover'}`}
+                    className={`btn-icon ${confirmDeleteId === f.id ? 'btn-danger' : 'btn-danger-hover'}`}
                     onClick={(e) => handleDeleteSource(f.id!, e)}
                     title={confirmDeleteId === f.id ? "Haga clic de nuevo para confirmar eliminación" : "Eliminar fuente"}
                     style={{ background: 'transparent', border: 'none', color: confirmDeleteId === f.id ? 'var(--severity-critical)' : 'var(--text-muted)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
@@ -269,7 +269,11 @@ export function KnowledgeManager() {
                   Técnicas: {f.tecnicaId ? f.tecnicaId.split(',').map(id => TECNICAS_BJJ.find(t => t.id === id.trim())?.nombre || id.trim()).join(', ') : 'general'}
                 </span>
                 {confirmDeleteId === f.id ? (
-                  <span className="text-danger" style={{ fontWeight: 600, fontSize: '0.65rem', animation: 'pulse 1s infinite' }}>
+                  <span
+                    className="text-danger"
+                    style={{ fontWeight: 600, fontSize: '0.65rem', animation: 'pulse 1s infinite', cursor: 'pointer', color: 'var(--severity-critical)' }}
+                    onClick={(e) => handleDeleteSource(f.id!, e)}
+                  >
                     ⚠️ ¿Confirmar eliminación?
                   </span>
                 ) : (
