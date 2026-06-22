@@ -153,7 +153,7 @@ Responde únicamente en formato JSON con la siguiente estructura (no agregues te
       const erroresPrevios = this.getRecentErrors(historial);
 
       // 5. Consultar grounding RAG centralizado
-      const ragContext = await this.getContextPrompts(tecnicaId, esRecurrente);
+      const ragContext = await this.getContextPrompts(tecnicaId, esRecurrente, techniqueName);
 
       // 6. Construir prompt dinámico inyectando checkpoints y RAG
       const prompt = this.promptBuilder.buildPrompt({
@@ -334,7 +334,33 @@ Responde únicamente en formato JSON con la siguiente estructura (no agregues te
     return recent.flatMap(a => a.errores);
   }
 
-  private async getContextPrompts(tecnicaId: string, esErrorRecurrente: boolean): Promise<string[]> {
+  private async searchFallbackVideo(query: string): Promise<string | null> {
+    try {
+      const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(query + ' BJJ tutorial')}`;
+      console.log(`🔍 Buscando video de soporte en YouTube para: "${query}"...`);
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      });
+      const html = await response.text();
+      
+      const match = html.match(/"videoId"\s*:\s*"([\w-]{11})"/);
+      if (match && match[1]) {
+        return `https://www.youtube.com/watch?v=${match[1]}`;
+      }
+      
+      const watchMatch = html.match(/\/watch\?v=([\w-]{11})/);
+      if (watchMatch && watchMatch[1]) {
+        return `https://www.youtube.com/watch?v=${watchMatch[1]}`;
+      }
+    } catch (err) {
+      console.warn('Error buscando video de respaldo en YouTube:', err);
+    }
+    return null;
+  }
+
+  private async getContextPrompts(tecnicaId: string, esErrorRecurrente: boolean, techniqueName: string): Promise<string[]> {
     try {
       const queryText = `técnica ${tecnicaId} checkpoints biomecánicos ángulos articulares`;
       const queryVector = await this.embeddingService.generateEmbedding(queryText);
@@ -400,35 +426,26 @@ Responde únicamente en formato JSON con la siguiente estructura (no agregues te
         });
       }
 
-      const generalResults = await this.vectorStore.querySimilar(queryVector, 5, {
-        estadoValidacion: 'Validado'
-      });
-      const generalDocs = generalResults.documents?.[0] || [];
-      const generalMetas = generalResults.metadatas?.[0] || [];
-
-      if (generalDocs.length > 0) {
-        return generalDocs.map((doc, idx) => {
-          const meta = (generalMetas[idx] as any) || {};
-          const ytUrl = meta.fuenteId ? urlMap.get(Number(meta.fuenteId)) : undefined;
-          const urlStr = ytUrl ? ` (URL de YouTube: ${ytUrl})` : '';
-          return `[Fuente RAG General${urlStr}]: ${doc}`;
-        });
-      }
-
-      return [this.getFallbackContext()];
+      // Si no hay RAG específico para la técnica, buscar video de soporte basado en la técnica detectada
+      console.log(`⚠️ No se encontraron documentos específicos en el RAG para "${techniqueName}" (${tecnicaId}). Aplicando fallback dinámico basado en la técnica...`);
+      const fallbackVideo = await this.searchFallbackVideo(techniqueName);
+      return [this.getFallbackContext(fallbackVideo, techniqueName)];
     } catch (e) {
       console.warn('Error en vectorStore RAG query, aplicando fallback:', e);
-      return [this.getFallbackContext()];
+      // Buscar video de YouTube dinámicamente también en caso de error
+      const fallbackVideo = await this.searchFallbackVideo(techniqueName).catch(() => null);
+      return [this.getFallbackContext(fallbackVideo, techniqueName)];
     }
   }
 
-  private getFallbackContext(): string {
-    return `[Principios Universales de BJJ]:
+  private getFallbackContext(videoUrl?: string | null, techniqueName?: string): string {
+    const videoLine = videoUrl ? `\n(Video de Fundamentos/Técnica de BJJ: ${videoUrl})` : '';
+    return `[Principios Universales de BJJ aplicados a la técnica detectada]:
+Técnica detectada: ${techniqueName || 'Desconocida'}
 1. BASE: Mantener una base sólida distribuyendo el peso correctamente entre los puntos de apoyo.
 2. ALINEACIÓN: La columna vertebral debe permanecer alineada, evitando curvaturas excesivas.
 3. PALANCA: Usar los principios de palanca mecánica para maximizar la eficiencia del movimiento.
 4. PRESIÓN: Aplicar presión constante usando el peso corporal de manera eficiente.
-5. FRAMES: Crear estructuras óseas (frames) para mantener distancia o prevenir avances del oponente.
-(Video de Fundamentos Generales de BJJ: https://www.youtube.com/watch?v=0yL15BwS0G4)`;
+5. FRAMES: Crear estructuras óseas (frames) para mantener distancia o prevenir avances del oponente.${videoLine}`;
   }
 }
