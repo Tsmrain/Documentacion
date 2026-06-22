@@ -36,9 +36,7 @@ export function KnowledgeManager() {
 
   const loadData = async () => {
     try {
-      const persistence = (await import('../services/localPersistenceAdapter')).LocalPersistenceAdapter;
-      const p = new persistence();
-      const allFuentes = await p.getFuentes();
+      const allFuentes = await ragController.getFuentes();
       setFuentes(allFuentes);
       const ragStats = await ragController.getStats();
       setStats(ragStats);

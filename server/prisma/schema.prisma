@@ -1,0 +1,79 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Usuario {
+  id                      String                @id @default("default")
+  nombre                  String
+  cinturon                String                // e.g. Blanco, Azul, Morado, Marron, Negro
+  altura                  Float                 // m
+  peso                    Float                 // kg
+  longitudBrazos          Float                 // cm
+  longitudPiernas         Float                 // cm
+  rangoMovilidadArticular String                // JSON string representation of mobility ranges
+  progresoGeneral         Float                 @default(0)
+  estadoPedagogicoActual  String                @default("Inicio")
+  tecnicasEstancadas      String                @default("") // Comma-separated list of technique IDs
+  analisis                AnalisisBiomecanico[]
+}
+
+model AnalisisBiomecanico {
+  id                     Int                 @id @default(autoincrement())
+  fecha                  DateTime            @default(now())
+  tecnicaId              String
+  tecnicaNombre          String
+  puntuacionGeneral      Int                 // 0-100
+  puntosFuertes          String              // JSON array string
+  proximaTecnicaSugerida String
+  recomendacionEstrategia String             // tecnica, drill, explicacion_anatomica
+  recomendacionContenido  String             // Text detail
+  usuarioId              String
+  usuario                Usuario             @relation(fields: [usuarioId], references: [id])
+  metricas               MetricaCinematica[]
+  errores                ErrorBiomecanico[]
+}
+
+model MetricaCinematica {
+  id                Int                 @id @default(autoincrement())
+  frameIndex        Int
+  articulacion      String
+  anguloMedido      Float
+  velocidadMedida   Float
+  aceleracionMedida Float
+  analisisId        Int
+  analisis          AnalisisBiomecanico @relation(fields: [analisisId], references: [id], onDelete: Cascade)
+}
+
+model ErrorBiomecanico {
+  id               Int                 @id @default(autoincrement())
+  articulacion     String
+  anguloMedido     Float
+  anguloIdeal      Float
+  desviacion       Float
+  severidad        String              // leve, moderado, critico
+  descripcionFallo String
+  esRecurrente     Boolean
+  recomendacion    String
+  analisisId       Int
+  analisis         AnalisisBiomecanico @relation(fields: [analisisId], references: [id], onDelete: Cascade)
+}
+
+model FuenteConocimiento {
+  id               Int      @id @default(autoincrement())
+  titulo           String
+  tipo             String   // ManualPDF, VideoYouTube
+  estadoValidacion String   // Pendiente, Validado, Rechazado
+  tecnicaId        String
+  fechaCreacion    DateTime @default(now())
+  contenidoOriginal String?
+  numeroPaginas    Int?
+  isbn             String?
+  duracionSegundos Int?
+  canalAutor       String?
+  youtubeUrl       String?
+}
