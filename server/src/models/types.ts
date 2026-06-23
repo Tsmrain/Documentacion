@@ -195,6 +195,22 @@ export interface RutaAprendizaje {
   recomendacionesActivas: RecomendacionAdaptativa[];
 }
 
+export interface FighterAnalysis {
+  role: string;
+  status: 'approved' | 'correction_needed';
+  summary: string;
+  techniques: string[];
+  mistakes: string[];
+  tips: string[];
+  reference: {
+    book: string;
+    technique: string;
+    belt: string;
+    quote: string;
+  };
+  youtube_query: string;
+}
+
 export interface AnalisisBiomecanico {
   id?: number;
   fecha: Date;
@@ -207,6 +223,7 @@ export interface AnalisisBiomecanico {
   recomendacionAdaptativa: RecomendacionAdaptativa;
   proximaTecnicaSugerida: string;
   landmarks?: Landmark3D[][];
+  fighters?: FighterAnalysis[];
 }
 
 export interface GeminiEvaluationResponse {
@@ -226,5 +243,6 @@ export interface GeminiEvaluationResponse {
     contenido: string;
   };
   proximaTecnicaSugerida: string;
+  fighters?: FighterAnalysis[];
 }
 

@@ -100,33 +100,64 @@ export function HistoryView() {
             </div>
 
             <div className="history-card-body">
-              {/* Errores resumen */}
-              <div className="history-errors-summary">
-                {analisis.errores.length > 0 ? (
-                  <>
-                    <Target size={14} />
-                    <span>{analisis.errores.length} error{analisis.errores.length !== 1 ? 'es' : ''} detectado{analisis.errores.length !== 1 ? 's' : ''}</span>
-                  </>
-                ) : (
-                  <>
-                    <Award size={14} />
-                    <span className="text-green">Sin errores detectados</span>
-                  </>
-                )}
-              </div>
-
-              {/* Tags de errores */}
-              {analisis.errores.length > 0 && (
-                <div className="history-error-tags">
-                  {analisis.errores.slice(0, 3).map((e, i) => (
-                    <span key={i} className={`error-tag severity-${e.severidad}`}>
-                      {e.articulacion}
-                    </span>
+              {/* Resumen de luchadores si existen (Formato OpenBJJ) */}
+              {analisis.fighters && analisis.fighters.length > 0 ? (
+                <div className="history-fighters-summary" style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px', padding: '8px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--border-glass)' }}>
+                  {analisis.fighters.map((fighter: any, fIdx: number) => (
+                    <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem' }}>
+                      <div style={{
+                        width: '16px',
+                        height: '16px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#fff',
+                        fontSize: '9px',
+                        fontWeight: 'bold',
+                        flexShrink: 0,
+                        background: fighter.status === 'approved' ? 'var(--accent-green)' : 'var(--accent-primary)'
+                      }}>
+                        {fighter.status === 'approved' ? '✓' : '!'}
+                      </div>
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{fighter.role.split(' ')[0]}:</span>
+                      <span style={{ color: 'var(--text-secondary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '300px' }}>
+                        {fighter.techniques.slice(0, 2).join(', ') || 'Posturas básicas'}
+                      </span>
+                    </div>
                   ))}
-                  {analisis.errores.length > 3 && (
-                    <span className="error-tag more">+{analisis.errores.length - 3}</span>
-                  )}
                 </div>
+              ) : (
+                <>
+                  {/* Errores resumen (Legacy/Backwards compatible) */}
+                  <div className="history-errors-summary">
+                    {analisis.errores.length > 0 ? (
+                      <>
+                        <Target size={14} />
+                        <span>{analisis.errores.length} error{analisis.errores.length !== 1 ? 'es' : ''} detectado{analisis.errores.length !== 1 ? 's' : ''}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Award size={14} />
+                        <span className="text-green">Sin errores detectados</span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Tags de errores */}
+                  {analisis.errores.length > 0 && (
+                    <div className="history-error-tags">
+                      {analisis.errores.slice(0, 3).map((e, i) => (
+                        <span key={i} className={`error-tag severity-${e.severidad}`}>
+                          {e.articulacion}
+                        </span>
+                      ))}
+                      {analisis.errores.length > 3 && (
+                        <span className="error-tag more">+{analisis.errores.length - 3}</span>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </div>
 

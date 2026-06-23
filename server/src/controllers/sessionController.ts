@@ -184,6 +184,7 @@ Responde únicamente en formato JSON con la siguiente estructura (no agregues te
         puntosFuertes: parsed.puntosFuertes,
         proximaTecnicaSugerida: parsed.proximaTecnicaSugerida,
         recomendacionAdaptativa: parsed.recomendacionAdaptativa,
+        fighters: parsed.fighters || [],
         metricas: metrics || [],
         errores: parsed.errores.map((e: any) => ({
           articulacion: e.articulacion,

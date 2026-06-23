@@ -48,6 +48,7 @@ model AnalisisBiomecanico {
   tecnica                Tecnica             @relation(fields: [tecnicaId], references: [id])
   metricas               MetricaCinematica[]
   errores                ErrorBiomecanico[]
+  fightersJson           String?
 }
 
 model MetricaCinematica {

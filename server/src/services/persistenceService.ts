@@ -180,6 +180,7 @@ export class PersistenceService {
         recomendacionEstrategia: data.recomendacionAdaptativa?.tipoEstrategia || 'tecnica',
         recomendacionContenido: data.recomendacionAdaptativa?.contenido || '',
         usuarioId: userId,
+        fightersJson: JSON.stringify(data.fighters || []),
         metricas: {
           create: (data.metricas || []).map((m: any) => ({
             frameIndex: m.frameIndex,
@@ -386,7 +387,8 @@ export class PersistenceService {
         descripcionFallo: e.descripcionFallo,
         esRecurrente: e.esRecurrente,
         recomendacion: e.recomendacion
-      }))
+      })),
+      fighters: item.fightersJson ? JSON.parse(item.fightersJson) : []
     };
   }
 }

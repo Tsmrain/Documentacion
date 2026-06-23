@@ -68,8 +68,8 @@ INSTRUCCIÓN CRÍTICA: La estrategia pedagógica DEBE cambiar. En lugar de repet
     // Calcular ajuste de umbral según perfil biomecánico (regla RD-02)
     const ajusteBiotipo = this.calcularAjusteBiotipo(perfil);
 
-    const prompt = `Eres un instructor experto de Brazilian Jiu-Jitsu con 20 años de experiencia en análisis biomecánico.
-Evalúa la ejecución técnica del practicante para la técnica: "${tecnicaNombre}".
+    const prompt = `Eres un instructor experto de Brazilian Jiu-Jitsu con 20 años de experiencia en análisis biomecánico y táctico.
+Evalúa la ejecución de la técnica: "${tecnicaNombre}" basándote en las fuentes técnicas y directrices de nuestro sistema.
 
 ## DATOS DEL PRACTICANTE (PERFIL BIOMECÁNICO)
 - Altura: ${perfil.altura}m
@@ -77,36 +77,40 @@ Evalúa la ejecución técnica del practicante para la técnica: "${tecnicaNombr
 - Longitud de brazos (envergadura): ${perfil.longitudBrazos}cm
 - Longitud de piernas: ${perfil.longitudPiernas}cm
 - Rangos de movilidad articular: ${JSON.stringify(perfil.rangoMovilidadArticular)}
-- Ajuste de tolerancia por biotipo: ${ajusteBiotipo}% (Regla RD-02: se flexibiliza hasta 20% si hay limitaciones)
+- Ajuste de tolerancia por biotipo: ${ajusteBiotipo}% (Regla RD-02)
 
-## MÉTRICAS CINEMÁTICAS MEDIDAS (Resumen compacto)
-Las siguientes métricas fueron extraídas localmente del video del practicante mediante landmarks 3D:
+## MÉTRICAS CINEMÁTICAS MEDIDAS (Resumen compacto de landmarks)
 ${JSON.stringify(metricsResumen, null, 2)}
 
 ${checkpointsSection}
 
-## CONTEXTO TÉCNICO DE MANUALES OFICIALES (RAG - FUENTES VALIDADAS)
-Los siguientes fragmentos provienen de manuales oficiales y videos validados:
+## CONTEXTO DE CONOCIMIENTO (RAG - FUENTES DINÁMICAS CARGADAS POR LOS USUARIOS)
+Los siguientes fragmentos y directrices técnicas provienen de manuales, libros y transcripciones de videos que los usuarios han subido al RAG:
 ${ragSection}
 
-## REGLAS DE EVALUACIÓN BIOMECÁNICA
-1. Identifica desviaciones angulares respecto al patrón ideal definido en los checkpoints o en las fuentes RAG.
-2. Clasifica los errores según severidad:
-   - **Leve**: desviación ≤ 15° (considerando ajuste de biotipo)
-   - **Moderado**: desviación entre 15° y 30°
-   - **Crítico**: desviación > 30° o error recurrente en el historial del practicante
-3. IMPORTANTE (Regla RD-02): Considera el biotipo del practicante. Si tiene limitaciones de movilidad registradas, flexibiliza el umbral angular hasta un ${ajusteBiotipo}%.
-4. Basa tu evaluación ESTRICTAMENTE en las fuentes RAG y los checkpoints proporcionados arriba. No inventes técnicas ni referencias que no estén en el contexto.
-5. Cita textualmente las recomendaciones de las fuentes RAG cuando sea posible.
-6. CONCISIÓN EXTREMA Y ENFOQUE VISUAL: Los usuarios se guían por lo directo y visual.
-   - En "descripcion" de cada error: Explica el fallo en una sola frase corta y directa (máximo 15 palabras).
-   - En "recomendacion" de cada error: Da una instrucción correctiva muy concisa (máximo 20 palabras).
-   - En "recomendacionAdaptativa.contenido": Escribe un texto pedagógico corto (máximo 2 párrafos breves, no más de 80 palabras en total). Si hay un video de YouTube aplicable del RAG, colócalo claramente en su propia línea al final (ejemplo: "Video de soporte: https://www.youtube.com/watch?v=...").
-   - En "puntosFuertes": Limítate a máximo 3 puntos fuertes de la ejecución, de no más de 10 palabras cada uno.
+## REGLAS DE EVALUACIÓN
+1. Identifica desviaciones angulares comparando los checkpoints o la literatura provista en el contexto RAG.
+2. Identifica a ambos luchadores en la secuencia (Top Fighter y Bottom Fighter).
+3. Evalúa a cada luchador por separado en el array "fighters":
+   - "role": Identificador visual/táctico del luchador (ej. "Top Fighter (White Gi)", "Bottom Fighter (Blue Gi)").
+   - "status": "approved" si ejecuta la postura correcta según su rol, "correction_needed" si comete errores graves.
+   - "summary": Resumen de 1-2 frases describiendo su acción táctica y control.
+   - "techniques": Lista de técnicas BJJ observadas para este luchador (máximo 3).
+   - "mistakes": Errores biomecánicos o conceptuales cometidos por este luchador (máximo 3, vacío si es aprobado).
+   - "tips": Consejos prácticos extraídos de las fuentes RAG para mejorar la técnica (máximo 3).
+   - "reference": Citación precisa basada en las fuentes RAG de donde se extrajo la recomendación. Debe incluir "book": "Nombre del manual/libro de la fuente RAG (por ejemplo, el título de la fuente)", "technique": "Sección o técnica de la fuente", "belt": "Nivel estimado (Blanco/Azul/Morado/Marrón/Negro)", y "quote": "Frase clave o concepto de la fuente".
+   - "youtube_query": Término de búsqueda optimizado para encontrar este tutorial en YouTube (ej. "BJJ mount survival technique tutorial").
+4. Mantén los textos en "fighters" claros, concisos y profesionales en español.
+5. Inyecta el diagnóstico general y los errores biomecánicos individuales de las articulaciones en el formato JSON principal.
+6. CONCISIÓN EXTREMA EN LOS DETALLES BIOMECÁNICOS GENERALES:
+   - En "errores.descripcion": frase corta (máximo 15 palabras).
+   - En "errores.recomendacion": recomendación correctiva concisa (máximo 20 palabras).
+   - En "recomendacionAdaptativa.contenido": texto pedagógico corto (máximo 2 párrafos cortos, no más de 80 palabras). Si hay un video RAG o youtube inyectado, colócalo en su propia línea al final como "Video de soporte: https://www.youtube.com/watch?v=...".
+   - En "puntosFuertes": máximo 3 puntos, de no más de 10 palabras cada uno.
 ${recurrentSection}
 
 RESPONDE ÚNICAMENTE con el siguiente objeto JSON (sin texto adicional, sin markdown, sin bloques de código). 
-IMPORTANTE: Asegúrate de que el JSON sea estrictamente válido. Cualquier salto de línea dentro de los valores de texto (como en las explicaciones o recomendaciones) DEBE ser representado con el carácter de escape '\\n' (barra invertida y n) en lugar de un salto de línea físico real, para evitar errores de parseo:
+IMPORTANTE: Asegúrate de que el JSON sea estrictamente válido. Cualquier salto de línea dentro de los valores de texto (como en las explicaciones o recomendaciones) DEBE ser representado con el carácter de escape '\\n':
 {
   "puntuacionGeneral": <número de 0 a 100>,
   "errores": [
@@ -116,16 +120,33 @@ IMPORTANTE: Asegúrate de que el JSON sea estrictamente válido. Cualquier salto
       "anguloIdeal": <número>,
       "desviacion": <número>,
       "severidad": "<leve|moderado|critico>",
-      "descripcion": "<descripción clara del error en español>",
-      "recomendacion": "<recomendación específica citando fuentes RAG>"
+      "descripcion": "<descripción clara en español del error>",
+      "recomendacion": "<recomendación correctiva>"
     }
   ],
-  "puntosFuertes": ["<lista de aspectos positivos de la ejecución>"],
+  "puntosFuertes": ["<lista de aspectos positivos>"],
   "recomendacionAdaptativa": {
     "tipoEstrategia": "<tecnica|drill|explicacion_anatomica>",
-    "contenido": "<descripción detallada y de alta calidad para corregir, incluyendo el enlace de YouTube de soporte si aplica (URL de YouTube del RAG)>"
+    "contenido": "<resumen pedagógico adaptativo con el enlace de YouTube si aplica>"
   },
-  "proximaTecnicaSugerida": "<nombre de la siguiente técnica a practicar según progresión>"
+  "proximaTecnicaSugerida": "<siguiente técnica a practicar>",
+  "fighters": [
+    {
+      "role": "<Top Fighter (...) o Bottom Fighter (...)>",
+      "status": "<approved|correction_needed>",
+      "summary": "<resumen de su ejecución en español>",
+      "techniques": ["<técnica 1>", "<técnica 2>"],
+      "mistakes": ["<error 1>", "<error 2>"],
+      "tips": ["<consejo 1>", "<consejo 2>"],
+      "reference": {
+        "book": "Jiu-Jitsu University",
+        "technique": "<ID Sección + Nombre de la TOC>",
+        "belt": "<White|Blue|Purple|Brown|Black>",
+        "quote": "<frase célebre o concepto clave del manual>"
+      },
+      "youtube_query": "<búsqueda optimizada de YouTube>"
+    }
+  ]
 }`;
 
     return prompt;
@@ -197,6 +218,10 @@ IMPORTANTE: Asegúrate de que el JSON sea estrictamente válido. Cualquier salto
         if (!['leve', 'moderado', 'critico'].includes(error.severidad)) {
           error.severidad = 'moderado';
         }
+      }
+
+      if (!parsed.fighters || !Array.isArray(parsed.fighters)) {
+        parsed.fighters = [];
       }
 
       return parsed as GeminiEvaluationResponse;
