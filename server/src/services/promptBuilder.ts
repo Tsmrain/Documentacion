@@ -98,7 +98,7 @@ ${ragSection}
    - "techniques": Lista de técnicas BJJ observadas para este luchador (máximo 3).
    - "mistakes": Errores biomecánicos o conceptuales cometidos por este luchador (máximo 3, vacío si es aprobado).
    - "tips": Consejos prácticos extraídos de las fuentes RAG para mejorar la técnica (máximo 3).
-   - "reference": Citación precisa basada en las fuentes RAG de donde se extrajo la recomendación. Debe incluir "book": "Nombre del manual/libro de la fuente RAG (por ejemplo, el título de la fuente)", "technique": "Sección o técnica de la fuente", "belt": "Nivel estimado (Blanco/Azul/Morado/Marrón/Negro)", y "quote": "Frase clave o concepto de la fuente".
+   - "reference": Citación precisa basada en las fuentes RAG de donde se extrajo la recomendación. Debe incluir "book": "Nombre del manual/libro de la fuente RAG (por ejemplo, el título de la fuente)", "technique": "Sección o técnica de la fuente", "belt": "Nivel estimado (Blanco/Azul/Morado/Marrón/Negro)", y "quote": "Frase clave o concept del manual".
    - "youtube_query": Término de búsqueda optimizado para encontrar este tutorial en YouTube (ej. "BJJ mount survival technique tutorial").
 4. Mantén los textos en "fighters" claros, concisos y profesionales en español.
 5. Inyecta el diagnóstico general y los errores biomecánicos individuales de las articulaciones en el formato JSON principal.
@@ -107,6 +107,7 @@ ${ragSection}
    - En "errores.recomendacion": recomendación correctiva concisa (máximo 20 palabras).
    - En "recomendacionAdaptativa.contenido": texto pedagógico corto (máximo 2 párrafos cortos, no más de 80 palabras). Si hay un video RAG o youtube inyectado, colócalo en su propia línea al final como "Video de soporte: https://www.youtube.com/watch?v=...".
    - En "puntosFuertes": máximo 3 puntos, de no más de 10 palabras cada uno.
+7. Calcula la "puntuacionGeneral" de forma estrictamente dinámica: comienza con 100 puntos y resta 15 puntos por cada error biomecánico general de severidad "critico" identificado en la sección "errores" principal, resta 8 puntos por cada error "moderado", y resta 4 puntos por cada error "leve". Si no se identifican errores biomecánicos, la puntuación general debe situarse entre 90 y 100 puntos según la fluidez del movimiento. Es sumamente importante que la puntuación refleje dinámicamente la cantidad y severidad de los errores biomecánicos listados, evitando retornar un puntaje estático o por defecto (como 65).
 ${recurrentSection}
 
 RESPONDE ÚNICAMENTE con el siguiente objeto JSON (sin texto adicional, sin markdown, sin bloques de código). 

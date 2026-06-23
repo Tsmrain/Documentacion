@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { TrendingUp, AlertTriangle, Target, Award, BarChart3 } from 'lucide-react';
+import { TrendingUp, AlertTriangle, Target, Award, BarChart3, Play, ExternalLink } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { AnalisisBiomecanico } from '../models/types';
 
@@ -11,10 +11,46 @@ interface ErrorStat {
 }
 
 export function ProgressDashboard() {
-  const { historial, loadHistory, usuario } = useApp();
+  const { historial, loadHistory, usuario, sessionController } = useApp();
   const [errorStats, setErrorStats] = useState<ErrorStat[]>([]);
   const [promedioScore, setPromedioScore] = useState(0);
   const [tendencia, setTendencia] = useState<'mejorando' | 'estable' | 'declinando'>('estable');
+
+  const [selectedTecnica, setSelectedTecnica] = useState<string>('');
+  const [comparacion, setComparacion] = useState<any>(null);
+  const [loadingCompare, setLoadingCompare] = useState<boolean>(false);
+  const [errorCompare, setErrorCompare] = useState<string | null>(null);
+
+  const uniqueTechniques = React.useMemo(() => {
+    const list: { id: string; nombre: string }[] = [];
+    const idsSeen = new Set<string>();
+    for (const a of historial) {
+      if (a.tecnicaId && !idsSeen.has(a.tecnicaId)) {
+        idsSeen.add(a.tecnicaId);
+        list.push({ id: a.tecnicaId, nombre: a.tecnicaNombre || a.tecnicaId });
+      }
+    }
+    return list;
+  }, [historial]);
+
+  const handleSelectTechnique = async (tecnicaId: string) => {
+    setSelectedTecnica(tecnicaId);
+    if (!tecnicaId) {
+      setComparacion(null);
+      return;
+    }
+    try {
+      setLoadingCompare(true);
+      setErrorCompare(null);
+      const res = await sessionController.compareTechnique(tecnicaId, usuario?.id || 'default');
+      setComparacion(res);
+    } catch (err: any) {
+      setErrorCompare(err.message || 'Error al obtener la comparación técnica.');
+      setComparacion(null);
+    } finally {
+      setLoadingCompare(false);
+    }
+  };
 
   useEffect(() => {
     loadHistory();
@@ -67,26 +103,15 @@ export function ProgressDashboard() {
     setErrorStats(stats.sort((a, b) => b.recurrencia - a.recurrencia));
   }, [historial]);
 
-  // CU03: Extensión 2a - Historial insuficiente
-  if (historial.length < 3) {
+  // CU03: Extensión 2a - Historial vacío
+  if (historial.length === 0) {
     return (
       <div className="progress-dashboard">
         <div className="glass-card empty-state">
           <div className="empty-content">
             <span className="empty-emoji">📊</span>
-            <h2>¡Sigue entrenando!</h2>
-            <p>Necesitamos al menos 3 análisis para personalizar tu ruta de aprendizaje.</p>
-            <div className="progress-mini">
-              <div className="progress-dots">
-                {[0, 1, 2].map(i => (
-                  <div
-                    key={i}
-                    className={`progress-dot ${i < historial.length ? 'filled' : ''}`}
-                  />
-                ))}
-              </div>
-              <span className="progress-label">{historial.length} de 3 análisis</span>
-            </div>
+            <h2>¡Sube tus primeros videos!</h2>
+            <p>Analiza tus secuencias de Brazilian Jiu-Jitsu para iniciar tu seguimiento biomecánico y comparativo.</p>
           </div>
         </div>
       </div>
@@ -95,10 +120,151 @@ export function ProgressDashboard() {
 
   return (
     <div className="progress-dashboard">
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
       <h2 className="section-title">
         <TrendingUp size={22} />
         Mi Progreso
       </h2>
+
+      {historial.length < 3 && (
+        <div className="glass-card" style={{ borderLeft: '4px solid var(--severity-moderate)', padding: '16px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <AlertTriangle size={20} style={{ color: '#f4a261' }} />
+            <div>
+              <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.9rem' }}>Historial reducido ({historial.length}/3)</h4>
+              <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.8rem', lineHeight: '1.4' }}>
+                Necesitas realizar al menos 3 análisis de video para activar la Ruta de Aprendizaje Adaptativa y las métricas avanzadas. Sin embargo, ya puedes utilizar el Comparador de Técnicas a continuación.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Selector y Comparador de Técnicas */}
+      <div className="glass-card compare-card" style={{ marginBottom: '20px', padding: '20px' }}>
+        <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+          <Award size={18} style={{ color: 'var(--accent-primary)' }} />
+          Seguimiento y Comparativa de Técnicas Realizadas
+        </h3>
+        
+        <div className="compare-selector-container" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+          <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Selecciona una técnica de tu historial para compararla con su referencia técnica:</label>
+          <select 
+            value={selectedTecnica} 
+            onChange={(e) => handleSelectTechnique(e.target.value)}
+            style={{
+              padding: '12px',
+              borderRadius: '8px',
+              border: '1px solid var(--border-glass)',
+              background: 'var(--bg-glass)',
+              color: 'var(--text-primary)',
+              fontSize: '0.9rem',
+              outline: 'none',
+              cursor: 'pointer',
+              width: '100%'
+            }}
+          >
+            <option value="" style={{ background: 'var(--bg-tertiary)' }}>-- Seleccionar técnica realizada --</option>
+            {uniqueTechniques.map(tech => (
+              <option key={tech.id} value={tech.id} style={{ background: 'var(--bg-tertiary)' }}>
+                {tech.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {loadingCompare && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', gap: '12px' }}>
+            <div style={{ display: 'inline-block', width: '28px', height: '28px', border: '3px solid rgba(255,255,255,0.1)', borderTop: '3px solid var(--accent-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', animation: 'pulse 1.5s infinite' }}>
+              Generando análisis comparativo con RAG/Internet...
+            </span>
+          </div>
+        )}
+
+        {errorCompare && (
+          <div className="error-alert" style={{ background: 'rgba(230, 57, 70, 0.1)', border: '1px solid var(--score-poor)', color: 'var(--score-poor)', padding: '12px', borderRadius: '8px', fontSize: '0.85rem' }}>
+            {errorCompare}
+          </div>
+        )}
+
+        {comparacion && !loadingCompare && (
+          <div className="comparison-results" style={{ marginTop: '20px', borderTop: '1px solid var(--border-glass)', paddingTop: '20px' }}>
+            {/* Reference Source */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '16px', padding: '12px', borderRadius: '8px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-glass)' }}>
+              <div>
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '4px 8px', borderRadius: '4px', textTransform: 'uppercase', marginRight: '8px', background: comparacion.isRAG ? 'rgba(6, 214, 160, 0.15)' : 'rgba(134, 59, 255, 0.15)', color: comparacion.isRAG ? '#06d6a0' : '#863bff' }}>
+                  {comparacion.isRAG ? 'RAG Interno' : 'Internet'}
+                </span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  Ref: {comparacion.referenceTitle}
+                </span>
+              </div>
+              {comparacion.sourceUrl && (
+                <a 
+                  href={comparacion.sourceUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', padding: '6px 12px', borderRadius: '6px', textDecoration: 'none', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', border: '1px solid var(--border-glass)', fontWeight: 600 }}
+                >
+                  <Play size={14} />
+                  Ver Video
+                </a>
+              )}
+            </div>
+
+            {/* Side-by-side strengths & mistakes */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(6, 214, 160, 0.04)', border: '1px solid rgba(6, 214, 160, 0.15)' }}>
+                <h4 style={{ margin: '0 0 8px 0', color: '#06d6a0', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
+                  🏆 Lo que haces bien
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                  {comparacion.haceBien}
+                </p>
+              </div>
+
+              <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(230, 57, 70, 0.04)', border: '1px solid rgba(230, 57, 70, 0.15)' }}>
+                <h4 style={{ margin: '0 0 8px 0', color: '#e63946', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
+                  ⚠️ Lo que haces mal (Errores Recurrentes)
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                  {comparacion.haceMal}
+                </p>
+              </div>
+            </div>
+
+            {/* YouTube Suggestion */}
+            <div style={{ marginTop: '20px', padding: '16px', borderRadius: '12px', background: 'rgba(244, 162, 97, 0.04)', border: '1px solid rgba(244, 162, 97, 0.15)' }}>
+              <h4 style={{ margin: '0 0 6px 0', color: '#f4a261', fontSize: '0.95rem', fontWeight: 600 }}>
+                🎥 Clase de Refuerzo Recomendada (YouTube)
+              </h4>
+              <p style={{ margin: '0 0 12px 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                Estudia esta búsqueda en YouTube para comprender y corregir tus debilidades específicas:
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                <span style={{ fontFamily: 'monospace', fontSize: '0.85rem', color: 'var(--text-primary)', background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border-glass)' }}>
+                  {comparacion.consultaYouTube}
+                </span>
+                <a 
+                  href={`https://www.youtube.com/results?search_query=${encodeURIComponent(comparacion.consultaYouTube)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: 600, padding: '10px 18px', borderRadius: '8px', background: 'var(--accent-primary)', color: '#fff', border: 'none', textDecoration: 'none', cursor: 'pointer', transition: 'all 0.2s' }}
+                >
+                  <ExternalLink size={16} />
+                  Buscar en YouTube
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Score Overview */}
       <div className="glass-card overview-card">

@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   Target,
   Zap,
-  BookOpen,
   TrendingUp,
   Play,
   Check
@@ -17,7 +16,6 @@ import { Severidad } from '../models/types';
 export function TacticalReport() {
   const { analisisActual, clearAnalisisActual } = useApp();
   const [activeFighterIndex, setActiveFighterIndex] = useState(0);
-  const [showReferenceModal, setShowReferenceModal] = useState(false);
 
   if (!analisisActual) return null;
 
@@ -224,14 +222,6 @@ export function TacticalReport() {
               <div className="resources-section" style={{ display: 'flex', gap: '12px', marginTop: '4px' }}>
                 <button 
                   className="btn btn-ghost" 
-                  onClick={() => setShowReferenceModal(true)}
-                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '14px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
-                >
-                  <BookOpen size={18} />
-                  Manual Técnico
-                </button>
-                <button 
-                  className="btn btn-ghost" 
                   onClick={handleOpenReferenceVideo}
                   style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '14px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
                 >
@@ -334,64 +324,6 @@ export function TacticalReport() {
           <p className="next-technique">
             Próxima técnica sugerida: <strong>{analisisActual.proximaTecnicaSugerida}</strong>
           </p>
-        </div>
-      )}
-
-      {/* Modal de Referencia Bibliográfica */}
-      {showReferenceModal && activeFighter && (
-        <div 
-          className="modal-backdrop" 
-          style={{ 
-            position: 'fixed', 
-            top: 0, 
-            left: 0, 
-            right: 0, 
-            bottom: 0, 
-            background: 'rgba(10, 10, 18, 0.9)', 
-            zIndex: 1000, 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            padding: '16px',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)'
-          }} 
-          onClick={() => setShowReferenceModal(false)}
-        >
-          <div 
-            className="glass-card modal-content" 
-            style={{ 
-              maxWidth: '480px', 
-              width: '100%', 
-              margin: 'auto', 
-              padding: '24px', 
-              position: 'relative', 
-              border: '1px solid var(--border-glass)',
-              background: 'var(--bg-tertiary)',
-              borderRadius: '20px',
-              boxShadow: 'var(--glass-shadow)'
-            }} 
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
-              <BookOpen size={20} className="text-blue" />
-              {activeFighter.reference.book}
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              <p><strong>Sección Técnica:</strong> {activeFighter.reference.technique}</p>
-              <p><strong>Nivel Recomendado:</strong> Cinturón {activeFighter.reference.belt === 'White' ? 'Blanco' : activeFighter.reference.belt === 'Blue' ? 'Azul' : activeFighter.reference.belt === 'Purple' ? 'Morado' : activeFighter.reference.belt === 'Brown' ? 'Marrón' : 'Negro'}</p>
-              <div style={{ marginTop: '12px', padding: '16px', background: 'rgba(255,255,255,0.03)', borderLeft: '3px solid var(--accent-primary)', borderRadius: '8px', fontStyle: 'italic', color: 'var(--text-primary)', lineHeight: '1.5' }}>
-                "{activeFighter.reference.quote}"
-              </div>
-            </div>
-            <button 
-              className="btn btn-primary" 
-              style={{ marginTop: '20px', width: '100%', padding: '12px', borderRadius: '10px', border: 'none', background: 'var(--accent-primary)', color: '#fff', fontWeight: 600, cursor: 'pointer' }} 
-              onClick={() => setShowReferenceModal(false)}
-            >
-              Cerrar Referencia
-            </button>
-          </div>
         </div>
       )}
     </div>

@@ -297,6 +297,19 @@ export class SesionEntrenamientoController {
   }
 
   /**
+   * Compara los intentos de una técnica con la referencia RAG o de Internet.
+   */
+  async compareTechnique(tecnicaId: string, userId: string = 'default'): Promise<any> {
+    try {
+      const response = await apiClient.get(`/session/compare-technique/${tecnicaId}/${userId}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error al comparar la técnica:', error);
+      throw new Error(error.response?.data?.error || 'Fallo al obtener la comparación técnica.');
+    }
+  }
+
+  /**
    * Eliminar un análisis del historial.
    */
   async deleteAnalysis(id: number): Promise<void> {

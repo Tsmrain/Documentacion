@@ -310,6 +310,15 @@ export class PersistenceService {
     });
   }
 
+  async getValidatedFuenteByTecnica(tecnicaId: string): Promise<any | null> {
+    return await prisma.fuenteConocimiento.findFirst({
+      where: {
+        tecnicaId,
+        estadoValidacion: 'Validado'
+      }
+    });
+  }
+
   // ========================
   // HISTORIAL DE VISUALIZACIÓN DE VIDEOS (CU10)
   // ========================

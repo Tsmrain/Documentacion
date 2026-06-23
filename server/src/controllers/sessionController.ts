@@ -279,6 +279,112 @@ Responde únicamente en formato JSON con la siguiente estructura (no agregues te
   };
 
   /**
+   * Compara los intentos de una técnica con la referencia RAG o de Internet y evalúa.
+   */
+  compareTechnique = async (req: Request, res: Response) => {
+    try {
+      const { tecnicaId, userId } = req.params;
+      const activeUserId = userId || 'default';
+
+      // 1. Obtener historial de análisis de esta técnica
+      const historial = await this.persistence.getAnalysisByTecnica(activeUserId, tecnicaId);
+      if (!historial || historial.length === 0) {
+        return res.status(404).json({ error: 'No se encontraron análisis para la técnica seleccionada.' });
+      }
+
+      const tecnicaNombre = historial[0].tecnicaNombre || tecnicaId;
+
+      // 2. Buscar en RAG
+      const source = await this.persistence.getValidatedFuenteByTecnica(tecnicaId);
+      let referenceInfo = '';
+      let sourceUrl = '';
+      let isRAG = false;
+
+      if (source) {
+        isRAG = true;
+        referenceInfo = `Título del Manual/Video RAG: ${source.titulo}\nTipo: ${source.tipo}\n`;
+        if (source.contenidoOriginal) {
+          referenceInfo += `Contenido técnico/Instrucciones: ${source.contenidoOriginal.slice(0, 1500)}\n`;
+        }
+        if (source.youtubeUrl) {
+          sourceUrl = source.youtubeUrl;
+          referenceInfo += `URL del video de soporte RAG: ${source.youtubeUrl}\n`;
+        }
+      } else {
+        // Fallback a internet (YouTube search)
+        console.log(`🔍 No se encontró fuente RAG para ${tecnicaNombre}. Buscando en internet...`);
+        const internetVideo = await this.searchFallbackVideo(tecnicaNombre).catch(() => null);
+        if (internetVideo) {
+          sourceUrl = internetVideo;
+          referenceInfo = `Referencia encontrada en Internet (YouTube): ${internetVideo}\n`;
+        } else {
+          referenceInfo = `Principios biomecánicos universales de BJJ para la técnica: ${tecnicaNombre}\n`;
+        }
+      }
+
+      // 3. Resumir los intentos previos del usuario
+      const attemptsSummary = historial.map((a, idx) => ({
+        intento: idx + 1,
+        fecha: a.fecha,
+        puntuacion: a.puntuacionGeneral,
+        erroresDetectados: a.errores.map((e: any) => ({
+          articulacion: e.articulacion,
+          descripcion: e.descripcionFallo || e.descripcion,
+          severidad: e.severidad
+        })),
+        puntosFuertes: a.puntosFuertes ? (typeof a.puntosFuertes === 'string' ? JSON.parse(a.puntosFuertes) : a.puntosFuertes) : []
+      }));
+
+      // 4. Generar la comparación usando Gemini
+      const prompt = `Eres un cinturón negro de Brazilian Jiu-Jitsu (BJJ) con 20 años de experiencia e instructor experto en biomecánica.
+Analiza el historial de intentos del alumno y compáralo con la referencia técnica proporcionada.
+
+## TÉCNICA A EVALUAR: "${tecnicaNombre}"
+
+## HISTORIAL DE INTENTOS DEL PRACTICANTE
+${JSON.stringify(attemptsSummary, null, 2)}
+
+## REFERENCIA TÉCNICA DE COMPARACIÓN
+${referenceInfo}
+
+## INSTRUCCIONES
+Compara los intentos del alumno con la referencia técnica para identificar patrones de movimiento y áreas consistentes.
+Genera una respuesta en español estructurada estrictamente en formato JSON con los siguientes campos (sin bloques de código markdown, sin texto adicional):
+{
+  "haceBien": "<Un breve análisis de 1 o 2 párrafos concisos destacando lo que el practicante ejecuta de manera correcta y sus fortalezas>",
+  "haceMal": "<Un breve análisis de 1 o 2 párrafos concisos sobre los errores consistentes, malos hábitos biomecánicos o áreas que requieren atención urgente>",
+  "consultaYouTube": "<Una consulta de búsqueda corta en YouTube (máximo 5 palabras, ej. 'BJJ triangle choke details') optimizada para que el alumno aprenda a resolver sus errores específicos>"
+}`;
+
+      console.log(`🤖 Comparando técnica "${tecnicaNombre}" con Gemini...`);
+      const responseText = await this.geminiService.evaluateMovement(prompt);
+
+      let cleaned = responseText.trim();
+      if (cleaned.startsWith('```json')) cleaned = cleaned.slice(7);
+      if (cleaned.startsWith('```')) cleaned = cleaned.slice(3);
+      if (cleaned.endsWith('```')) cleaned = cleaned.slice(0, -3);
+      cleaned = cleaned.trim();
+
+      const parsed = JSON.parse(cleaned);
+
+      res.json({
+        tecnicaId,
+        tecnicaNombre,
+        isRAG,
+        sourceUrl,
+        referenceTitle: source ? source.titulo : (sourceUrl ? 'Video de Internet' : 'Principios Universales'),
+        haceBien: parsed.haceBien || 'No se pudo generar el análisis positivo.',
+        haceMal: parsed.haceMal || 'No se pudo generar el análisis correctivo.',
+        consultaYouTube: parsed.consultaYouTube || `${tecnicaNombre} BJJ technique details`
+      });
+
+    } catch (error: any) {
+      console.error('Error en compareTechnique controller:', error);
+      res.status(500).json({ error: 'Fallo interno del servidor al comparar la técnica.' });
+    }
+  };
+
+  /**
    * Obtiene los datos del usuario.
    */
   getUser = async (req: Request, res: Response) => {
