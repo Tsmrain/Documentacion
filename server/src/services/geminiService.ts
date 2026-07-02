@@ -1,5 +1,6 @@
-import { GoogleGenerativeAI, GenerativeModel, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
+import { GoogleGenerativeAI, GenerativeModel, HarmCategory, HarmBlockThreshold, SchemaType } from '@google/generative-ai';
 import { TECNICAS_BJJ } from '../models/types';
+
 
 export class GeminiService {
   private genAI: GoogleGenerativeAI;
@@ -18,16 +19,24 @@ export class GeminiService {
     this.genAI = new GoogleGenerativeAI(apiKey);
   }
 
-  private getModel(modelName: string, temperature: number = 0.3, responseMimeType?: string): GenerativeModel {
+  private getModel(
+    modelName: string,
+    temperature: number = 0.3,
+    responseMimeType?: string,
+    responseSchema?: any
+  ): GenerativeModel {
+    const isModel25 = modelName.includes('2.5');
     return this.genAI.getGenerativeModel({
       model: modelName,
       generationConfig: {
         temperature,
         topK: 40,
         topP: 0.95,
-        maxOutputTokens: 4096,
-        ...(responseMimeType ? { responseMimeType } : {})
-      },
+        maxOutputTokens: 8192,
+        ...(responseMimeType ? { responseMimeType } : {}),
+        ...(responseSchema ? { responseSchema } : {}),
+        ...(isModel25 ? { thinkingConfig: { thinkingBudget: 0 } } : {})
+      } as any,
       safetySettings: [
         {
           category: HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -122,10 +131,14 @@ Si la secuencia de imágenes no corresponde a ninguna posición conocida de nues
    * Evalúa cinemáticamente la técnica y genera una retroalimentación pedagógica
    * utilizando los checkpoints de manuales oficiales.
    */
-  async evaluateMovement(prompt: string): Promise<string> {
+  async evaluateMovement(
+    prompt: string,
+    responseMimeType?: string,
+    responseSchema?: any
+  ): Promise<string> {
     try {
-      // Forzar formato JSON en la salida para consistencia
-      const model = this.getModel(this.evaluatorModelName, 0.3, 'application/json');
+      // Dejar que genere de forma libre o forzar JSON según se solicite
+      const model = this.getModel(this.evaluatorModelName, 0.3, responseMimeType, responseSchema);
       const result = await this.callWithRetry(() => model.generateContent(prompt));
       return result.response.text();
     } catch (error) {
@@ -309,3 +322,75 @@ ${chunksText}`;
     }
   }
 }
+
+export const evaluationResponseSchema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    puntuacionGeneral: {
+      type: SchemaType.INTEGER,
+      description: "Puntuación general del movimiento (0 a 100). Dinámica, restando 15 por cada error crítico, 8 por moderado y 4 por leve."
+    },
+    errores: {
+      type: SchemaType.ARRAY,
+      description: "Desviaciones biomecánicas detectadas en las articulaciones",
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          articulacion: { type: SchemaType.STRING, description: "Articulación afectada (ej: espalda, codo, rodilla, cadera, hombro)" },
+          anguloMedido: { type: SchemaType.NUMBER, description: "Ángulo articular medido del video" },
+          anguloIdeal: { type: SchemaType.NUMBER, description: "Ángulo ideal establecido" },
+          desviacion: { type: SchemaType.NUMBER, description: "Diferencia absoluta entre el medido y el ideal" },
+          severidad: { type: SchemaType.STRING, description: "Severidad del desvío (leve, moderado o critico)" },
+          descripcion: { type: SchemaType.STRING, description: "Explicación corta (máximo 15 palabras) del error en español" },
+          recomendacion: { type: SchemaType.STRING, description: "Recomendación correctiva concisa (máximo 20 palabras) en español" }
+        },
+        required: ["articulacion", "anguloMedido", "anguloIdeal", "desviacion", "severidad", "descripcion", "recomendacion"]
+      }
+    },
+    puntosFuertes: {
+      type: SchemaType.ARRAY,
+      description: "Hasta 3 aspectos positivos de la postura o control del practicante",
+      items: { type: SchemaType.STRING }
+    },
+    recomendacionAdaptativa: {
+      type: SchemaType.OBJECT,
+      description: "Recomendación pedagógica según recurrencia",
+      properties: {
+        tipoEstrategia: { type: SchemaType.STRING, description: "Tipo de estrategia sugerida (tecnica, drill, explicacion_anatomica)" },
+        contenido: { type: SchemaType.STRING, description: "Explicación corta adaptada (máximo 80 palabras) en español" }
+      },
+      required: ["tipoEstrategia", "contenido"]
+    },
+    proximaTecnicaSugerida: { type: SchemaType.STRING, description: "Siguiente posición/movimiento recomendado en la ruta de aprendizaje" },
+    fighters: {
+      type: SchemaType.ARRAY,
+      description: "Análisis táctico y de control posicional para cada luchador",
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          role: { type: SchemaType.STRING, description: "Rol e identificación visual del luchador (ej. Top Fighter (White Gi))" },
+          status: { type: SchemaType.STRING, description: "Estado posicional (approved o correction_needed)" },
+          summary: { type: SchemaType.STRING, description: "Breve descripción táctica del rol y base en español" },
+          techniques: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "Posiciones de BJJ observadas (máx 3)" },
+          mistakes: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "Errores de base o presión (máx 3)" },
+          tips: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "Consejos de base o escape extraídos del RAG (máx 3)" },
+          reference: {
+            type: SchemaType.OBJECT,
+            description: "Cita del libro o manual del RAG en el que se apoya la corrección",
+            properties: {
+              book: { type: SchemaType.STRING, description: "Nombre del libro/manual" },
+              technique: { type: SchemaType.STRING, description: "Sección o técnica de la referencia" },
+              belt: { type: SchemaType.STRING, description: "Cinturón de la referencia (White/Blue/Purple/Brown/Black)" },
+              quote: { type: SchemaType.STRING, description: "Frase textual o concept clave del manual" }
+            },
+            required: ["book", "technique", "belt", "quote"]
+          },
+          youtube_query: { type: SchemaType.STRING, description: "Búsqueda optimizada de YouTube para su situación" }
+        },
+        required: ["role", "status", "summary", "techniques", "mistakes", "tips", "reference", "youtube_query"]
+      }
+    }
+  },
+  required: ["puntuacionGeneral", "errores", "puntosFuertes", "recomendacionAdaptativa", "proximaTecnicaSugerida", "fighters"]
+};
+

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { GeminiService } from '../services/geminiService';
+import fs from 'fs';
+import { GeminiService, evaluationResponseSchema } from '../services/geminiService';
 import { EmbeddingService } from '../services/embeddingService';
 import { VectorStore } from '../services/vectorStore';
 import { PersistenceService } from '../services/persistenceService';
@@ -98,7 +99,7 @@ Responde únicamente en formato JSON con la siguiente estructura (no agregues te
     { "fase": "Base", "articulacion": "rodilla", "anguloArticularIdeal": 45, "toleranciaGrados": 15 }
   ]
 }`;
-          const discoveryResponse = await this.geminiService.evaluateMovement(discoveryPrompt);
+          const discoveryResponse = await this.geminiService.evaluateMovement(discoveryPrompt, 'application/json');
           
           let cleanedDisc = discoveryResponse.trim();
           if (cleanedDisc.startsWith('```json')) cleanedDisc = cleanedDisc.slice(7);
@@ -168,12 +169,26 @@ Responde únicamente en formato JSON con la siguiente estructura (no agregues te
 
       // 7. Evaluar con Gemini
       console.log('🤖 Generando evaluación biomecánica con Gemini...');
-      const responseText = await this.geminiService.evaluateMovement(prompt);
+      const responseText = await this.geminiService.evaluateMovement(prompt, 'application/json', evaluationResponseSchema);
 
       // 8. Validar y estructurar respuesta JSON
       const parsed = this.promptBuilder.validateResponse(responseText);
       if (!parsed) {
-        return res.status(422).json({ error: 'La respuesta de la IA no pudo ser parseada al esquema JSON esperado.' });
+        console.error('❌ La respuesta de la IA no pudo ser parseada al esquema JSON esperado. Respuesta original:', responseText);
+        try {
+          fs.writeFileSync('gemini_debug.json', JSON.stringify({
+            timestamp: new Date(),
+            responseText: responseText,
+            prompt: prompt
+          }, null, 2));
+          console.log('📝 Se ha guardado la respuesta fallida de Gemini en server/gemini_debug.json');
+        } catch (e) {
+          console.error('No se pudo escribir gemini_debug.json:', e);
+        }
+        return res.status(422).json({ 
+          error: 'La respuesta de la IA no pudo ser parseada al esquema JSON esperado.',
+          responseText: responseText
+        });
       }
 
       // 9. Guardar análisis biomecánico en SQLite
@@ -357,7 +372,7 @@ Genera una respuesta en español estructurada estrictamente en formato JSON con 
 }`;
 
       console.log(`🤖 Comparando técnica "${tecnicaNombre}" con Gemini...`);
-      const responseText = await this.geminiService.evaluateMovement(prompt);
+      const responseText = await this.geminiService.evaluateMovement(prompt, 'application/json');
 
       let cleaned = responseText.trim();
       if (cleaned.startsWith('```json')) cleaned = cleaned.slice(7);

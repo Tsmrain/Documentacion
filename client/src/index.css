@@ -511,6 +511,159 @@ body::before {
   gap: var(--space-sm);
 }
 
+/* Pestañas del Uploader */
+.uploader-tabs {
+  display: flex;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-lg);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 4px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.tab-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.tab-btn.active {
+  color: var(--text-primary);
+  background: rgba(230, 57, 70, 0.15);
+  border: 1px solid rgba(230, 57, 70, 0.3);
+}
+
+/* Grabador de Cámara */
+.camera-recorder-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  align-items: center;
+  width: 100%;
+}
+
+.camera-viewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-width: 480px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
+}
+
+.camera-live-stream {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  display: none;
+}
+
+.camera-live-stream.active {
+  display: block;
+}
+
+.camera-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  color: var(--text-muted);
+}
+
+.placeholder-icon {
+  opacity: 0.4;
+}
+
+.camera-controls {
+  display: flex;
+  gap: var(--space-sm);
+  width: 100%;
+  justify-content: center;
+  margin-top: var(--space-xs);
+}
+
+/* Indicador de grabación */
+.recording-indicator {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  background: rgba(0, 0, 0, 0.7);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  z-index: 10;
+}
+
+.recording-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--severity-critical);
+  border-radius: 50%;
+  animation: pulse-red 1.5s infinite;
+}
+
+.recording-timer {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  font-weight: bold;
+}
+
+@keyframes pulse-red {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(230, 57, 70, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(230, 57, 70, 0);
+  }
+}
+
+.record-start-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.dot-icon {
+  width: 8px;
+  height: 8px;
+  background: var(--severity-critical);
+  border-radius: 50%;
+}
+
 .error-banner {
   display: flex;
   align-items: flex-start;

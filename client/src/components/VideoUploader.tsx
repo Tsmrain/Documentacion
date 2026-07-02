@@ -1,15 +1,38 @@
-import React, { useState, useRef } from 'react';
-import { Upload, Camera, Play, AlertTriangle } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Upload, Camera, Play, AlertTriangle, Square, RotateCcw } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { ProcessingView } from './ProcessingView';
 
 export function VideoUploader() {
   const { analyzeVideo, procesando, analisisActual, error, clearError } = useApp();
+  const [activeTab, setActiveTab] = useState<'upload' | 'record'>('upload');
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  // Estados de cámara y grabación
+  const [cameraActive, setCameraActive] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const liveVideoRef = useRef<HTMLVideoElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const timerRef = useRef<any>(null);
+
+  // Limpieza al desmontar
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -35,6 +58,105 @@ export function VideoUploader() {
     setVideoPreview(url);
   };
 
+  const startCamera = async () => {
+    try {
+      setLocalError(null);
+      clearError();
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 640, height: 480, facingMode: 'user' },
+        audio: false // La biomecánica posicional no requiere audio
+      });
+
+      streamRef.current = stream;
+      if (liveVideoRef.current) {
+        liveVideoRef.current.srcObject = stream;
+      }
+      setCameraActive(true);
+    } catch (err: any) {
+      console.error('Error accediendo a la cámara:', err);
+      setLocalError('No se pudo acceder a la cámara. Por favor verifique los permisos en su navegador.');
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (liveVideoRef.current) {
+      liveVideoRef.current.srcObject = null;
+    }
+    setCameraActive(false);
+  };
+
+  const startRecording = async () => {
+    setLocalError(null);
+    clearError();
+
+    if (!streamRef.current) {
+      await startCamera();
+    }
+
+    if (!streamRef.current) return;
+
+    const chunks: BlobPart[] = [];
+    let recorder: MediaRecorder;
+    try {
+      recorder = new MediaRecorder(streamRef.current, { mimeType: 'video/webm;codecs=vp9' });
+    } catch (e) {
+      try {
+        recorder = new MediaRecorder(streamRef.current, { mimeType: 'video/webm' });
+      } catch (e2) {
+        recorder = new MediaRecorder(streamRef.current);
+      }
+    }
+
+    recorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) {
+        chunks.push(e.data);
+      }
+    };
+
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const file = new File([blob], 'grabacion_camara.webm', { type: 'video/webm' });
+      setVideoFile(file);
+      const url = URL.createObjectURL(file);
+      setVideoPreview(url);
+      stopCamera();
+    };
+
+    mediaRecorderRef.current = recorder;
+    recorder.start();
+    setRecording(true);
+    setRecordingTime(0);
+
+    timerRef.current = setInterval(() => {
+      setRecordingTime(prev => {
+        if (prev >= 44) {
+          stopRecording();
+          return 45;
+        }
+        return prev + 1;
+      });
+    }, 1000);
+  };
+
+  const stopRecording = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    setRecording(false);
+  };
+
   const handleAnalyze = async () => {
     if (!videoFile) return;
 
@@ -57,6 +179,22 @@ export function VideoUploader() {
     setLocalError(null);
     clearError();
     if (fileInputRef.current) fileInputRef.current.value = '';
+
+    // Si está en modo grabación, reactivar cámara para un nuevo intento
+    if (activeTab === 'record') {
+      startCamera();
+    }
+  };
+
+  const switchTab = (tab: 'upload' | 'record') => {
+    setActiveTab(tab);
+    setLocalError(null);
+    clearError();
+    if (tab === 'record') {
+      startCamera();
+    } else {
+      stopCamera();
+    }
   };
 
   // Si está procesando, mostrar vista de procesamiento
@@ -77,27 +215,95 @@ export function VideoUploader() {
           Análisis Biomecánico
         </h2>
         <p className="card-subtitle">
-          Carga un video de tu ejecución técnica (máx. 45 seg)
+          Carga o graba un video de tu ejecución técnica (máx. 45 seg)
         </p>
 
-        {/* Zona de Upload */}
-        {!videoFile ? (
-          <div
-            className="upload-zone"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Upload size={48} className="upload-icon" />
-            <p className="upload-text">Toca para seleccionar video</p>
-            <p className="upload-hint">Formatos: MP4, WebM, MOV • Máx. 45 seg</p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="video/*"
-              onChange={handleFileSelect}
-              className="hidden"
-              id="video-input"
-            />
+        {/* Selector de Pestañas */}
+        {!videoFile && (
+          <div className="uploader-tabs">
+            <button
+              className={`tab-btn ${activeTab === 'upload' ? 'active' : ''}`}
+              onClick={() => switchTab('upload')}
+            >
+              <Upload size={16} />
+              Subir Video
+            </button>
+            <button
+              className={`tab-btn ${activeTab === 'record' ? 'active' : ''}`}
+              onClick={() => switchTab('record')}
+            >
+              <Camera size={16} />
+              Grabar con Cámara
+            </button>
           </div>
+        )}
+
+        {/* Zona de Upload / Grabación */}
+        {!videoFile ? (
+          activeTab === 'upload' ? (
+            <div
+              className="upload-zone"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload size={48} className="upload-icon" />
+              <p className="upload-text">Toca para seleccionar video</p>
+              <p className="upload-hint">Formatos: MP4, WebM, MOV • Máx. 45 seg</p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="video/*"
+                onChange={handleFileSelect}
+                className="hidden"
+                id="video-input"
+              />
+            </div>
+          ) : (
+            <div className="camera-recorder-container">
+              <div className="camera-viewport">
+                <video
+                  ref={liveVideoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className={`camera-live-stream ${cameraActive ? 'active' : ''}`}
+                />
+                {!cameraActive && !recording && (
+                  <div className="camera-placeholder">
+                    <Camera size={48} className="placeholder-icon" />
+                    <button className="btn btn-secondary" onClick={startCamera}>
+                      Activar Cámara
+                    </button>
+                  </div>
+                )}
+                {recording && (
+                  <div className="recording-indicator">
+                    <span className="recording-dot"></span>
+                    <span className="recording-timer">00:{recordingTime.toString().padStart(2, '0')}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="camera-controls">
+                {cameraActive && !recording && (
+                  <button className="btn btn-primary record-start-btn" onClick={startRecording}>
+                    <span className="dot-icon"></span>
+                    Iniciar Grabación
+                  </button>
+                )}
+                {recording && (
+                  <button className="btn btn-danger record-stop-btn" onClick={stopRecording}>
+                    <Square size={16} fill="currentColor" />
+                    Detener Grabación
+                  </button>
+                )}
+                {cameraActive && !recording && (
+                  <button className="btn btn-ghost" onClick={stopCamera}>
+                    Desactivar Cámara
+                  </button>
+                )}
+              </div>
+            </div>
+          )
         ) : (
           <div className="video-preview-container">
             <video
@@ -127,7 +333,7 @@ export function VideoUploader() {
                 className="btn btn-ghost"
                 onClick={handleClear}
               >
-                Cambiar video
+                {activeTab === 'record' ? 'Grabar de nuevo' : 'Cambiar video'}
               </button>
             </div>
           </div>

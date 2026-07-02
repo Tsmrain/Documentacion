@@ -30,8 +30,24 @@ export class PromptBuilder {
       erroresPrevios
     } = params;
 
+    // Obtener los índices de frames únicos y ordenados
+    const uniqueFrames = Array.from(new Set(metrics.map(m => m.frameIndex))).sort((a, b) => a - b);
+    
+    // Seleccionar un subconjunto representativo de máximo 9 fotogramas
+    const maxRepresentativeFrames = 9;
+    let selectedFrames = uniqueFrames;
+    if (uniqueFrames.length > maxRepresentativeFrames) {
+      const step = (uniqueFrames.length - 1) / (maxRepresentativeFrames - 1);
+      selectedFrames = Array.from({ length: maxRepresentativeFrames }, (_, idx) => {
+        const index = Math.round(idx * step);
+        return uniqueFrames[index];
+      });
+    }
+
+    const filteredMetrics = metrics.filter(m => selectedFrames.includes(m.frameIndex));
+
     // Resumen cinemático compacto (~3KB JSON según restricción R-03)
-    const metricsResumen = metrics.map(m => ({
+    const metricsResumen = filteredMetrics.map(m => ({
       frame: m.frameIndex,
       art: m.articulacion,
       ang: Math.round(m.anguloMedido * 10) / 10,
@@ -186,19 +202,28 @@ IMPORTANTE: Asegúrate de que el JSON sea estrictamente válido. Cualquier salto
 
       const parsed = JSON.parse(cleaned);
 
+      // Robustness: Coerce score to number if it came as a string
+      if (typeof parsed.puntuacionGeneral === 'string') {
+        parsed.puntuacionGeneral = Number(parsed.puntuacionGeneral);
+      }
+
       if (
         typeof parsed.puntuacionGeneral !== 'number' ||
+        isNaN(parsed.puntuacionGeneral) ||
         parsed.puntuacionGeneral < 0 ||
         parsed.puntuacionGeneral > 100
       ) {
+        console.warn('⚠️ validateResponse falló: puntuacionGeneral no es un número válido de 0 a 100.', parsed.puntuacionGeneral);
         return null;
       }
 
       if (!Array.isArray(parsed.errores)) {
+        console.warn('⚠️ validateResponse falló: errores no es un array.');
         return null;
       }
 
       if (!parsed.recomendacionAdaptativa || !parsed.recomendacionAdaptativa.tipoEstrategia) {
+        console.warn('⚠️ validateResponse falló: falta recomendacionAdaptativa o tipoEstrategia.');
         return null;
       }
 
@@ -210,13 +235,25 @@ IMPORTANTE: Asegúrate de que el JSON sea estrictamente válido. Cualquier salto
         parsed.proximaTecnicaSugerida = '';
       }
 
-      for (const error of parsed.errores) {
-        if (!error.articulacion || typeof error.severidad !== 'string') {
+      for (let i = 0; i < parsed.errores.length; i++) {
+        const error = parsed.errores[i];
+        if (!error.articulacion) {
+          console.warn(`⚠️ validateResponse falló: error en el elemento index ${i} de errores. Falta articulacion.`, error);
           return null;
         }
-        error.severidad = error.severidad.toLowerCase();
-        if (!['leve', 'moderado', 'critico'].includes(error.severidad)) {
+
+        // Robustness: Coerce numeric values if returned as string
+        if (typeof error.anguloMedido === 'string') error.anguloMedido = Number(error.anguloMedido);
+        if (typeof error.anguloIdeal === 'string') error.anguloIdeal = Number(error.anguloIdeal);
+        if (typeof error.desviacion === 'string') error.desviacion = Number(error.desviacion);
+
+        if (typeof error.severidad !== 'string') {
           error.severidad = 'moderado';
+        } else {
+          error.severidad = error.severidad.toLowerCase();
+          if (!['leve', 'moderado', 'critico'].includes(error.severidad)) {
+            error.severidad = 'moderado';
+          }
         }
       }
 

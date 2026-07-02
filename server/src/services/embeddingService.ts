@@ -9,11 +9,11 @@ export class EmbeddingService {
   constructor() {
     const apiKey = process.env.GEMINI_API_KEY || '';
     this.modelName = process.env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004';
-    if (apiKey) {
+    if (apiKey && this.modelName !== 'local') {
       this.genAI = new GoogleGenerativeAI(apiKey);
       console.log(`🤖 Inicializando servicio de embeddings de Google con modelo: ${this.modelName}`);
     } else {
-      console.warn('⚠️ EmbeddingService: GEMINI_API_KEY no configurado, se utilizará modelo local Xenova.');
+      console.warn('⚠️ EmbeddingService: Utilizando modelo de embeddings local Xenova.');
     }
   }
 
