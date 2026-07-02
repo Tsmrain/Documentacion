@@ -59,7 +59,27 @@ export const TECNICAS_BJJ: Tecnica[] = [
     checkpoints: [
       { fase: 'Control', articulacion: 'cadera', anguloArticularIdeal: 90, toleranciaGrados: 15 },
       { fase: 'Control', articulacion: 'rodilla', anguloArticularIdeal: 45, toleranciaGrados: 15 },
-      { fase: 'Agarre', articulacion: 'codo', anguloArticularIdeal: 90, toleranciaGrados: 15 }
+      { fase: 'Postura', articulacion: 'espalda', anguloArticularIdeal: 170, toleranciaGrados: 10 }
+    ]
+  },
+  {
+    id: 'guardia-abierta',
+    nombre: 'Guardia Abierta',
+    categoria: 'Guardia',
+    cinturonRequerido: Cinturon.Blanco,
+    checkpoints: [
+      { fase: 'Base', articulacion: 'espalda', anguloArticularIdeal: 150, toleranciaGrados: 15 },
+      { fase: 'Control', articulacion: 'rodilla', anguloArticularIdeal: 90, toleranciaGrados: 15 }
+    ]
+  },
+  {
+    id: 'media-guardia',
+    nombre: 'Media Guardia',
+    categoria: 'Guardia',
+    cinturonRequerido: Cinturon.Blanco,
+    checkpoints: [
+      { fase: 'Control', articulacion: 'cadera', anguloArticularIdeal: 100, toleranciaGrados: 15 },
+      { fase: 'Control', articulacion: 'rodilla', anguloArticularIdeal: 60, toleranciaGrados: 15 }
     ]
   },
   {
@@ -80,63 +100,40 @@ export const TECNICAS_BJJ: Tecnica[] = [
     cinturonRequerido: Cinturon.Blanco,
     checkpoints: [
       { fase: 'Presión', articulacion: 'cadera', anguloArticularIdeal: 85, toleranciaGrados: 15 },
-      { fase: 'Presión', articulacion: 'hombro', anguloArticularIdeal: 45, toleranciaGrados: 15 },
+      { fase: 'Presión', articulacion: 'espalda', anguloArticularIdeal: 160, toleranciaGrados: 15 },
       { fase: 'Control', articulacion: 'codo', anguloArticularIdeal: 90, toleranciaGrados: 15 }
     ]
   },
   {
-    id: 'escape-montada',
-    nombre: 'Escape de Montada (Upa)',
-    categoria: 'Escape',
+    id: 'espalda',
+    nombre: 'Control de Espalda (Back Control)',
+    categoria: 'Posición Dominante',
     cinturonRequerido: Cinturon.Blanco,
     checkpoints: [
-      { fase: 'Puente', articulacion: 'cadera', anguloArticularIdeal: 160, toleranciaGrados: 15 },
-      { fase: 'Puente', articulacion: 'rodilla', anguloArticularIdeal: 90, toleranciaGrados: 15 },
-      { fase: 'Giro', articulacion: 'hombro', anguloArticularIdeal: 45, toleranciaGrados: 20 }
+      { fase: 'Control', articulacion: 'cadera', anguloArticularIdeal: 90, toleranciaGrados: 15 },
+      { fase: 'Ganchos', articulacion: 'rodilla', anguloArticularIdeal: 75, toleranciaGrados: 15 },
+      { fase: 'Postura', articulacion: 'espalda', anguloArticularIdeal: 165, toleranciaGrados: 15 }
     ]
   },
   {
-    id: 'raspado-tijera',
-    nombre: 'Raspado de Tijera (Scissor Sweep)',
-    categoria: 'Raspado',
+    id: 'tortuga',
+    nombre: 'Posición de Tortuga (Turtle)',
+    categoria: 'Posición Defensiva',
     cinturonRequerido: Cinturon.Blanco,
     checkpoints: [
-      { fase: 'Guardia', articulacion: 'cadera', anguloArticularIdeal: 90, toleranciaGrados: 15 },
-      { fase: 'Corte', articulacion: 'rodilla', anguloArticularIdeal: 170, toleranciaGrados: 15 },
-      { fase: 'Tracción', articulacion: 'codo', anguloArticularIdeal: 80, toleranciaGrados: 15 }
+      { fase: 'Defensa', articulacion: 'cadera', anguloArticularIdeal: 45, toleranciaGrados: 15 },
+      { fase: 'Defensa', articulacion: 'rodilla', anguloArticularIdeal: 45, toleranciaGrados: 15 },
+      { fase: 'Protección', articulacion: 'codo', anguloArticularIdeal: 45, toleranciaGrados: 15 }
     ]
   },
   {
-    id: 'armbar',
-    nombre: 'Armbar (Llave de Brazo)',
-    categoria: 'Sumisión',
-    cinturonRequerido: Cinturon.Azul,
+    id: 'rodilla-en-barriga',
+    nombre: 'Rodilla en Barriga (Knee on Belly)',
+    categoria: 'Posición Dominante',
+    cinturonRequerido: Cinturon.Blanco,
     checkpoints: [
-      { fase: 'Aislamiento', articulacion: 'cadera', anguloArticularIdeal: 90, toleranciaGrados: 15 },
-      { fase: 'Control', articulacion: 'rodilla', anguloArticularIdeal: 45, toleranciaGrados: 10 },
-      { fase: 'Extensión', articulacion: 'codo_oponente', anguloArticularIdeal: 180, toleranciaGrados: 10 }
-    ]
-  },
-  {
-    id: 'triangle-choke',
-    nombre: 'Triángulo (Triangle Choke)',
-    categoria: 'Sumisión',
-    cinturonRequerido: Cinturon.Azul,
-    checkpoints: [
-      { fase: 'Encuadre', articulacion: 'cadera', anguloArticularIdeal: 95, toleranciaGrados: 15 },
-      { fase: 'Cierre', articulacion: 'rodilla', anguloArticularIdeal: 35, toleranciaGrados: 10 },
-      { fase: 'Ángulo', articulacion: 'hombro', anguloArticularIdeal: 45, toleranciaGrados: 15 }
-    ]
-  },
-  {
-    id: 'pasaje-guardia',
-    nombre: 'Pasaje de Guardia',
-    categoria: 'Pasaje',
-    cinturonRequerido: Cinturon.Azul,
-    checkpoints: [
-      { fase: 'Postura', articulacion: 'espalda', anguloArticularIdeal: 170, toleranciaGrados: 10 },
-      { fase: 'Base', articulacion: 'rodilla', anguloArticularIdeal: 90, toleranciaGrados: 15 },
-      { fase: 'Presión', articulacion: 'cadera', anguloArticularIdeal: 70, toleranciaGrados: 15 }
+      { fase: 'Presión', articulacion: 'rodilla', anguloArticularIdeal: 90, toleranciaGrados: 15 },
+      { fase: 'Postura', articulacion: 'espalda', anguloArticularIdeal: 165, toleranciaGrados: 15 }
     ]
   }
 ];

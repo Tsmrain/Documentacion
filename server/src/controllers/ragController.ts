@@ -164,11 +164,15 @@ export class RagController {
       // 1. Actualizar estado en base de datos SQLite
       await this.persistence.updateFuenteStatus(Number(fuenteId), nuevoEstado);
 
-      // 2. Actualizar estado o eliminar de ChromaDB
-      if (aprobado) {
-        await this.vectorStore.updateValidationStatus(Number(fuenteId), nuevoEstado);
-      } else {
-        await this.vectorStore.deleteByFuenteId(Number(fuenteId));
+      // 2. Actualizar estado o eliminar de ChromaDB (de forma no bloqueante)
+      try {
+        if (aprobado) {
+          await this.vectorStore.updateValidationStatus(Number(fuenteId), nuevoEstado);
+        } else {
+          await this.vectorStore.deleteByFuenteId(Number(fuenteId));
+        }
+      } catch (chromaErr) {
+        console.warn(`⚠️ Advertencia: No se pudo sincronizar el estado de validación en ChromaDB para la fuente ${fuenteId}:`, chromaErr);
       }
 
       res.json({ success: true });
@@ -224,8 +228,16 @@ export class RagController {
   deleteFuente = async (req: Request, res: Response) => {
     try {
       const id = Number(req.params.id);
+      // Primero eliminar de la base de datos de persistencia (SQLite)
       await this.persistence.deleteFuente(id);
-      await this.vectorStore.deleteByFuenteId(id);
+      
+      // Intentar eliminar del vector store (ChromaDB) de forma no bloqueante
+      try {
+        await this.vectorStore.deleteByFuenteId(id);
+      } catch (chromaErr) {
+        console.warn(`⚠️ Advertencia: No se pudieron eliminar los vectores de ChromaDB para la fuente ${id}:`, chromaErr);
+      }
+
       res.json({ success: true });
     } catch (error) {
       console.error('Error eliminando fuente:', error);

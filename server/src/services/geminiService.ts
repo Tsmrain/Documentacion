@@ -1,12 +1,15 @@
-import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
+import { GoogleGenerativeAI, GenerativeModel, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
+import { TECNICAS_BJJ } from '../models/types';
 
 export class GeminiService {
   private genAI: GoogleGenerativeAI;
-  private modelName: string;
+  private classifierModelName: string;
+  private evaluatorModelName: string;
 
   constructor() {
     const apiKey = process.env.GEMINI_API_KEY || '';
-    this.modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    this.classifierModelName = process.env.GEMINI_CLASSIFIER_MODEL || process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+    this.evaluatorModelName = process.env.GEMINI_EVALUATOR_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-pro';
 
     if (!apiKey) {
       console.warn('⚠️ GeminiService: GEMINI_API_KEY is not defined in environment variables.');
@@ -15,16 +18,34 @@ export class GeminiService {
     this.genAI = new GoogleGenerativeAI(apiKey);
   }
 
-  private getModel(temperature: number = 0.3, responseMimeType?: string): GenerativeModel {
+  private getModel(modelName: string, temperature: number = 0.3, responseMimeType?: string): GenerativeModel {
     return this.genAI.getGenerativeModel({
-      model: this.modelName,
+      model: modelName,
       generationConfig: {
         temperature,
         topK: 40,
         topP: 0.95,
         maxOutputTokens: 4096,
         ...(responseMimeType ? { responseMimeType } : {})
-      }
+      },
+      safetySettings: [
+        {
+          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+          threshold: HarmBlockThreshold.BLOCK_NONE
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+          threshold: HarmBlockThreshold.BLOCK_NONE
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+          threshold: HarmBlockThreshold.BLOCK_NONE
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+          threshold: HarmBlockThreshold.BLOCK_NONE
+        }
+      ]
     });
   }
 
@@ -51,17 +72,39 @@ export class GeminiService {
    */
   async classifyTechnique(keyframes: string[]): Promise<string> {
     try {
-      const model = this.getModel(0.2, 'application/json');
+      const model = this.getModel(this.classifierModelName, 0.2, 'application/json');
       const contents = keyframes.map((frame) => ({
         inlineData: { data: frame, mimeType: 'image/jpeg' },
       }));
+
+      const catalogList = TECNICAS_BJJ.map(
+        (t) => `- "${t.nombre}" (ID: "${t.id}", Categoría: "${t.categoria}")`
+      ).join('\n');
+
+      const classificationPrompt = `Analiza la secuencia de fotogramas del video de Brazilian Jiu-Jitsu (BJJ).
+Identifica cuál es la posición de control de BJJ predominante que se observa en las imágenes.
+Debes seleccionar estrictamente una posición de nuestro catálogo de posiciones permitidas:
+
+${catalogList}
+
+Responde estrictamente con un objeto JSON válido con el siguiente formato:
+{
+  "nombre": "<Nombre exacto de la posición del catálogo, ej. 'Montada'>",
+  "categoria": "<Categoría exacta de la posición del catálogo, ej. 'Posición Dominante'>"
+}
+
+Si la secuencia de imágenes no corresponde a ninguna posición conocida de nuestro catálogo con suficiente claridad, o si es una transición aérea o derribo no catalogado, responde estrictamente con:
+{
+  "nombre": "Desconocida",
+  "categoria": "Desconocida"
+}`;
 
       const result = await this.callWithRetry(() => model.generateContent({
         contents: [
           {
             role: 'user',
             parts: [
-              { text: 'Identifica la técnica de Brazilian Jiu-Jitsu que se ejecuta en estas imágenes. Responde estrictamente con un formato JSON estructurado: { "nombre": "Nombre de la técnica", "categoria": "Guardia|Pasaje|Sumisión|Derribo|Transición|Posición Dominante|Escape" }. Si no es una técnica reconocible de BJJ, responde con { "nombre": "Desconocida", "categoria": "Desconocida" }.' },
+              { text: classificationPrompt },
               ...contents.map((part) => ({ inlineData: part.inlineData })),
             ],
           },
@@ -82,7 +125,7 @@ export class GeminiService {
   async evaluateMovement(prompt: string): Promise<string> {
     try {
       // Forzar formato JSON en la salida para consistencia
-      const model = this.getModel(0.3, 'application/json');
+      const model = this.getModel(this.evaluatorModelName, 0.3, 'application/json');
       const result = await this.callWithRetry(() => model.generateContent(prompt));
       return result.response.text();
     } catch (error) {
@@ -96,8 +139,9 @@ export class GeminiService {
    */
   async validateBJJRelevance(text: string): Promise<boolean> {
     try {
-      const model = this.getModel(0.1);
-      const prompt = `Evalúa si el siguiente texto está relacionado estrictamente con la enseñanza, táctica, historia, reglas o técnica de Brazilian Jiu-Jitsu (BJJ) o defensa personal de lucha en el suelo. Responde únicamente "SI" o "NO". Cualquier otro deporte ajeno responder "NO".\n\nTexto:\n${text}`;
+      const model = this.getModel(this.classifierModelName, 0.1);
+      const sample = text.slice(0, 5000);
+      const prompt = `Evalúa si el siguiente texto está relacionado estrictamente con la enseñanza, táctica, historia, reglas o técnica de Brazilian Jiu-Jitsu (BJJ) o defensa personal de lucha en el suelo. Responde únicamente "SI" o "NO". Cualquier otro deporte ajeno responder "NO".\n\nTexto:\n${sample}`;
       const result = await this.callWithRetry(() => model.generateContent(prompt));
       const answer = result.response.text().trim().toUpperCase();
       return answer.includes('SI');
@@ -113,7 +157,7 @@ export class GeminiService {
    */
   async describeUnknownTechnique(keyframes: string[]): Promise<string> {
     try {
-      const model = this.getModel(0.3);
+      const model = this.getModel(this.evaluatorModelName, 0.3);
       const contents = keyframes.map((frame) => ({
         inlineData: { data: frame, mimeType: 'image/jpeg' },
       }));
@@ -143,7 +187,7 @@ export class GeminiService {
    */
   async analyzeSourceContent(text: string, fallbackTitle: string): Promise<{ titulo: string; tecnicas: string[] }> {
     try {
-      const model = this.getModel(0.2, 'application/json');
+      const model = this.getModel(this.classifierModelName, 0.2, 'application/json');
       const sample = text.slice(0, 4000); // Mayor muestra para detectar múltiples técnicas si existen
       const prompt = `Analiza el siguiente extracto de texto de Brazilian Jiu-Jitsu (BJJ).
 Identifica un título conciso, profesional y representativo de la fuente de información (máximo 7 palabras).
@@ -208,7 +252,7 @@ ${sample}`;
     try {
       if (chunks.length === 0) return [];
       
-      const model = this.getModel(0.2, 'application/json');
+      const model = this.getModel(this.classifierModelName, 0.2, 'application/json');
       
       // Mapeamos los chunks en un formato compacto para el prompt
       const chunksText = chunks.map((c, i) => `[Chunk ${i}]:\n${c.slice(0, 1000)}`).join('\n\n');

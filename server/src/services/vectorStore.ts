@@ -19,6 +19,27 @@ export class VectorStore {
         metadata: { 'hnsw:space': 'cosine' }
       });
       console.log('✅ Conectado a la colección de ChromaDB:', this.collectionName);
+
+      // Auto-detección y corrección de discrepancia de dimensiones en ChromaDB
+      const count = await this.collection.count();
+      if (count > 0) {
+        const sample = await this.collection.peek({ limit: 1 });
+        if (sample && sample.embeddings && sample.embeddings.length > 0) {
+          const sampleDim = sample.embeddings[0].length;
+          const currentApiKey = process.env.GEMINI_API_KEY || '';
+          const expectedDim = currentApiKey ? 768 : 384; 
+
+          if (sampleDim !== expectedDim) {
+            console.warn(`⚠️ Discrepancia de dimensiones en ChromaDB detectada (actual: ${sampleDim} vs esperada: ${expectedDim}). Recreando colección...`);
+            await this.client.deleteCollection({ name: this.collectionName });
+            this.collection = await this.client.createCollection({
+              name: this.collectionName,
+              metadata: { 'hnsw:space': 'cosine' }
+            });
+            console.log('✅ Colección de ChromaDB recreada con éxito con las nuevas dimensiones.');
+          }
+        }
+      }
     } catch (error) {
       console.error('❌ Error al inicializar la base de datos ChromaDB:', error);
       throw error;

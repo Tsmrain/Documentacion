@@ -61,15 +61,14 @@ ${erroresPrevios?.map(e => `- ${e.articulacion}: ${e.descripcionFallo} (severida
 INSTRUCCIÓN CRÍTICA: La estrategia pedagógica DEBE cambiar. En lugar de repetir la misma explicación técnica:
 - Si es un error biomecánico puro → sugiere un DRILL de movilidad o fortalecimiento muscular específico.
 - Si es un error conceptual → sugiere una explicación anatómica detallada o video explicativo lento.
-- NO repitas recomendaciones que ya fueron dadas anteriormente.
-`
+- NO repitas recomendaciones que ya fueron dadas.`
       : '';
 
     // Calcular ajuste de umbral según perfil biomecánico (regla RD-02)
     const ajusteBiotipo = this.calcularAjusteBiotipo(perfil);
 
     const prompt = `Eres un instructor experto de Brazilian Jiu-Jitsu con 20 años de experiencia en análisis biomecánico y táctico.
-Evalúa la ejecución de la técnica: "${tecnicaNombre}" basándote en las fuentes técnicas y directrices de nuestro sistema.
+Evalúa el control posicional, la estabilidad y la alineación en la posición: "${tecnicaNombre}" basándote en las fuentes técnicas y directrices de nuestro sistema.
 
 ## DATOS DEL PRACTICANTE (PERFIL BIOMECÁNICO)
 - Altura: ${perfil.altura}m
@@ -89,17 +88,17 @@ Los siguientes fragmentos y directrices técnicas provienen de manuales, libros 
 ${ragSection}
 
 ## REGLAS DE EVALUACIÓN
-1. Identifica desviaciones angulares comparando los checkpoints o la literatura provista en el contexto RAG.
-2. Identifica a ambos luchadores en la secuencia (Top Fighter y Bottom Fighter).
+1. Identifica desviaciones angulares comparando los checkpoints posicionales o la literatura provista en el contexto RAG.
+2. Identifica a ambos luchadores en la secuencia y sus respectivos roles posicionales (luchador superior o atacante y luchador inferior o defensor).
 3. Evalúa a cada luchador por separado en el array "fighters":
-   - "role": Identificador visual/táctico del luchador (ej. "Top Fighter (White Gi)", "Bottom Fighter (Blue Gi)").
-   - "status": "approved" si ejecuta la postura correcta según su rol, "correction_needed" si comete errores graves.
-   - "summary": Resumen de 1-2 frases describiendo su acción táctica y control.
-   - "techniques": Lista de técnicas BJJ observadas para este luchador (máximo 3).
-   - "mistakes": Errores biomecánicos o conceptuales cometidos por este luchador (máximo 3, vacío si es aprobado).
-   - "tips": Consejos prácticos extraídos de las fuentes RAG para mejorar la técnica (máximo 3).
-   - "reference": Citación precisa basada en las fuentes RAG de donde se extrajo la recomendación. Debe incluir "book": "Nombre del manual/libro de la fuente RAG (por ejemplo, el título de la fuente)", "technique": "Sección o técnica de la fuente", "belt": "Nivel estimado (Blanco/Azul/Morado/Marrón/Negro)", y "quote": "Frase clave o concept del manual".
-   - "youtube_query": Término de búsqueda optimizado para encontrar este tutorial en YouTube (ej. "BJJ mount survival technique tutorial").
+   - "role": Identificador visual y táctico del luchador (ej. "Top/Attacking Fighter (White Gi)", "Bottom/Defending Fighter (Blue Gi)").
+   - "status": "approved" si mantiene una estructura posicional sólida según su rol (ej. buena base y centro de gravedad para el de arriba, codos cerrados y defensa del cuello para el de abajo), "correction_needed" si expone articulaciones o comete errores graves de postura.
+   - "summary": Resumen de 1-2 frases describiendo su control posicional y alineación de espalda.
+   - "techniques": Lista de las posiciones o posturas de BJJ observadas (ej. "Control Lateral", "Supervivencia de Tortuga"). Máximo 3.
+   - "mistakes": Errores posicionales, de base o de alineación biomecánica (ej. codos abiertos, hombro expuesto, falta de presión). Máximo 3, vacío si no hay errores.
+   - "tips": Consejos prácticos de base, postura o palanca extraídos de las fuentes RAG para mejorar el control o el escape de esta posición. Máximo 3.
+   - "reference": Citación precisa basada en las fuentes RAG de donde se extrajo la recomendación. Debe incluir "book": "Nombre del manual/libro de la fuente RAG (por ejemplo, el título de la fuente)", "technique": "Posición o sección de la fuente", "belt": "Nivel estimado (Blanco/Azul/Morado/Marrón/Negro)", y "quote": "Frase clave o concepto del manual".
+   - "youtube_query": Término de búsqueda optimizado para encontrar tutoriales de control o escape de la posición en YouTube (ej. "BJJ mount survival elbow technique tutorial" o "BJJ side control pressure base tutorial").
 4. Mantén los textos en "fighters" claros, concisos y profesionales en español.
 5. Inyecta el diagnóstico general y los errores biomecánicos individuales de las articulaciones en el formato JSON principal.
 6. CONCISIÓN EXTREMA EN LOS DETALLES BIOMECÁNICOS GENERALES:

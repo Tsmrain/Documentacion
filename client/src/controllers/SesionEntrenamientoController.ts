@@ -227,7 +227,7 @@ export class SesionEntrenamientoController {
       const ctx = canvas.getContext('2d')!;
 
       const duration = video.duration;
-      const numFrames = Math.min(5, Math.floor(duration));
+      const numFrames = Math.min(9, Math.floor(duration));
       const interval = duration / numFrames;
 
       for (let i = 0; i < numFrames; i++) {

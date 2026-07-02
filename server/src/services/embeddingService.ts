@@ -1,7 +1,21 @@
 import { pipeline } from '@xenova/transformers';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export class EmbeddingService {
   private extractor: any = null;
+  private genAI: GoogleGenerativeAI | null = null;
+  private modelName: string;
+
+  constructor() {
+    const apiKey = process.env.GEMINI_API_KEY || '';
+    this.modelName = process.env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004';
+    if (apiKey) {
+      this.genAI = new GoogleGenerativeAI(apiKey);
+      console.log(`🤖 Inicializando servicio de embeddings de Google con modelo: ${this.modelName}`);
+    } else {
+      console.warn('⚠️ EmbeddingService: GEMINI_API_KEY no configurado, se utilizará modelo local Xenova.');
+    }
+  }
 
   async init() {
     if (this.extractor) return;
@@ -15,9 +29,21 @@ export class EmbeddingService {
   }
 
   /**
-   * Genera un embedding vectorial (384 dimensiones) para un texto.
+   * Genera un embedding vectorial (768 dimensiones con Google, 384 con Xenova local) para un texto.
    */
   async generateEmbedding(text: string): Promise<number[]> {
+    if (this.genAI) {
+      try {
+        const model = this.genAI.getGenerativeModel({ model: this.modelName });
+        const result = await model.embedContent(text);
+        if (result && result.embedding && result.embedding.values) {
+          return result.embedding.values;
+        }
+      } catch (error) {
+        console.warn('⚠️ Fallo al generar embedding con Google GenAI, intentando fallback local...', error);
+      }
+    }
+
     if (!this.extractor) {
       await this.init();
     }

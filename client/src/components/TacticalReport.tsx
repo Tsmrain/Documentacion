@@ -8,7 +8,8 @@ import {
   Zap,
   TrendingUp,
   Play,
-  Check
+  Check,
+  BookOpen
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Severidad } from '../models/types';

@@ -4,20 +4,38 @@ import { TECNICAS_BJJ } from '../models/types';
 const prisma = new PrismaClient();
 
 export class PersistenceService {
+  private static seedPromise: Promise<void> | null = null;
+
   constructor() {
     // Inicializar la base de datos de técnicas (seed automático)
-    this.seedInitialTechniques().catch(err => {
-      console.error('❌ Error al realizar el seed de técnicas:', err);
-    });
+    if (!PersistenceService.seedPromise) {
+      PersistenceService.seedPromise = this.seedInitialTechniques().catch(err => {
+        console.error('❌ Error al realizar el seed de técnicas:', err);
+        PersistenceService.seedPromise = null;
+      });
+    }
   }
 
   /**
    * Pre-pobla la tabla Tecnica con el catálogo original de BJJ si está vacía.
    */
   async seedInitialTechniques(): Promise<void> {
-    const count = await prisma.tecnica.count();
-    if (count === 0) {
-      console.log('🌱 Inicializando catálogo de técnicas de BJJ en SQLite...');
+    const existing = await prisma.tecnica.findMany({
+      where: { esCustom: false }
+    });
+
+    const existingIds = existing.map(e => e.id);
+    const catalogIds = TECNICAS_BJJ.map(t => t.id);
+
+    const hasDiscrepancy = existingIds.some(id => !catalogIds.includes(id)) || catalogIds.some(id => !existingIds.includes(id));
+
+    if (hasDiscrepancy || existing.length === 0) {
+      console.log('🌱 Actualizando catálogo de posiciones de BJJ en SQLite...');
+      
+      await prisma.tecnica.deleteMany({
+        where: { esCustom: false }
+      });
+
       for (const t of TECNICAS_BJJ) {
         await prisma.tecnica.create({
           data: {
@@ -27,11 +45,11 @@ export class PersistenceService {
             cinturonRequerido: t.cinturonRequerido,
             checkpoints: JSON.stringify(t.checkpoints),
             esCustom: false,
-            descripcion: `Especificación biomecánica estándar para ${t.nombre}`
+            descripcion: `Especificación biomecánica estándar para la posición de ${t.nombre}`
           }
         });
       }
-      console.log('✅ Catálogo de técnicas prepoblado con éxito');
+      console.log('✅ Catálogo de posiciones prepoblado y sincronizado con éxito');
     }
   }
 
