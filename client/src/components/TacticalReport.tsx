@@ -15,7 +15,7 @@ import { useApp } from '../context/AppContext';
 import { Severidad } from '../models/types';
 
 export function TacticalReport() {
-  const { analisisActual, clearAnalisisActual } = useApp();
+  const { analisisActual, clearAnalisisActual, linkFighter } = useApp();
   const [activeFighterIndex, setActiveFighterIndex] = useState(0);
 
   if (!analisisActual) return null;
@@ -247,6 +247,28 @@ export function TacticalReport() {
               })}
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* Active Fighter Link Confirmation */}
+      <div style={{ padding: '12px 16px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+          👤 Alumno evaluado: <strong style={{ color: 'var(--accent-primary)' }}>{analisisActual.fighters?.find(f => f.isStudent)?.role || 'Sin vincular'}</strong>
+        </span>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {analisisActual.fighters?.map((f, idx) => {
+            if (f.isStudent) return null;
+            return (
+              <button
+                key={idx}
+                className="btn btn-ghost btn-sm"
+                style={{ fontSize: '0.75rem', padding: '4px 10px', height: 'auto', border: '1px solid rgba(255,255,255,0.1)' }}
+                onClick={() => linkFighter(analisisActual.id!, idx)}
+              >
+                Vincular a: {f.role.split('(')[0].trim()}
+              </button>
+            );
+          })}
         </div>
       </div>
 

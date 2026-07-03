@@ -351,6 +351,26 @@ export class SesionEntrenamientoController {
   }
 
   /**
+   * Vincula el análisis biomecánico a un luchador específico en el video.
+   */
+  async linkFighter(analysisId: number, fighterIndex: number, userId: string = 'default'): Promise<AnalisisBiomecanico> {
+    try {
+      const response = await apiClient.post('/session/link-fighter', {
+        analysisId,
+        fighterIndex,
+        userId
+      });
+      return {
+        ...response.data,
+        fecha: new Date(response.data.fecha)
+      };
+    } catch (error: any) {
+      console.error('Error al vincular luchador:', error);
+      throw new Error(error.response?.data?.error || 'Fallo al vincular el luchador.');
+    }
+  }
+
+  /**
    * Estima el almacenamiento (mock local client-side).
    */
   async getStorageEstimate(): Promise<{ used: number; quota: number }> {

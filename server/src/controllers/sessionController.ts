@@ -596,6 +596,110 @@ Genera una respuesta en español estructurada estrictamente en formato JSON con 
     }
   };
 
+  linkFighter = async (req: Request, res: Response) => {
+    try {
+      const { analysisId, fighterIndex, userId } = req.body;
+      const activeUserId = userId || 'default';
+
+      if (analysisId === undefined || fighterIndex === undefined) {
+        return res.status(400).json({ error: 'Faltan parámetros obligatorios: analysisId y fighterIndex.' });
+      }
+
+      console.log(`🔗 Vinculando análisis ${analysisId} al luchador índice ${fighterIndex} para el alumno "${activeUserId}"...`);
+
+      // 1. Obtener análisis actual
+      const analysis = await this.persistence.getAnalysisById(Number(analysisId));
+      if (!analysis) {
+        return res.status(404).json({ error: 'Análisis no encontrado.' });
+      }
+
+      // 2. Extraer fighters
+      const fighters = analysis.fighters || [];
+      if (fighterIndex < 0 || fighterIndex >= fighters.length) {
+        return res.status(400).json({ error: 'Índice de luchador inválido.' });
+      }
+
+      // 3. Marcar isStudent en el luchador seleccionado y desmarcar en los otros
+      const updatedFighters = fighters.map((f: any, idx: number) => ({
+        ...f,
+        isStudent: idx === Number(fighterIndex)
+      }));
+
+      const selectedFighter = updatedFighters[Number(fighterIndex)];
+
+      // 4. Mapear errores del luchador seleccionado
+      const selectedErrors = selectedFighter.errors || [];
+      const score = selectedFighter.status === 'CORRECCIÓN REQUERIDA' ? 70 : (analysis.puntuacionGeneral || 80);
+      const nextTecnica = selectedFighter.proximaTecnicaSugerida || '';
+
+      // 5. Actualizar el análisis en la base de datos
+      const updatedAnalysis = await this.persistence.updateAnalysisFighter(
+        Number(analysisId),
+        score,
+        selectedErrors,
+        updatedFighters,
+        nextTecnica
+      );
+
+      // 6. Recalcular validación de aprendizaje
+      const usuario = await this.persistence.getUser(activeUserId);
+      const historial = await this.persistence.getAnalysisByTecnica(activeUserId, analysis.tecnicaId);
+      const esRecurrente = this.detectRecurrentErrors(historial, analysis.tecnicaId);
+      const erroresPrevios = this.getRecentErrors(historial.filter(a => a.id !== Number(analysisId)));
+
+      let aprendizajeValidado = null;
+      if (historial.length > 1) {
+        const scorePrevioMax = Math.max(...historial.filter(a => a.id !== Number(analysisId)).map((a: any) => a.puntuacionGeneral || 0));
+        
+        const videosVistos = await this.persistence.getWatchedVideos(activeUserId);
+        const haVistoVideoSoporte = videosVistos.some((w: any) => w.tecnicaId === analysis.tecnicaId);
+        
+        const erroresPreviosArt = new Set(erroresPrevios.map((e: any) => e.articulacion.toLowerCase()));
+        const erroresActualesArt = new Set(selectedErrors.map((e: any) => e.articulacion.toLowerCase()));
+        
+        const erroresCorregidos: string[] = [];
+        erroresPreviosArt.forEach((art) => {
+          if (!erroresActualesArt.has(art)) {
+            erroresCorregidos.push(art);
+          }
+        });
+
+        const subioPuntaje = score > scorePrevioMax;
+        const puntajeExcelente = score >= 80;
+
+        if ((subioPuntaje || puntajeExcelente) && erroresCorregidos.length > 0 && haVistoVideoSoporte) {
+          console.log(`🎉 ¡Aprendizaje Validado en re-vinculación!`);
+          aprendizajeValidado = {
+            esMejora: true,
+            scoreAumento: Math.max(0, score - scorePrevioMax),
+            scorePrevioMax,
+            erroresCorregidos,
+            videoEstudiado: true
+          };
+
+          const ruta = { ...usuario.rutaAprendizaje };
+          ruta.tecnicasEstancadas = (ruta.tecnicasEstancadas || []).filter((id: string) => id !== analysis.tecnicaId);
+          ruta.estadoPedagogicoActual = `Dominado: ${analysis.tecnicaNombre} (Aprendizaje validado tras corrección)`;
+          const nuevoProgreso = Math.min(100, (usuario.progresoGeneral || 0) + 15);
+
+          await this.persistence.saveUser(activeUserId, {
+            tecnicasEstancadas: ruta.tecnicasEstancadas,
+            estadoPedagogicoActual: ruta.estadoPedagogicoActual,
+            progresoGeneral: nuevoProgreso
+          });
+        }
+      }
+
+      res.json({
+        ...updatedAnalysis,
+        aprendizajeValidado
+      });
+    } catch (error) {
+      console.error('Error al vincular luchador en controller:', error);
+      res.status(500).json({ error: 'Fallo interno al vincular luchador.' });
+    }
+  };
+
   // ========================
   // MÉTODOS DE APOYO (REPETICIÓN Y RAG)
   // ========================

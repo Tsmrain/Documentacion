@@ -266,6 +266,58 @@ export class PersistenceService {
   }
 
   /**
+   * Obtiene un análisis específico por su ID.
+   */
+  async getAnalysisById(id: number): Promise<any | null> {
+    const item = await prisma.analisisBiomecanico.findUnique({
+      where: { id },
+      include: {
+        metricas: true,
+        errores: true
+      }
+    });
+    return this.parseAnalysis(item);
+  }
+
+  /**
+   * Actualiza las métricas y errores principales de un análisis para vincularlo a un luchador específico.
+   */
+  async updateAnalysisFighter(id: number, score: number, errors: any[], fighters: any[], nextTecnica: string): Promise<any> {
+    // 1. Eliminar errores antiguos de la tabla de relaciones
+    await prisma.errorBiomecanico.deleteMany({
+      where: { analisisId: id }
+    });
+
+    // 2. Actualizar datos de puntuación y recrear relaciones de errores
+    const result = await prisma.analisisBiomecanico.update({
+      where: { id },
+      data: {
+        puntuacionGeneral: score,
+        proximaTecnicaSugerida: nextTecnica,
+        fightersJson: JSON.stringify(fighters),
+        errores: {
+          create: errors.map(e => ({
+            articulacion: e.articulacion,
+            anguloMedido: Number(e.anguloMedido || 0),
+            anguloIdeal: Number(e.anguloIdeal || 0),
+            desviacion: Number(e.desviacion || 0),
+            severidad: e.severidad || 'leve',
+            descripcionFallo: e.descripcionFallo || e.descripcion || '',
+            esRecurrente: false,
+            recomendacion: e.recomendacion || ''
+          }))
+        }
+      },
+      include: {
+        metricas: true,
+        errores: true
+      }
+    });
+
+    return this.parseAnalysis(result);
+  }
+
+  /**
    * Elimina un análisis específico.
    */
   async deleteAnalysis(id: number): Promise<void> {

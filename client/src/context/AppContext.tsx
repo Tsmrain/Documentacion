@@ -39,6 +39,7 @@ interface AppContextType {
   setAnalisisActual: (analisis: AnalisisBiomecanico | null) => void;
   switchUser: (id: string) => Promise<void>;
   createUser: (nombre: string) => Promise<void>;
+  linkFighter: (analysisId: number, fighterIndex: number) => Promise<void>;
 
   // RAG
   ragController: RetrievalAugmentedController;
@@ -176,6 +177,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [sessionController, loadUsersList]);
 
+  // Vincular luchador a alumno
+  const linkFighter = useCallback(async (analysisId: number, fighterIndex: number) => {
+    try {
+      const updated = await sessionController.linkFighter(analysisId, fighterIndex, activeUserId);
+      setAnalisisActual(updated);
+      await loadHistory();
+      const userProfile = await sessionController.getUser(activeUserId);
+      setUsuario(userProfile);
+    } catch (err) {
+      console.error('Error al vincular luchador:', err);
+    }
+  }, [sessionController, activeUserId, loadHistory]);
+
   // Modo instructor (PIN local)
   const toggleModoInstructor = useCallback((pin: string): boolean => {
     const storedPin = localStorage.getItem('openbjj_instructor_pin') || INSTRUCTOR_PIN;
@@ -209,6 +223,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     toggleModoInstructor,
     switchUser,
     createUser,
+    linkFighter,
     ragController,
     sessionController
   };

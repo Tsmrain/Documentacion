@@ -138,6 +138,7 @@ export interface FighterAnalysis {
   youtube_query: string;
   errors?: ErrorBiomecanico[];
   proximaTecnicaSugerida?: string;
+  isStudent?: boolean;
 }
 
 export interface AnalisisBiomecanico {

@@ -6,6 +6,7 @@ const controller = new SessionController();
 
 router.post('/analyze', controller.analyzeVideo);
 router.post('/video-view', controller.registerVideoView);
+router.post('/link-fighter', controller.linkFighter);
 router.get('/history/:userId', controller.getHistory);
 router.get('/compare-technique/:tecnicaId/:userId', controller.compareTechnique);
 router.delete('/analysis/:id', controller.deleteAnalysis);
