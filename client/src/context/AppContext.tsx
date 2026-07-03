@@ -24,6 +24,8 @@ interface AppContextType {
   estadoProcesamiento: string;
   error: string | null;
   modoInstructor: boolean;
+  usuarios: Usuario[];
+  activeUserId: string;
 
   // Acciones
   setVistaActual: (vista: AppView) => void;
@@ -35,6 +37,8 @@ interface AppContextType {
   clearAnalisisActual: () => void;
   toggleModoInstructor: (pin: string) => boolean;
   setAnalisisActual: (analisis: AnalisisBiomecanico | null) => void;
+  switchUser: (id: string) => Promise<void>;
+  createUser: (nombre: string) => Promise<void>;
 
   // RAG
   ragController: RetrievalAugmentedController;
@@ -55,22 +59,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [estadoProcesamiento, setEstadoProcesamiento] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [modoInstructor, setModoInstructor] = useState(false);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [activeUserId, setActiveUserId] = useState<string>(() => localStorage.getItem('openbjj_active_user_id') || 'default');
 
   const [sessionController] = useState(() => new SesionEntrenamientoController());
   const [ragController] = useState(() => new RetrievalAugmentedController());
 
-  // Cargar usuario al inicio
+  // Cargar lista de usuarios y el usuario activo
+  const loadUsersList = useCallback(async () => {
+    try {
+      const list = await sessionController.listUsers();
+      setUsuarios(list);
+    } catch (err) {
+      console.error('Error cargando lista de usuarios:', err);
+    }
+  }, [sessionController]);
+
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const user = await sessionController.getUser();
+        const user = await sessionController.getUser(activeUserId);
         setUsuario(user);
+        await loadUsersList();
       } catch (err) {
         console.error('Error cargando usuario:', err);
       }
     };
     loadUser();
-  }, [sessionController]);
+  }, [sessionController, activeUserId, loadUsersList]);
 
   // Analizar video (CU01)
   const analyzeVideo = useCallback(async (videoBlob: Blob) => {
@@ -82,6 +98,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       const result = await sessionController.analyzeVideo(
         videoBlob,
+        activeUserId,
         (stage, progress) => {
           setEstadoProcesamiento(stage);
           setProgresoProcesamiento(progress);
@@ -90,23 +107,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       setAnalisisActual(result);
       setVistaActual('analisis'); // Mostrar resultado
+      await loadHistory();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error desconocido';
       setError(message);
     } finally {
       setProcesando(false);
     }
-  }, [sessionController]);
+  }, [sessionController, activeUserId]);
 
   // Cargar historial
   const loadHistory = useCallback(async () => {
     try {
-      const history = await sessionController.getHistory();
+      const history = await sessionController.getHistory(activeUserId);
       setHistorial(history);
     } catch (err) {
       console.error('Error cargando historial:', err);
     }
-  }, [sessionController]);
+  }, [sessionController, activeUserId]);
 
   // Eliminar análisis (CP05)
   const deleteAnalysis = useCallback(async (id: number) => {
@@ -121,12 +139,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Actualizar perfil (CU04)
   const updateProfile = useCallback(async (data: any) => {
     try {
-      const updatedUser = await sessionController.updateUserProfile(data);
+      const updatedUser = await sessionController.updateUserProfile(data, activeUserId);
       setUsuario(updatedUser);
+      await loadUsersList();
     } catch (err) {
       console.error('Error actualizando perfil:', err);
     }
-  }, [sessionController]);
+  }, [sessionController, activeUserId, loadUsersList]);
+
+  // Cambiar practicante
+  const switchUser = useCallback(async (id: string) => {
+    localStorage.setItem('openbjj_active_user_id', id);
+    setActiveUserId(id);
+    setAnalisisActual(null);
+  }, []);
+
+  // Crear nuevo practicante
+  const createUser = useCallback(async (nombre: string) => {
+    const slug = nombre
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    const id = slug || `user-${Date.now()}`;
+    try {
+      await sessionController.getUser(id);
+      await sessionController.updateUserProfile({ nombre }, id);
+      await loadUsersList();
+      localStorage.setItem('openbjj_active_user_id', id);
+      setActiveUserId(id);
+      setAnalisisActual(null);
+    } catch (err) {
+      console.error('Error creando practicante:', err);
+    }
+  }, [sessionController, loadUsersList]);
 
   // Modo instructor (PIN local)
   const toggleModoInstructor = useCallback((pin: string): boolean => {
@@ -148,6 +195,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     estadoProcesamiento,
     error,
     modoInstructor,
+    usuarios,
+    activeUserId,
     setVistaActual,
     analyzeVideo,
     loadHistory,
@@ -157,6 +206,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     clearAnalisisActual: () => setAnalisisActual(null),
     setAnalisisActual,
     toggleModoInstructor,
+    switchUser,
+    createUser,
     ragController,
     sessionController
   };

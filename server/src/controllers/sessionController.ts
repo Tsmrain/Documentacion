@@ -233,13 +233,76 @@ Responde únicamente en formato JSON con la siguiente estructura (no agregues te
         }))
       });
 
-      // 10. Actualizar ruta de aprendizaje si hay estancamiento
-      if (esRecurrente) {
+      // 10. Determinar si el practicante está aprendiendo de verdad (Validación de Aprendizaje)
+      let aprendizajeValidado = null;
+      if (historial.length > 0) {
+        // Encontrar el mejor intento previo
+        const scorePrevioMax = Math.max(...historial.map((a: any) => a.puntuacionGeneral || 0));
+        
+        // Obtener videos vistos
+        const videosVistos = await this.persistence.getWatchedVideos(activeUserId);
+        const haVistoVideoSoporte = videosVistos.some((w: any) => w.tecnicaId === tecnicaId);
+        
+        // Obtener errores recurrentes previos
+        const erroresPreviosArt = new Set(erroresPrevios.map((e: any) => e.articulacion.toLowerCase()));
+        
+        // Errores actuales
+        const erroresActualesArt = new Set(parsed.errores.map((e: any) => e.articulacion.toLowerCase()));
+        
+        // Identificar cuáles errores recurrentes previos fueron resueltos en esta sesión
+        const erroresCorregidos: string[] = [];
+        erroresPreviosArt.forEach((art) => {
+          if (!erroresActualesArt.has(art)) {
+            erroresCorregidos.push(art);
+          }
+        });
+
+        const scoreActual = parsed.puntuacionGeneral;
+        const subioPuntaje = scoreActual > scorePrevioMax;
+        const puntajeExcelente = scoreActual >= 80;
+
+        // Criterio de aprendizaje:
+        // 1. Ha subido su puntaje respecto al mejor intento previo O tiene una ejecución excelente (>=80).
+        // 2. Ha corregido al menos un error que cometía recurrentemente en el pasado.
+        // 3. Ha visto previamente el video de soporte sugerido para esta técnica.
+        if ((subioPuntaje || puntajeExcelente) && erroresCorregidos.length > 0 && haVistoVideoSoporte) {
+          console.log(`🎉 ¡Aprendizaje Validado! El usuario "${activeUserId}" resolvió errores recurrentes de [${erroresCorregidos.join(', ')}] en la técnica "${techniqueName}" después de ver el video tutorial.`);
+          
+          aprendizajeValidado = {
+            esMejora: true,
+            scoreAumento: Math.max(0, scoreActual - scorePrevioMax),
+            scorePrevioMax,
+            erroresCorregidos,
+            videoEstudiado: true
+          };
+
+          // Actualizar el perfil del usuario para recompensar y avanzar
+          const ruta = { ...usuario.rutaAprendizaje };
+          
+          // Eliminar de técnicas estancadas si estaba ahí
+          ruta.tecnicasEstancadas = (ruta.tecnicasEstancadas || []).filter((id: string) => id !== tecnicaId);
+          
+          // Avanzar su estado pedagógico
+          ruta.estadoPedagogicoActual = `Dominado: ${techniqueName} (Aprendizaje validado tras corrección)`;
+          
+          // Incrementar progreso general (+15% de progreso, máximo 100%)
+          const nuevoProgreso = Math.min(100, (usuario.progresoGeneral || 0) + 15);
+
+          await this.persistence.saveUser(activeUserId, {
+            tecnicasEstancadas: ruta.tecnicasEstancadas,
+            estadoPedagogicoActual: ruta.estadoPedagogicoActual,
+            progresoGeneral: nuevoProgreso
+          });
+        }
+      }
+
+      // Si no validó aprendizaje, pero hay estancamiento (errores recurrentes), marcamos estancamiento
+      if (!aprendizajeValidado && esRecurrente) {
         const rutaActualizada = { ...usuario.rutaAprendizaje };
         if (!rutaActualizada.tecnicasEstancadas.includes(tecnicaId)) {
           rutaActualizada.tecnicasEstancadas.push(tecnicaId);
         }
-        rutaActualizada.estadoPedagogicoActual = `Adaptando: ${techniqueName}`;
+        rutaActualizada.estadoPedagogicoActual = `Adaptando: ${techniqueName} (Requiere refuerzo)`;
 
         await this.persistence.saveUser(activeUserId, {
           tecnicasEstancadas: rutaActualizada.tecnicasEstancadas,
@@ -247,7 +310,10 @@ Responde únicamente en formato JSON con la siguiente estructura (no agregues te
         });
       }
 
-      res.json(analisis);
+      res.json({
+        ...analisis,
+        aprendizajeValidado
+      });
     } catch (error) {
       console.error('Error procesando análisis de video:', error);
       res.status(500).json({ error: 'Error interno del servidor al analizar la sesión.' });
@@ -386,21 +452,56 @@ ${referenceInfo}
 Compara los intentos del alumno con la referencia técnica para identificar patrones de movimiento y áreas consistentes.
 Genera una respuesta en español estructurada estrictamente en formato JSON con los siguientes campos (sin bloques de código markdown, sin texto adicional):
 {
-  "haceBien": "<Un breve análisis de 1 o 2 párrafos concisos destacando lo que el practicante ejecuta de manera correcta y sus fortalezas>",
-  "haceMal": "<Un breve análisis de 1 o 2 párrafos concisos sobre los errores consistentes, malos hábitos biomecánicos o áreas que requieren atención urgente>",
+  "haceBien": "<Un análisis extremadamente conciso en 2 o 3 viñetas breves en español (máximo 40 palabras en total en toda la propiedad) de lo que el practicante hace bien. Usa guiones '-' para separar cada punto y saltos de línea para que se muestre como lista.>",
+  "haceMal": "<Un análisis extremadamente conciso en 2 o 3 viñetas breves en español (máximo 40 palabras en total en toda la propiedad) de los errores mecánicos más recurrentes y debilidades. Usa guiones '-' para separar cada punto y saltos de línea para que se muestre como lista.>",
   "consultaYouTube": "<Una consulta de búsqueda corta en YouTube (máximo 5 palabras, ej. 'BJJ triangle choke details') optimizada para que el alumno aprenda a resolver sus errores específicos>"
 }`;
 
-      console.log(`🤖 Comparando técnica "${tecnicaNombre}" con Gemini...`);
-      const responseText = await this.geminiService.evaluateMovement(prompt, 'application/json');
+      let parsed: any;
+      try {
+        console.log(`🤖 Comparando técnica "${tecnicaNombre}" con Gemini...`);
+        const responseText = await this.geminiService.evaluateMovement(prompt, 'application/json');
 
-      let cleaned = responseText.trim();
-      if (cleaned.startsWith('```json')) cleaned = cleaned.slice(7);
-      if (cleaned.startsWith('```')) cleaned = cleaned.slice(3);
-      if (cleaned.endsWith('```')) cleaned = cleaned.slice(0, -3);
-      cleaned = cleaned.trim();
+        let cleaned = responseText.trim();
+        if (cleaned.startsWith('```json')) cleaned = cleaned.slice(7);
+        if (cleaned.startsWith('```')) cleaned = cleaned.slice(3);
+        if (cleaned.endsWith('```')) cleaned = cleaned.slice(0, -3);
+        cleaned = cleaned.trim();
 
-      const parsed = JSON.parse(cleaned);
+        parsed = JSON.parse(cleaned);
+      } catch (geminiError) {
+        console.warn('⚠️ Error al llamar a Gemini en compareTechnique (límite de cuota o temporal). Generando análisis local heurístico de respaldo...', geminiError);
+        
+        // Obtener errores únicos de la historia
+        const uniqueErrors = Array.from(new Set(
+          attemptsSummary.flatMap((att: any) => att.erroresDetectados.map((e: any) => e.articulacion))
+        ));
+
+        const getArtName = (art: string) => {
+          switch (art.toLowerCase()) {
+            case 'cadera': return 'Cadera (Control de Base)';
+            case 'rodilla': return 'Rodilla (Control de Piernas)';
+            case 'espalda': return 'Espalda / Postura (Alineación Vertebral)';
+            case 'codo': return 'Codo (Estructura de Brazos)';
+            case 'hombro': return 'Hombro (Alineación Superior)';
+            default: return art;
+          }
+        };
+
+        const listadoErrores = uniqueErrors.length > 0
+          ? uniqueErrors.map((err: any) => `- Corregir postura en la articulación de ${getArtName(err)}`).join('\n')
+          : '- Mantener alineación general del cuerpo';
+
+        const listadoAciertos = uniqueErrors.includes('espalda') && uniqueErrors.includes('cadera')
+          ? '- Iniciativa consistente al entrar en la posición\n- Esfuerzo continuo de control y agarre'
+          : '- Buen control de la postura general\n- Buena distribución de peso corporal y frames';
+
+        parsed = {
+          haceBien: `[Análisis Local]\n${listadoAciertos}`,
+          haceMal: `[Análisis Local]\n${listadoErrores}`,
+          consultaYouTube: `${tecnicaNombre} BJJ details`
+        };
+      }
 
       res.json({
         tecnicaId,
@@ -430,6 +531,16 @@ Genera una respuesta en español estructurada estrictamente en formato JSON con 
     } catch (error) {
       console.error('Error al obtener usuario:', error);
       res.status(500).json({ error: 'Fallo al recuperar perfil del usuario.' });
+    }
+  };
+
+  listUsers = async (req: Request, res: Response) => {
+    try {
+      const users = await this.persistence.listUsers();
+      res.json(users);
+    } catch (error) {
+      console.error('Error al listar usuarios:', error);
+      res.status(500).json({ error: 'Fallo al listar perfiles.' });
     }
   };
 

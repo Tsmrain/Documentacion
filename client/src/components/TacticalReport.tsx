@@ -174,6 +174,60 @@ export function TacticalReport() {
         Volver a Historial
       </button>
 
+      {/* Celebration Banner for Validated Learning */}
+      {analisisActual.aprendizajeValidado && (
+        <div 
+          className="celebration-banner" 
+          style={{
+            background: 'linear-gradient(135deg, #4cc9f0 0%, #4895ef 50%, #4361ee 100%)',
+            borderRadius: '16px',
+            padding: '24px',
+            color: '#ffffff',
+            boxShadow: '0 8px 32px rgba(67, 97, 238, 0.3)',
+            marginBottom: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+            gap: '12px',
+            border: '2px solid rgba(255, 255, 255, 0.2)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+        >
+          <style>{`
+            @keyframes shine {
+              0% { transform: skewX(-25deg) translateX(-150%); }
+              30% { transform: skewX(-25deg) translateX(150%); }
+              100% { transform: skewX(-25deg) translateX(150%); }
+            }
+          `}</style>
+          {/* Shine effect */}
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%)', transform: 'skewX(-25deg) translateX(-100%)', animation: 'shine 4s infinite' }} />
+          
+          <div style={{ background: 'rgba(255,255,255,0.25)', width: '56px', height: '56px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
+            🏆
+          </div>
+          
+          <div>
+            <h3 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 6px 0', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+              ¡APRENDIZAJE VALIDADO!
+            </h3>
+            <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.5', opacity: 0.95, maxWidth: '500px' }}>
+              Nuestra IA detectó que has estudiado el video recomendado y corregido con éxito los errores biomecánicos de 
+              <strong> {analisisActual.aprendizajeValidado.erroresCorregidos.map((art: string) => getArticulationName(art)).join(', ')}</strong> que tenías en tus intentos anteriores.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '16px', marginTop: '4px', background: 'rgba(0, 0, 0, 0.15)', padding: '8px 20px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 600 }}>
+            <span>Puntaje Máx Previo: {analisisActual.aprendizajeValidado.scorePrevioMax} pts</span>
+            <span style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '16px' }}>
+              Mejora: +{analisisActual.aprendizajeValidado.scoreAumento} pts
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Score Card */}
       <div className="glass-card score-card">
         <div className="score-display">

@@ -241,7 +241,7 @@ export function ProgressDashboard() {
                 <h4 style={{ margin: '0 0 8px 0', color: '#06d6a0', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
                   🏆 Lo que haces bien
                 </h4>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5', whiteSpace: 'pre-line' }}>
                   {comparacion.haceBien}
                 </p>
               </div>
@@ -250,7 +250,7 @@ export function ProgressDashboard() {
                 <h4 style={{ margin: '0 0 8px 0', color: '#e63946', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
                   ⚠️ Lo que haces mal (Errores Recurrentes)
                 </h4>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5', whiteSpace: 'pre-line' }}>
                   {comparacion.haceMal}
                 </p>
               </div>

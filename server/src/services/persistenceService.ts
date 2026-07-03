@@ -364,6 +364,16 @@ export class PersistenceService {
     });
   }
 
+  /**
+   * Obtiene la lista de todos los usuarios registrados en el sistema.
+   */
+  async listUsers(): Promise<any[]> {
+    const list = await prisma.usuario.findMany({
+      orderBy: { nombre: 'asc' }
+    });
+    return list.map(u => this.parseUser(u));
+  }
+
   // ========================
   // PARSER UTILITIES
   // ========================

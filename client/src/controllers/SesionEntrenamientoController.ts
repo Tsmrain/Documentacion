@@ -28,6 +28,7 @@ export class SesionEntrenamientoController {
    */
   async analyzeVideo(
     videoBlob: Blob,
+    userId: string = 'default',
     onProgress?: (stage: string, progress: number) => void
   ): Promise<AnalisisBiomecanico> {
     // 1. Validar video (formato y duración ≤ 45s)
@@ -35,7 +36,7 @@ export class SesionEntrenamientoController {
     await this.validateVideo(videoBlob);
 
     // 2. Obtener perfil de usuario desde el backend
-    const usuario = await this.getUser();
+    const usuario = await this.getUser(userId);
     const perfil = usuario.perfilBiomecanico!;
 
     // 3. Extraer landmarks 3D via MediaPipe (client-side)
@@ -254,9 +255,9 @@ export class SesionEntrenamientoController {
   /**
    * CU04: Actualizar perfil biomecánico del usuario en el servidor.
    */
-  async updateUserProfile(perfil: Partial<PerfilBiomecanico> & { nombre?: string; cinturon?: string }): Promise<Usuario> {
+  async updateUserProfile(perfil: Partial<PerfilBiomecanico> & { nombre?: string; cinturon?: string }, userId: string = 'default'): Promise<Usuario> {
     try {
-      const response = await apiClient.post('/profile/default', perfil);
+      const response = await apiClient.post(`/profile/${userId}`, perfil);
       return response.data;
     } catch (error: any) {
       console.error('Error actualizando perfil biomecánico:', error);
@@ -267,12 +268,12 @@ export class SesionEntrenamientoController {
   /**
    * Registra la confirmación de visualización de un video (CU10).
    */
-  async registerVideoView(videoUrl: string, tecnicaId: string): Promise<void> {
+  async registerVideoView(videoUrl: string, tecnicaId: string, userId: string = 'default'): Promise<void> {
     try {
       await apiClient.post('/session/video-view', {
         videoUrl,
         tecnicaId,
-        userId: 'default'
+        userId
       });
     } catch (error: any) {
       console.error('Error registrando visualización de video:', error);
@@ -283,9 +284,9 @@ export class SesionEntrenamientoController {
   /**
    * Obtener historial de análisis del servidor.
    */
-  async getHistory(): Promise<AnalisisBiomecanico[]> {
+  async getHistory(userId: string = 'default'): Promise<AnalisisBiomecanico[]> {
     try {
-      const response = await apiClient.get('/session/history/default');
+      const response = await apiClient.get(`/session/history/${userId}`);
       return response.data.map((item: any) => ({
         ...item,
         fecha: new Date(item.fecha)
@@ -324,13 +325,26 @@ export class SesionEntrenamientoController {
   /**
    * Obtener usuario actual del servidor.
    */
-  async getUser(): Promise<Usuario> {
+  async getUser(userId: string = 'default'): Promise<Usuario> {
     try {
-      const response = await apiClient.get('/profile/default');
+      const response = await apiClient.get(`/profile/${userId}`);
       return response.data;
     } catch (error) {
       console.error('Error obteniendo usuario:', error);
       throw new Error('No se pudo establecer conexión con el servidor local.');
+    }
+  }
+
+  /**
+   * Obtiene la lista de todos los practicantes.
+   */
+  async listUsers(): Promise<Usuario[]> {
+    try {
+      const response = await apiClient.get('/profile');
+      return response.data;
+    } catch (error) {
+      console.error('Error al listar practicantes:', error);
+      return [];
     }
   }
 

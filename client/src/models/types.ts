@@ -153,6 +153,13 @@ export interface AnalisisBiomecanico {
   proximaTecnicaSugerida: string;
   landmarks?: Landmark3D[][];
   fighters?: FighterAnalysis[];
+  aprendizajeValidado?: {
+    esMejora: boolean;
+    scoreAumento: number;
+    scorePrevioMax: number;
+    erroresCorregidos: string[];
+    videoEstudiado: boolean;
+  } | null;
 }
 
 export interface RutaAprendizaje {

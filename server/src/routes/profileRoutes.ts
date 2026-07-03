@@ -4,6 +4,7 @@ import { SessionController } from '../controllers/sessionController';
 const router = express.Router();
 const controller = new SessionController();
 
+router.get('/', controller.listUsers);
 router.get('/:id', controller.getUser);
 router.post('/:id', controller.updateUserProfile);
 
