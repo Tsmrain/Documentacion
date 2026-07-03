@@ -199,7 +199,27 @@ Responde únicamente en formato JSON con la siguiente estructura (no agregues te
         puntosFuertes: parsed.puntosFuertes,
         proximaTecnicaSugerida: parsed.proximaTecnicaSugerida,
         recomendacionAdaptativa: parsed.recomendacionAdaptativa,
-        fighters: parsed.fighters || [],
+        fighters: (parsed.fighters || []).map((f: any) => ({
+          role: f.role,
+          status: f.status,
+          summary: f.summary,
+          techniques: f.techniques || [],
+          mistakes: f.mistakes || [],
+          tips: f.tips || [],
+          reference: f.reference,
+          youtube_query: f.youtube_query,
+          errors: (f.errors || []).map((e: any) => ({
+            articulacion: e.articulacion,
+            anguloMedido: e.anguloMedido,
+            anguloIdeal: e.anguloIdeal,
+            desviacion: e.desviacion,
+            severidad: e.severidad,
+            descripcionFallo: e.descripcion || e.descripcionFallo || '',
+            esRecurrente: false,
+            recomendacion: e.recomendacion
+          })),
+          proximaTecnicaSugerida: f.proximaTecnicaSugerida || ''
+        })),
         metricas: metrics || [],
         errores: parsed.errores.map((e: any) => ({
           articulacion: e.articulacion,

@@ -21,6 +21,23 @@ export function ProgressDashboard() {
   const [loadingCompare, setLoadingCompare] = useState<boolean>(false);
   const [errorCompare, setErrorCompare] = useState<string | null>(null);
 
+  const getArticulationName = (articulacion: string) => {
+    switch (articulacion.toLowerCase()) {
+      case 'cadera':
+        return 'Cadera (Control de Base y Escape)';
+      case 'rodilla':
+        return 'Rodilla (Control de Ganchos y Piernas)';
+      case 'espalda':
+        return 'Espalda / Postura (Alineación Vertebral)';
+      case 'codo':
+        return 'Codo (Estructura de Brazos)';
+      case 'hombro':
+        return 'Hombro (Alineación Superior)';
+      default:
+        return articulacion.charAt(0).toUpperCase() + articulacion.slice(1);
+    }
+  };
+
   const uniqueTechniques = React.useMemo(() => {
     const list: { id: string; nombre: string }[] = [];
     const idsSeen = new Set<string>();
@@ -329,7 +346,7 @@ export function ProgressDashboard() {
             {errorStats.map((stat, i) => (
               <div key={i} className={`error-stat-item ${stat.estancada ? 'stalled' : ''}`}>
                 <div className="error-stat-header">
-                  <span className="error-stat-name">{stat.articulacion}</span>
+                  <span className="error-stat-name">{getArticulationName(stat.articulacion)}</span>
                   {stat.estancada && (
                     <span className="stalled-badge">
                       <AlertTriangle size={12} />

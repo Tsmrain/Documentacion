@@ -136,6 +136,8 @@ export interface FighterAnalysis {
     quote: string;
   };
   youtube_query: string;
+  errors?: ErrorBiomecanico[];
+  proximaTecnicaSugerida?: string;
 }
 
 export interface AnalisisBiomecanico {

@@ -55,6 +55,98 @@ export function TacticalReport() {
     }
   };
 
+  const getArticulationName = (articulacion: string) => {
+    switch (articulacion.toLowerCase()) {
+      case 'cadera':
+        return 'Cadera (Control de Base y Escape)';
+      case 'rodilla':
+        return 'Rodilla (Control de Ganchos y Piernas)';
+      case 'espalda':
+        return 'Espalda / Postura (Alineación Vertebral)';
+      case 'codo':
+        return 'Codo (Estructura de Brazos y Defensa)';
+      case 'hombro':
+        return 'Hombro (Alineación Superior)';
+      default:
+        return articulacion.charAt(0).toUpperCase() + articulacion.slice(1);
+    }
+  };
+
+  const renderBiomechanicalGauge = (error: any) => {
+    const medido = Math.round(error.anguloMedido);
+    const ideal = Math.round(error.anguloIdeal);
+    const desviacion = Math.round(error.desviacion);
+    
+    // Scale percentages for display
+    const maxVal = Math.max(medido, ideal, 180);
+    const measuredPercent = Math.max(5, Math.min(95, (medido / maxVal) * 100));
+    const idealPercent = Math.max(5, Math.min(95, (ideal / maxVal) * 100));
+    
+    const config = getSeverityConfig(error.severidad);
+    
+    return (
+      <div className="biomechanic-gauge" style={{ marginTop: '12px', background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+          <span>Tu Ángulo: <strong style={{ color: 'var(--text-primary)' }}>{medido}°</strong></span>
+          <span>Ángulo Ideal: <strong style={{ color: '#06d6a0' }}>{ideal}°</strong></span>
+        </div>
+        
+        {/* Track */}
+        <div className="gauge-track" style={{ height: '10px', background: 'rgba(255,255,255,0.08)', borderRadius: '6px', position: 'relative', margin: '14px 0' }}>
+          {/* Ideal range highlight */}
+          <div style={{
+            position: 'absolute',
+            left: `${Math.max(0, idealPercent - 10)}%`,
+            width: '20%',
+            height: '100%',
+            background: 'rgba(6, 214, 160, 0.15)',
+            borderLeft: '1px dashed rgba(6, 214, 160, 0.4)',
+            borderRight: '1px dashed rgba(6, 214, 160, 0.4)',
+            zIndex: 1
+          }} />
+          
+          {/* Ideal position marker */}
+          <div style={{
+            position: 'absolute',
+            left: `${idealPercent}%`,
+            top: '-4px',
+            width: '8px',
+            height: '18px',
+            background: '#06d6a0',
+            borderRadius: '4px',
+            transform: 'translateX(-50%)',
+            boxShadow: '0 0 8px rgba(6, 214, 160, 0.6)',
+            zIndex: 3
+          }} title={`Ideal: ${ideal}°`} />
+
+          {/* Measured position marker */}
+          <div style={{
+            position: 'absolute',
+            left: `${measuredPercent}%`,
+            top: '-6px',
+            width: '12px',
+            height: '22px',
+            background: error.severidad === 'critico' ? 'var(--severity-critical)' : error.severidad === 'moderado' ? 'var(--severity-moderate)' : 'var(--accent-green)',
+            borderRadius: '6px',
+            transform: 'translateX(-50%)',
+            boxShadow: '0 0 10px rgba(255,255,255,0.2)',
+            border: '2px solid var(--text-primary)',
+            zIndex: 4
+          }} title={`Medido: ${medido}°`} />
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginTop: '6px', alignItems: 'center' }}>
+          <span style={{ color: error.severidad === 'critico' ? 'var(--severity-critical)' : error.severidad === 'moderado' ? 'var(--severity-moderate)' : 'var(--accent-green)', fontWeight: 600 }}>
+            Desviación: {desviacion}° ({config.label})
+          </span>
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+            {error.articulacion === 'cadera' ? 'Base y balance' : error.articulacion === 'rodilla' ? 'Control de ganchos' : error.articulacion === 'espalda' ? 'Postura de columna' : 'Palanca defensiva'}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'score-excellent';
     if (score >= 60) return 'score-good';
@@ -230,50 +322,27 @@ export function TacticalReport() {
                   Video de Soporte
                 </button>
               </div>
+
+
+
+              {/* Siguiente Paso (Fighter Specific) */}
+              {activeFighter.proximaTecnicaSugerida && (
+                <div className="glass-card next-card" style={{ marginTop: '10px' }}>
+                  <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <TrendingUp size={16} className="text-blue" />
+                    Siguiente Paso
+                  </h4>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    Próxima técnica sugerida: <strong>{activeFighter.proximaTecnicaSugerida}</strong>
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
       )}
 
-      {/* Biomechanical Errors (For detailed angular metrics inspection) */}
-      {analisisActual.errores.length > 0 && (
-        <div className="glass-card errors-card" style={{ marginTop: '20px' }}>
-          <h3 className="card-title">
-            <Target size={20} className="text-orange" />
-            Métricas Biomecánicas e Inclinación Articular
-          </h3>
-          <div className="errors-list" style={{ marginTop: '10px' }}>
-            {analisisActual.errores.map((error, i) => {
-              const config = getSeverityConfig(error.severidad);
-              return (
-                <div key={i} className={`error-item ${config.color}`}>
-                  <div className="error-header">
-                    {config.icon}
-                    <span className="error-articulation">{error.articulacion}</span>
-                    <span className={`severity-badge ${config.color}`}>{config.label}</span>
-                  </div>
-                  <p className="error-description">{error.descripcionFallo}</p>
-                  <div className="error-metrics">
-                    <span>Ángulo medido: <strong>{error.anguloMedido}°</strong></span>
-                    <span>Ángulo ideal: <strong>{error.anguloIdeal}°</strong></span>
-                    <span>Desviación: <strong>{error.desviacion}°</strong></span>
-                  </div>
-                  {error.esRecurrente && (
-                    <div className="recurrent-badge">
-                      <AlertTriangle size={14} />
-                      Error recurrente — Estrategia adaptativa aplicada
-                    </div>
-                  )}
-                  <div className="error-recommendation">
-                    <BookOpen size={14} />
-                    <span>{error.recomendacion}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+
 
       {/* Puntos Fuertes (If no fighters object was evaluated or if available) */}
       {!hasFighters && analisisActual.puntosFuertes.length > 0 && (
@@ -315,8 +384,8 @@ export function TacticalReport() {
         </div>
       )}
 
-      {/* Próxima Técnica */}
-      {analisisActual.proximaTecnicaSugerida && (
+      {/* Próxima Técnica (Fallback for legacy records) */}
+      {!hasFighters && analisisActual.proximaTecnicaSugerida && (
         <div className="glass-card next-card" style={{ marginTop: '20px' }}>
           <h3 className="card-title">
             <TrendingUp size={20} className="text-blue" />

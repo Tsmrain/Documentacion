@@ -70,10 +70,11 @@ export function HistoryView() {
             style={{ cursor: 'pointer', transition: 'all 0.2s' }}
           >
             <div className="history-card-header">
-              <div className="history-score-container">
-                <div className={`history-score ${getScoreColor(analisis.puntuacionGeneral)}`}>
+              <div className="history-score-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div className={`history-score ${getScoreColor(analisis.puntuacionGeneral)}`} title={`Puntuación: ${analisis.puntuacionGeneral}/100`}>
                   {analisis.puntuacionGeneral}
                 </div>
+                <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ptos</span>
               </div>
               <div className="history-info">
                 <h3 className="history-tecnica">{analisis.tecnicaNombre}</h3>

@@ -206,6 +206,8 @@ export interface FighterAnalysis {
     quote: string;
   };
   youtube_query: string;
+  errors?: ErrorBiomecanico[];
+  proximaTecnicaSugerida?: string;
 }
 
 export interface AnalisisBiomecanico {
@@ -240,6 +242,30 @@ export interface GeminiEvaluationResponse {
     contenido: string;
   };
   proximaTecnicaSugerida: string;
-  fighters?: FighterAnalysis[];
+  fighters?: {
+    role: string;
+    status: 'approved' | 'correction_needed';
+    summary: string;
+    techniques: string[];
+    mistakes: string[];
+    tips: string[];
+    reference: {
+      book: string;
+      technique: string;
+      belt: string;
+      quote: string;
+    };
+    youtube_query: string;
+    errors?: {
+      articulacion: string;
+      anguloMedido: number;
+      anguloIdeal: number;
+      desviacion: number;
+      severidad: string;
+      descripcion: string;
+      recomendacion: string;
+    }[];
+    proximaTecnicaSugerida: string;
+  }[];
 }
 

@@ -115,6 +115,8 @@ ${ragSection}
    - "tips": Consejos prácticos de base, postura o palanca extraídos de las fuentes RAG para mejorar el control o el escape de esta posición. Máximo 3.
    - "reference": Citación precisa basada en las fuentes RAG de donde se extrajo la recomendación. Debe incluir "book": "Nombre del manual/libro de la fuente RAG (por ejemplo, el título de la fuente)", "technique": "Posición o sección de la fuente", "belt": "Nivel estimado (Blanco/Azul/Morado/Marrón/Negro)", y "quote": "Frase clave o concepto del manual".
    - "youtube_query": Término de búsqueda optimizado para encontrar tutoriales de control o escape de la posición en YouTube (ej. "BJJ mount survival elbow technique tutorial" o "BJJ side control pressure base tutorial").
+   - "errors": Un array con las desviaciones biomecánicas específicas para este luchador en su articulación (cadera, rodilla, hombro, codo o espalda) comparado con el checkpoint ideal para su rol. Si no hay errores, déjalo vacío []. Cada error debe incluir: "articulacion", "anguloMedido", "anguloIdeal", "desviacion", "severidad" (leve|moderado|critico), "descripcion" (máximo 15 palabras) y "recomendacion" (máximo 20 palabras).
+   - "proximaTecnicaSugerida": Siguiente posición o técnica recomendada específicamente para este luchador según su rol (por ejemplo, el luchador superior debería mejorar pases de guardia o transiciones a montada, el luchador inferior escapes o reposición de guardia).
 4. Mantén los textos en "fighters" claros, concisos y profesionales en español.
 5. Inyecta el diagnóstico general y los errores biomecánicos individuales de las articulaciones en el formato JSON principal.
 6. CONCISIÓN EXTREMA EN LOS DETALLES BIOMECÁNICOS GENERALES:
@@ -160,7 +162,19 @@ IMPORTANTE: Asegúrate de que el JSON sea estrictamente válido. Cualquier salto
         "belt": "<White|Blue|Purple|Brown|Black>",
         "quote": "<frase célebre o concepto clave del manual>"
       },
-      "youtube_query": "<búsqueda optimizada de YouTube>"
+      "youtube_query": "<búsqueda optimizada de YouTube>",
+      "errors": [
+        {
+          "articulacion": "<nombre de la articulación>",
+          "anguloMedido": <número>,
+          "anguloIdeal": <número>,
+          "desviacion": <número>,
+          "severidad": "<leve|moderado|critico>",
+          "descripcion": "<descripción clara>",
+          "recomendacion": "<recomendación correctiva>"
+        }
+      ],
+      "proximaTecnicaSugerida": "<siguiente técnica recomendada para este luchador>"
     }
   ]
 }`;
@@ -259,6 +273,26 @@ IMPORTANTE: Asegúrate de que el JSON sea estrictamente válido. Cualquier salto
 
       if (!parsed.fighters || !Array.isArray(parsed.fighters)) {
         parsed.fighters = [];
+      } else {
+        for (const f of parsed.fighters) {
+          if (!f.errors || !Array.isArray(f.errors)) {
+            f.errors = [];
+          }
+          for (const e of f.errors) {
+            if (typeof e.anguloMedido === 'string') e.anguloMedido = Number(e.anguloMedido);
+            if (typeof e.anguloIdeal === 'string') e.anguloIdeal = Number(e.anguloIdeal);
+            if (typeof e.desviacion === 'string') e.desviacion = Number(e.desviacion);
+            
+            if (typeof e.severidad !== 'string') {
+              e.severidad = 'moderado';
+            } else {
+              e.severidad = e.severidad.toLowerCase();
+              if (!['leve', 'moderado', 'critico'].includes(e.severidad)) {
+                e.severidad = 'moderado';
+              }
+            }
+          }
+        }
       }
 
       return parsed as GeminiEvaluationResponse;

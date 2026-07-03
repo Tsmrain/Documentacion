@@ -385,9 +385,27 @@ export const evaluationResponseSchema = {
             },
             required: ["book", "technique", "belt", "quote"]
           },
-          youtube_query: { type: SchemaType.STRING, description: "Búsqueda optimizada de YouTube para su situación" }
+          youtube_query: { type: SchemaType.STRING, description: "Búsqueda optimizada de YouTube para su situación" },
+          errors: {
+            type: SchemaType.ARRAY,
+            description: "Desviaciones biomecánicas de articulaciones específicas de este luchador",
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                articulacion: { type: SchemaType.STRING, description: "Nombre de la articulación" },
+                anguloMedido: { type: SchemaType.NUMBER, description: "Ángulo medido en grados" },
+                anguloIdeal: { type: SchemaType.NUMBER, description: "Ángulo ideal establecido" },
+                desviacion: { type: SchemaType.NUMBER, description: "Diferencia absoluta entre el medido y el ideal" },
+                severidad: { type: SchemaType.STRING, description: "Severidad del desvío (leve, moderado o critico)" },
+                descripcion: { type: SchemaType.STRING, description: "Explicación corta (máximo 15 palabras) del error en español" },
+                recomendacion: { type: SchemaType.STRING, description: "Recomendación correctiva concisa (máximo 20 palabras) en español" }
+              },
+              required: ["articulacion", "anguloMedido", "anguloIdeal", "desviacion", "severidad", "descripcion", "recomendacion"]
+            }
+          },
+          proximaTecnicaSugerida: { type: SchemaType.STRING, description: "Siguiente paso o técnica recomendada para este luchador en BJJ" }
         },
-        required: ["role", "status", "summary", "techniques", "mistakes", "tips", "reference", "youtube_query"]
+        required: ["role", "status", "summary", "techniques", "mistakes", "tips", "reference", "youtube_query", "errors", "proximaTecnicaSugerida"]
       }
     }
   },
