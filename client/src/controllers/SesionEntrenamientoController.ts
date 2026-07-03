@@ -29,6 +29,7 @@ export class SesionEntrenamientoController {
   async analyzeVideo(
     videoBlob: Blob,
     userId: string = 'default',
+    userRole: string = 'top',
     onProgress?: (stage: string, progress: number) => void
   ): Promise<AnalisisBiomecanico> {
     // 1. Validar video (formato y duración ≤ 45s)
@@ -67,7 +68,8 @@ export class SesionEntrenamientoController {
       const response = await apiClient.post('/session/analyze', {
         frames,
         metrics,
-        userId: usuario.id
+        userId: usuario.id,
+        userRole
       });
 
       onProgress?.('¡Análisis completo!', 100);

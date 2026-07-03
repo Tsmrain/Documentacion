@@ -9,6 +9,7 @@ export function VideoUploader() {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string>('top');
 
   // Estados de cámara y grabación
   const [cameraActive, setCameraActive] = useState(false);
@@ -169,7 +170,7 @@ export function VideoUploader() {
     }
 
     const blob = new Blob([await videoFile.arrayBuffer()], { type: videoFile.type });
-    await analyzeVideo(blob);
+    await analyzeVideo(blob, userRole);
   };
 
   const handleClear = () => {
@@ -319,6 +320,35 @@ export function VideoUploader() {
                 {(videoFile.size / (1024 * 1024)).toFixed(1)} MB
               </span>
             </div>
+            
+            <div className="role-selector-container" style={{ margin: '16px 0', background: 'rgba(255, 255, 255, 0.03)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-glass)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                🥋 Identifica tu vestimenta en el video:
+              </span>
+              <select
+                value={userRole}
+                onChange={(e) => setUserRole(e.target.value)}
+                style={{
+                  width: '100%',
+                  background: 'var(--bg-tertiary)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border-glass)',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  outline: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value="white">Gi Blanco / Vestimenta Clara</option>
+                <option value="blue">Gi Azul / Vestimenta Oscura</option>
+              </select>
+              <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                La IA rastrea el color de tu vestimenta a lo largo del combate (inicie de pie o en el suelo) para asignar tus métricas y progresos de forma correcta.
+              </p>
+            </div>
+
             <div className="video-actions">
               <button
                 id="btn-analyze"

@@ -29,7 +29,7 @@ interface AppContextType {
 
   // Acciones
   setVistaActual: (vista: AppView) => void;
-  analyzeVideo: (videoBlob: Blob) => Promise<void>;
+  analyzeVideo: (videoBlob: Blob, userRole?: string) => Promise<void>;
   loadHistory: () => Promise<void>;
   deleteAnalysis: (id: number) => Promise<void>;
   updateProfile: (data: any) => Promise<void>;
@@ -89,7 +89,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [sessionController, activeUserId, loadUsersList]);
 
   // Analizar video (CU01)
-  const analyzeVideo = useCallback(async (videoBlob: Blob) => {
+  const analyzeVideo = useCallback(async (videoBlob: Blob, userRole: string = 'top') => {
     try {
       setProcesando(true);
       setError(null);
@@ -99,6 +99,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const result = await sessionController.analyzeVideo(
         videoBlob,
         activeUserId,
+        userRole,
         (stage, progress) => {
           setEstadoProcesamiento(stage);
           setProgresoProcesamiento(progress);

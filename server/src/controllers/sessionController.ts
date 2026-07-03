@@ -191,18 +191,21 @@ Responde únicamente en formato JSON con la siguiente estructura (no agregues te
         });
       }
 
-      // 9. Guardar análisis biomecánico en SQLite
-      const analisis = await this.persistence.saveAnalysis(activeUserId, {
-        tecnicaId,
-        tecnicaNombre: techniqueName,
-        puntuacionGeneral: parsed.puntuacionGeneral,
-        puntosFuertes: parsed.puntosFuertes,
-        proximaTecnicaSugerida: parsed.proximaTecnicaSugerida,
-        recomendacionAdaptativa: parsed.recomendacionAdaptativa,
-        fighters: (parsed.fighters || []).map((f: any) => ({
+      const userRole = req.body.userRole || 'white';
+      
+      const fightersList = (parsed.fighters || []).map((f: any, idx: number) => {
+        const roleLower = f.role.toLowerCase();
+        let isStudent = false;
+        if (userRole === 'white') {
+          isStudent = roleLower.includes('white') || roleLower.includes('blanco') || roleLower.includes('clara') || idx === 0;
+        } else {
+          isStudent = roleLower.includes('blue') || roleLower.includes('azul') || roleLower.includes('oscura') || idx === 1;
+        }
+        return {
           role: f.role,
           status: f.status,
           summary: f.summary,
+          isStudent,
           techniques: f.techniques || [],
           mistakes: f.mistakes || [],
           tips: f.tips || [],
@@ -219,18 +222,53 @@ Responde únicamente en formato JSON con la siguiente estructura (no agregues te
             recomendacion: e.recomendacion
           })),
           proximaTecnicaSugerida: f.proximaTecnicaSugerida || ''
-        })),
+        };
+      });
+
+      // Encontrar el luchador que representa al estudiante
+      const studentFighter = fightersList.find((f: any) => f.isStudent) || fightersList[0] || {
+        errors: [],
+        proximaTecnicaSugerida: parsed.proximaTecnicaSugerida || ''
+      };
+
+      // Mapear los errores que se guardarán en la tabla ErrorBiomecanico (solo los del estudiante)
+      const dbErrors = studentFighter.errors.map((e: any) => ({
+        articulacion: e.articulacion,
+        anguloMedido: e.anguloMedido,
+        anguloIdeal: e.anguloIdeal,
+        desviacion: e.desviacion,
+        severidad: e.severidad,
+        descripcionFallo: e.descripcionFallo || e.descripcion || '',
+        esRecurrente: false,
+        recomendacion: e.recomendacion
+      }));
+
+      // Si no hay errores específicos en el luchador, usamos los globales (fallback)
+      const erroresParaGuardar = dbErrors.length > 0 ? dbErrors : parsed.errores.map((e: any) => ({
+        articulacion: e.articulacion,
+        anguloMedido: e.anguloMedido,
+        anguloIdeal: e.anguloIdeal,
+        desviacion: e.desviacion,
+        severidad: e.severidad,
+        descripcionFallo: e.descripcion,
+        esRecurrente: false,
+        recomendacion: e.recomendacion
+      }));
+
+      // Determinar puntuación del estudiante
+      const studentScore = studentFighter.status === 'CORRECCIÓN REQUERIDA' ? 70 : (parsed.puntuacionGeneral || 80);
+
+      // 9. Guardar análisis biomecánico en SQLite
+      const analisis = await this.persistence.saveAnalysis(activeUserId, {
+        tecnicaId,
+        tecnicaNombre: techniqueName,
+        puntuacionGeneral: studentScore,
+        puntosFuertes: parsed.puntosFuertes,
+        proximaTecnicaSugerida: studentFighter.proximaTecnicaSugerida || parsed.proximaTecnicaSugerida || '',
+        recomendacionAdaptativa: parsed.recomendacionAdaptativa,
+        fighters: fightersList,
         metricas: metrics || [],
-        errores: parsed.errores.map((e: any) => ({
-          articulacion: e.articulacion,
-          anguloMedido: e.anguloMedido,
-          anguloIdeal: e.anguloIdeal,
-          desviacion: e.desviacion,
-          severidad: e.severidad,
-          descripcionFallo: e.descripcion,
-          esRecurrente: esRecurrente,
-          recomendacion: e.recomendacion
-        }))
+        errores: erroresParaGuardar
       });
 
       // 10. Determinar si el practicante está aprendiendo de verdad (Validación de Aprendizaje)
