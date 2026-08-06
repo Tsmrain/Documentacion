@@ -1,177 +1,135 @@
-import React, { useEffect, useState } from 'react';
-import { Trash2, Calendar, Target, Award, AlertCircle } from 'lucide-react';
-import { useApp } from '../context/AppContext';
-import { AnalisisBiomecanico } from '../models/types';
+import { useEffect, useState } from "react";
 
-export function HistoryView() {
-  const { historial, loadHistory, deleteAnalysis, setAnalisisActual, setVistaActual } = useApp();
-  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+interface HistoryViewProps {
+  usuarioId: string;
+  onSelectReport: (report: any) => void;
+}
+
+export function HistoryView({ usuarioId, onSelectReport }: HistoryViewProps) {
+  const [historial, setHistorial] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filtroTecnica, setFiltroTecnica] = useState("");
 
   useEffect(() => {
-    loadHistory();
-  }, [loadHistory]);
+    fetchHistorial();
+  }, [usuarioId]);
 
-  const handleDelete = async (id: number) => {
-    if (confirmDelete === id) {
-      await deleteAnalysis(id);
-      setConfirmDelete(null);
-    } else {
-      setConfirmDelete(id);
-      // Auto-cancel after 3 seconds
-      setTimeout(() => setConfirmDelete(null), 3000);
+  const fetchHistorial = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/sesion/historial?usuarioId=${usuarioId}`);
+      if (!res.ok) throw new Error("Error al obtener el historial de análisis.");
+      const json = await res.json();
+      setHistorial(json);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'score-excellent';
-    if (score >= 60) return 'score-good';
-    if (score >= 40) return 'score-moderate';
-    return 'score-poor';
-  };
-
-  // CP04: Historial vacío
-  if (historial.length === 0) {
+  if (loading) {
     return (
-      <div className="history-view">
-        <div className="glass-card empty-state">
-          <div className="empty-content">
-            <span className="empty-emoji">🥋</span>
-            <h2>¡Tu historial está vacío!</h2>
-            <p>Realiza tu primer análisis biomecánico para empezar a rastrear tu progreso.</p>
-            <p className="empty-motivation">
-              <em>"Un cinturón negro fue un cinturón blanco que no se rindió."</em>
-            </p>
-          </div>
-        </div>
+      <div className="glass-panel p-6 animate-fade-in" style={{ padding: '24px', textAlign: 'center' }}>
+        <p style={{ color: '#94a3b8' }}>Cargando historial de análisis...</p>
       </div>
     );
   }
 
+  if (error) {
+    return (
+      <div className="glass-panel p-6 animate-fade-in" style={{ padding: '24px' }}>
+        <h3 style={{ color: '#ef4444', marginTop: 0 }}>Error al Cargar Historial</h3>
+        <p style={{ color: '#cbd5e1' }}>{error}</p>
+        <button className="btn-secondary" onClick={fetchHistorial}>Reintentar</button>
+      </div>
+    );
+  }
+
+  const itemsFiltrados = historial.filter(item => {
+    if (!filtroTecnica) return true;
+    const tecnica = item.reporte?.tecnicaId || "";
+    return tecnica.toLowerCase().includes(filtroTecnica.toLowerCase());
+  });
+
   return (
-    <div className="history-view">
-      <div className="history-header">
-        <h2 className="section-title">
-          <Calendar size={22} />
-          Historial de Análisis
-        </h2>
-        <span className="history-count">{historial.length} registros</span>
+    <div className="glass-panel p-6 animate-fade-in mb-6" style={{ padding: '24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div>
+          <h2 style={{ margin: 0, color: '#818cf8', fontSize: '1.4rem' }}>Historial de Análisis (CU05)</h2>
+          <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '0.85rem' }}>
+            Registro cronológico de evaluaciones cinemáticas realizadas.
+          </p>
+        </div>
       </div>
 
-      <div className="history-list">
-        {historial.map((analisis) => (
-          <div
-            key={analisis.id}
-            className="glass-card history-card clickable"
-            onClick={() => {
-              setAnalisisActual(analisis);
-              setVistaActual('analisis');
-            }}
-            title="Clic para ver reporte biomecánico detallado"
-            style={{ cursor: 'pointer', transition: 'all 0.2s' }}
-          >
-            <div className="history-card-header">
-              <div className="history-score-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div className={`history-score ${getScoreColor(analisis.puntuacionGeneral)}`} title={`Puntuación: ${analisis.puntuacionGeneral}/100`}>
-                  {analisis.puntuacionGeneral}
-                </div>
-                <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ptos</span>
-              </div>
-              <div className="history-info">
-                <h3 className="history-tecnica">{analisis.tecnicaNombre}</h3>
-                <p className="history-date">
-                  {new Date(analisis.fecha).toLocaleDateString('es-BO', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </p>
-              </div>
-              <button
-                className={`btn-icon ${confirmDelete === analisis.id ? 'btn-danger' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(analisis.id!);
-                }}
-                title={confirmDelete === analisis.id ? 'Confirmar eliminación' : 'Eliminar'}
-              >
-                <Trash2 size={18} />
-              </button>
-            </div>
+      <div style={{ marginBottom: '20px' }}>
+        <input type="text" placeholder="Filtrar por técnica (ej. guardia, pasaje)..." value={filtroTecnica} onChange={(e) => setFiltroTecnica(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#ffffff', fontSize: '0.9rem' }} />
+      </div>
 
-            <div className="history-card-body">
-              {/* Resumen de luchadores si existen (Formato OpenBJJ) */}
-              {analisis.fighters && analisis.fighters.length > 0 ? (
-                <div className="history-fighters-summary" style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px', padding: '8px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--border-glass)' }}>
-                  {analisis.fighters.map((fighter: any, fIdx: number) => (
-                    <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem' }}>
-                      <div style={{
-                        width: '16px',
-                        height: '16px',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#fff',
-                        fontSize: '9px',
-                        fontWeight: 'bold',
-                        flexShrink: 0,
-                        background: fighter.status === 'approved' ? 'var(--accent-green)' : 'var(--accent-primary)'
-                      }}>
-                        {fighter.status === 'approved' ? '✓' : '!'}
-                      </div>
-                      <span style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{fighter.role.split(' ')[0]}:</span>
-                      <span style={{ color: 'var(--text-secondary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '300px' }}>
-                        {fighter.techniques.slice(0, 2).join(', ') || 'Posturas básicas'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <>
-                  {/* Errores resumen (Legacy/Backwards compatible) */}
-                  <div className="history-errors-summary">
-                    {analisis.errores.length > 0 ? (
-                      <>
-                        <Target size={14} />
-                        <span>{analisis.errores.length} error{analisis.errores.length !== 1 ? 'es' : ''} detectado{analisis.errores.length !== 1 ? 's' : ''}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Award size={14} />
-                        <span className="text-green">Sin errores detectados</span>
-                      </>
-                    )}
+      {historial.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '32px 16px', background: 'rgba(99,102,241,0.03)', border: '1px solid rgba(99,102,241,0.1)', borderRadius: '8px' }}>
+          <h3 style={{ color: '#818cf8', marginTop: 0, fontSize: '1.1rem' }}>Sin Registros Previos</h3>
+          <p style={{ color: '#cbd5e1', fontSize: '0.95rem', margin: 0, lineHeight: '1.5' }}>
+            Aún no has realizado ningún análisis. Sube tu primer video en el Analizador para ver tu historial.
+          </p>
+        </div>
+      ) : itemsFiltrados.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '32px 0', color: '#64748b' }}>
+          No se encontraron análisis que coincidan con la búsqueda.
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {itemsFiltrados.map((item) => {
+            const reporte = item.reporte || {};
+            const desviacion = reporte.desviacionGrados || 0;
+            const puntuacion = Math.max(0, Math.min(100, 100 - Math.round(desviacion * 1.8)));
+
+            let colorSeveridad = "#10b981";
+            if (reporte.severidad === "MODERADA") colorSeveridad = "#f59e0b";
+            else if (reporte.severidad === "GRAVE" || desviacion > 30) colorSeveridad = "#ef4444";
+
+            const fechaFormateada = new Date(item.fecha).toLocaleDateString("es-ES", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit"
+            });
+
+            return (
+              <div key={item.id} className="glass-panel" style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderLeft: `4px solid ${colorSeveridad}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block' }}>{fechaFormateada}</span>
+                    <h3 style={{ margin: '2px 0 0 0', fontSize: '1.05rem', color: '#f1f5f9' }}>
+                      {reporte.tecnicaId ? reporte.tecnicaId.replace("-", " ").toUpperCase() : "SPARRING GENERAL"}
+                    </h3>
                   </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: '1.4rem', fontWeight: 800, color: colorSeveridad }}>
+                      {puntuacion}%
+                    </span>
+                    <span style={{ fontSize: '0.7rem', display: 'block', color: colorSeveridad, fontWeight: 'bold', textTransform: 'uppercase' }}>
+                      {reporte.severidad || "LEVE"}
+                    </span>
+                  </div>
+                </div>
 
-                  {/* Tags de errores */}
-                  {analisis.errores.length > 0 && (
-                    <div className="history-error-tags">
-                      {analisis.errores.slice(0, 3).map((e, i) => (
-                        <span key={i} className={`error-tag severity-${e.severidad}`}>
-                          {e.articulacion}
-                        </span>
-                      ))}
-                      {analisis.errores.length > 3 && (
-                        <span className="error-tag more">+{analisis.errores.length - 3}</span>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Confirm delete banner */}
-            {confirmDelete === analisis.id && (
-              <div className="confirm-delete-banner">
-                <AlertCircle size={14} />
-                <span>Toca de nuevo para confirmar la eliminación</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                    Desviación: {reporte.desviacionArticular ? reporte.desviacionArticular.replace("_", " ") : "N/A"} ({desviacion} deg)
+                  </span>
+                  <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => onSelectReport({ success: true, reporte, planAdaptativo: item.planAdaptativo })}>
+                    Ver Reporte Completo (CU06)
+                  </button>
+                </div>
               </div>
-            )}
-          </div>
-        ))}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

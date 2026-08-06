@@ -1,0 +1,116 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Cinturon {
+  BLANCO
+  AZUL
+  MORADO
+  MARRON
+  NEGRO
+}
+
+enum CategoriaTecnica {
+  GUARDIA
+  PASAJE
+  SUMISION
+  DERRIBO
+  TRANSICION
+}
+
+enum SeveridadError {
+  LEVE
+  MODERADO
+  CRITICO
+}
+
+enum TipoFuente {
+  PDF
+  YOUTUBE
+}
+
+enum EstadoValidacion {
+  ACEPTADO
+  RECHAZADO
+}
+
+model Usuario {
+  id                String             @id @default(uuid())
+  nombre            String
+  email             String             @unique
+  cinturon          Cinturon           @default(BLANCO)
+  altura            Decimal            @db.Decimal(3, 2)
+  peso              Decimal            @db.Decimal(5, 2)
+  perfilCompetencia PerfilCompetencia?
+  sesiones          SesionEntrenamiento[]
+  createdAt         DateTime           @default(now())
+}
+
+model PerfilCompetencia {
+  id                       String                  @id @default(uuid())
+  usuarioId                String                  @unique
+  usuario                  Usuario                 @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  erroresHistoricos        Json                    // Objeto JSON con fallos consecutivos por articulación
+  historialVisualizaciones HistorialVisualizacion[]
+  rutaAprendizaje          RutaAprendizaje?
+}
+
+model SesionEntrenamiento {
+  id                 String              @id @default(uuid())
+  fecha              DateTime            @default(now())
+  usuarioId          String
+  usuario            Usuario             @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  analisis           AnalisisBiomecanico?
+}
+
+model AnalisisBiomecanico {
+  id                   String               @id @default(uuid())
+  sesionId             String               @unique
+  sesion               SesionEntrenamiento  @relation(fields: [sesionId], references: [id], onDelete: Cascade)
+  tecnicaId            String
+  severidad            SeveridadError
+  sugerenciaPedagogica String
+  erroresDetectados    ErrorBiomecanico[]
+}
+
+model ErrorBiomecanico {
+  id                  String               @id @default(uuid())
+  analisisId          String
+  analisis            AnalisisBiomecanico  @relation(fields: [analisisId], references: [id], onDelete: Cascade)
+  desviacionArticular String
+  desviacionGrados    Decimal              @db.Decimal(5, 2)
+}
+
+model HistorialVisualizacion {
+  id        String            @id @default(uuid())
+  perfilId  String
+  perfil    PerfilCompetencia @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+  videoId   String
+  visto     Boolean           @default(false)
+  timestamp DateTime          @default(now())
+}
+
+model RutaAprendizaje {
+  id                     String            @id @default(uuid())
+  perfilId               String            @unique
+  perfil                 PerfilCompetencia @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+  nivelCompetenciaActual String
+  drillRecomendado       String
+  videoYouTubeUrl        String
+  mensajeAdaptativo      String
+}
+
+model FuenteConocimiento {
+  id               String           @id @default(uuid())
+  titulo           String
+  autor            String?
+  url              String?
+  tipo             TipoFuente
+  estadoValidacion EstadoValidacion @default(ACEPTADO)
+  createdAt        DateTime         @default(now())
+}

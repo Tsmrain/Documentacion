@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Local SQLite databases & Journal
+*.db
+*.db-journal
+dev.db
+dev.db-journal
+
+# Raw videos and uploads
+*.mp4
+*.webm
+*.mov
+*.avi
+*.mkv
+uploads/
+
+# ChromaDB local data
+chroma-data/
+
+# Logs
+logs/
+*.log
