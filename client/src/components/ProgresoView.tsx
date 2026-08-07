@@ -96,6 +96,13 @@ export function ProgresoView({ usuarioId }: ProgresoViewProps) {
         </div>
       )}
 
+      {data.ultimaTecnica && (
+        <div className="glass-panel" style={{ padding: '12px 16px', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.2)', borderRadius: '8px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.85rem', color: '#a5b4fc', fontWeight: 600 }}>Última Técnica Evaluada:</span>
+          <span style={{ fontSize: '0.9rem', color: '#ffffff', fontWeight: 700, textTransform: 'uppercase' }}>{data.ultimaTecnica.replace(/-/g, " ")}</span>
+        </div>
+      )}
+
       <div>
         <h3 style={{ fontSize: '1rem', color: '#f1f5f9', marginTop: 0, marginBottom: '12px' }}>Nivel de Maestría por Posición</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

@@ -18,11 +18,15 @@ const extractFramesFromVideo = async (videoBlob: Blob, numFrames: number = 9): P
       const duration = video.duration || 1;
       const frames: string[] = [];
       let processed = 0;
+      // Escalar canvas a máximo 360px para optimizar consumo de tokens de Gemini y reducir ancho de banda
+      const scale = Math.min(360 / (video.videoWidth || 640), 1);
+      canvas.width = (video.videoWidth || 640) * scale;
+      canvas.height = (video.videoHeight || 480) * scale;
+
       video.onseeked = () => {
-        canvas.width = video.videoWidth || 640;
-        canvas.height = video.videoHeight || 480;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+        // Calidad 0.4: Óptima para pose y visión multimodal, reduce ~75% del peso base64
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.4);
         const base64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
         frames.push(base64);
         processed++;

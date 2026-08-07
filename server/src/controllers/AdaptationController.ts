@@ -22,6 +22,7 @@ export interface RutaAprendizaje {
   drillRecomendado: string;
   videoYouTubeUrl: string;
   mensajeAdaptativo: string;
+  ultimaTecnica?: string;
   posicionesMaestria?: { nombre: string; porcentaje: number }[];
 }
 
@@ -50,12 +51,10 @@ export class AdaptationController {
         const desviacion = h.desviacionGrados || 0;
         const score = Math.max(0, Math.min(100, 100 - Math.round(desviacion * 1.8)));
 
-        if (tecnica.includes("guardia") || tecnica.includes("triangulo") || tecnica.includes("armbar")) {
-          scoresGuardia.push(score);
-        } else if (tecnica.includes("pasaje") || tecnica.includes("derribo")) {
-          scoresPasaje.push(score);
-        } else if (tecnica.includes("montada") || tecnica.includes("lateral") || tecnica.includes("espalda")) {
+        if (tecnica.includes("montada") || tecnica.includes("mount") || tecnica.includes("lateral") || tecnica.includes("side") || tecnica.includes("espalda") || tecnica.includes("back")) {
           scoresMontada.push(score);
+        } else if (tecnica.includes("pasaje") || tecnica.includes("pass") || tecnica.includes("derribo") || tecnica.includes("takedown")) {
+          scoresPasaje.push(score);
         } else {
           scoresGuardia.push(score);
         }
@@ -88,6 +87,7 @@ export class AdaptationController {
         drillRecomendado: "Movimiento de cadera (Shrimping) básico",
         videoYouTubeUrl: "https://youtube.com/watch?v=shrimp101",
         mensajeAdaptativo: "Continúa practicando los drills básicos para consolidar tus posiciones.",
+        ultimaTecnica: historial.length > 0 ? (historial[historial.length - 1].tecnicaId || "") : undefined,
         posicionesMaestria
       };
     }
@@ -118,6 +118,7 @@ export class AdaptationController {
         desviacionGrados,
         severidad: evaluacion.severidad || "Moderado"
       });
+      resConmutada.ultimaTecnica = evaluacion.tecnicaId;
       resConmutada.posicionesMaestria = posicionesActualizadas;
       return resConmutada;
     }
@@ -127,6 +128,7 @@ export class AdaptationController {
       drillRecomendado: "Drill de Guardia Cerrada Estándar",
       videoYouTubeUrl: "https://youtube.com/watch?v=guardia_cerrada_basic",
       mensajeAdaptativo: `Intento registrado. Cuida el ángulo de tu ${errorArticular.replace("_", " ")}.`,
+      ultimaTecnica: evaluacion.tecnicaId,
       posicionesMaestria: posicionesActualizadas
     };
   }
