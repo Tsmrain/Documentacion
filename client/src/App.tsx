@@ -14,11 +14,11 @@ function App() {
     return localStorage.getItem("openbjj_user_id") || "user-default";
   });
   const [userProfile, setUserProfile] = useState<{ nombre: string; cinturon: string; maestria: string; altura?: number; peso?: number }>({
-    nombre: "Santiago",
-    cinturon: "AZUL",
-    maestria: "Intermedio",
-    altura: 178,
-    peso: 76
+    nombre: "Practicante",
+    cinturon: "BLANCO",
+    maestria: "Principiante",
+    altura: 175,
+    peso: 75
   });
 
   useEffect(() => {

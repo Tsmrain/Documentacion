@@ -61,10 +61,10 @@ export function ProgresoView({ usuarioId }: ProgresoViewProps) {
     );
   }
 
-  const posicionesMaestria = [
-    { nombre: "Guardia Cerrada", porcentaje: 85 },
-    { nombre: "Pasaje de Guardia", porcentaje: 65 },
-    { nombre: "Control Lateral y Montada", porcentaje: 45 }
+  const posicionesMaestria = data.posicionesMaestria || [
+    { nombre: "Guardia Cerrada", porcentaje: data.maestriaGuardia || 0 },
+    { nombre: "Pasaje de Guardia", porcentaje: data.maestriaPasaje || 0 },
+    { nombre: "Control Lateral y Montada", porcentaje: data.maestriaMontada || 0 }
   ];
 
   const esAlertaAdaptativa = data.mensajeAdaptativo?.includes("Alerta") || data.mensajeAdaptativo?.includes("fallado mas de 3 veces") || (data.vecesDetectadoConsecutivas && data.vecesDetectadoConsecutivas > 3);
@@ -99,7 +99,7 @@ export function ProgresoView({ usuarioId }: ProgresoViewProps) {
       <div>
         <h3 style={{ fontSize: '1rem', color: '#f1f5f9', marginTop: 0, marginBottom: '12px' }}>Nivel de Maestría por Posición</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {posicionesMaestria.map((pos, idx) => {
+          {posicionesMaestria.map((pos: { nombre: string; porcentaje: number }, idx: number) => {
             let color = "#10b981";
             if (pos.porcentaje < 50) color = "#ef4444";
             else if (pos.porcentaje < 80) color = "#f59e0b";

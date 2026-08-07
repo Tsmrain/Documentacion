@@ -13,10 +13,10 @@ interface PerfilViewProps {
 }
 
 export function PerfilView({ usuarioId, userProfile, onProfileUpdated }: PerfilViewProps) {
-  const [nombre, setNombre] = useState(userProfile.nombre || "Santiago");
-  const [cinturon, setCinturon] = useState(userProfile.cinturon || "AZUL");
-  const [altura, setAltura] = useState<number>(userProfile.altura || 178);
-  const [peso, setPeso] = useState<number>(userProfile.peso || 76);
+  const [nombre, setNombre] = useState(userProfile.nombre || "Practicante");
+  const [cinturon, setCinturon] = useState(userProfile.cinturon || "BLANCO");
+  const [altura, setAltura] = useState<number>(userProfile.altura || 175);
+  const [peso, setPeso] = useState<number>(userProfile.peso || 75);
   const [submitting, setSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 

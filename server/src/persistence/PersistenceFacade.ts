@@ -18,21 +18,21 @@ export class PersistenceFacade implements IPersistenceService {
   private usuarios: Map<string, UsuarioPerfil> = new Map();
 
   constructor() {
-    // Inicializar perfil por defecto y usuarios de prueba
+    // Inicializar perfil por defecto sin datos mock de prueba
     this.perfiles.set(DEFAULT_UUID, {
       usuarioId: DEFAULT_UUID,
-      cinturon: "AZUL",
+      cinturon: "BLANCO",
       erroresHistoricos: {},
       historialVisualizaciones: []
     });
 
     this.usuarios.set(DEFAULT_UUID, {
       usuarioId: DEFAULT_UUID,
-      nombre: "Santiago",
-      cinturon: "AZUL",
-      maestria: "Intermedio",
-      altura: 178,
-      peso: 76
+      nombre: "Practicante",
+      cinturon: "BLANCO",
+      maestria: "Principiante",
+      altura: 175,
+      peso: 75
     });
 
     this.usuarios.set("user-maria", {

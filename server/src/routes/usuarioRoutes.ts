@@ -13,11 +13,11 @@ export function createUsuarioRouter(sessionController: SesionEntrenamientoContro
       console.warn("[usuarioRoutes] Error al obtener perfil:", error);
       return res.status(200).json({
         usuarioId: "user-default",
-        nombre: "Santiago",
-        cinturon: "AZUL",
-        maestria: "Intermedio",
-        altura: 178,
-        peso: 76
+        nombre: "Practicante",
+        cinturon: "BLANCO",
+        maestria: "Principiante",
+        altura: 175,
+        peso: 75
       });
     }
   });

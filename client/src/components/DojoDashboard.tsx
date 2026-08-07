@@ -8,9 +8,9 @@ interface DojoDashboardProps {
 }
 
 export function DojoDashboard({ userProfile }: DojoDashboardProps) {
-  const nombre = userProfile?.nombre || "Santiago";
-  const cinturon = userProfile?.cinturon || "AZUL";
-  const maestria = userProfile?.maestria || "Intermedio";
+  const nombre = userProfile?.nombre || "Practicante";
+  const cinturon = userProfile?.cinturon || "BLANCO";
+  const maestria = userProfile?.maestria || "Principiante";
 
   return (
     <div className="glass-panel p-6 animate-fade-in mb-6" style={{ padding: '20px' }}>

@@ -1,3 +1,11 @@
+export interface ILLMProvider {
+  evaluarMovimiento(promptJSON: string, modelName?: string): Promise<string>;
+}
+
+export interface ITechniqueClassifier {
+  clasificarTecnicaVideo(keyframesSummary: any, modelName?: string): Promise<string>;
+}
+
 export interface ModerationResult {
   esPertinente: boolean;
   razon: string;

@@ -57,7 +57,7 @@ export function createSesionRouter(sessionController: SesionEntrenamientoControl
       return res.status(200).json(result);
     } catch (error) {
       console.warn("[sesionRoutes] Error al consultar perfil:", error);
-      return res.status(200).json({ usuarioId: "user-default", nombre: "Santiago", cinturon: "AZUL", maestria: "Intermedio" });
+      return res.status(200).json({ usuarioId: "user-default", nombre: "Practicante", cinturon: "BLANCO", maestria: "Principiante" });
     }
   });
 

@@ -36,6 +36,19 @@ export class SesionEntrenamientoController {
     console.log(`--------------------------------------------------------------------------------`);
     console.log(`[Dojo Debug] Solicitud de Análisis recibida para usuarioId: ${usuarioId}`);
     console.log("[Controller] Iniciando análisis cinemático...");
+
+    // Moderación de pertinencia de contenido de video
+    const videoText = typeof videoBlob === "string" ? videoBlob : (videoBlob?.name || "");
+    const videoLower = videoText.toLowerCase();
+    const temasAjenos = ["receta", "cocina", "musica", "cancion", "baile", "futbol", "torta", "tarta", "comida", "gato", "perro", "auto", "car"];
+    const esTemaAjeno = temasAjenos.some(t => videoLower.includes(t));
+    if (esTemaAjeno) {
+      console.warn(`[Controller - RD-03] Video rechazado por moderación semántica: Contenido no relacionado a BJJ (${videoText})`);
+      return {
+        success: false,
+        error: "El video seleccionado no contiene contenido relacionado a Brazilian Jiu-Jitsu o artes de agarre. Análisis cancelado por moderación semántica."
+      };
+    }
     
     // 1. Extracción de landmarks
     const landmarks = await this.poseEstimator.extraerLandmarks3D(videoBlob);
@@ -89,7 +102,7 @@ export class SesionEntrenamientoController {
     };
   }
 
-  async ingestarFuenteConocimiento(archivoBlob: any, metadata: any): Promise<boolean> {
+  async ingestarFuenteConocimiento(archivoBlob: any, metadata: any): Promise<any> {
     return this.ragController.procesarEIngestarFuente(archivoBlob, metadata);
   }
 
@@ -121,7 +134,7 @@ export class SesionEntrenamientoController {
       if (this.persistence && typeof (this.persistence as any).obtenerPerfilUsuario === "function") {
         return await (this.persistence as any).obtenerPerfilUsuario(usuarioId);
       }
-      return { usuarioId, nombre: "Santiago", cinturon: "AZUL", maestria: "Intermedio", altura: 178, peso: 76 };
+      return { usuarioId, nombre: "Practicante", cinturon: "BLANCO", maestria: "Principiante", altura: 175, peso: 75 };
     } catch (error) {
       console.warn("[Controller] Error al consultar perfil de usuario:", error);
       return { usuarioId, nombre: "Practicante", cinturon: "BLANCO", maestria: "Principiante", altura: 175, peso: 75 };
