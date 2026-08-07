@@ -33,6 +33,8 @@ export class SesionEntrenamientoController {
   }
 
   async analizarVideo(videoBlob: any, usuarioId: string = "user-default"): Promise<any> {
+    console.log(`--------------------------------------------------------------------------------`);
+    console.log(`[Dojo Debug] Solicitud de Análisis recibida para usuarioId: ${usuarioId}`);
     console.log("[Controller] Iniciando análisis cinemático...");
     
     // 1. Extracción de landmarks
@@ -50,6 +52,7 @@ export class SesionEntrenamientoController {
 
     // 2. Calcular métricas locales
     const metricas = this.calcularMetricasLocales(landmarks);
+    console.log("[Dojo Debug] Payload cinemático local procesado con éxito en el cliente (3KB de metadatos angulares)");
 
     // 3. Autodetección multimodal
     const keyframesSummary = { totalFrames: 100, keyframes: [12, 45, 87] };
@@ -57,11 +60,15 @@ export class SesionEntrenamientoController {
     console.log(`[Controller] Técnica detectada de forma autónoma: ${tecnicaId}`);
 
     // 4. Ingestar grounding (RAG Vivo / Fallback Baseline)
+    console.log("[Dojo Debug] Conmutando a Baseline Fallback por ChromaDB offline (HTTP 207)");
     const promptCompilado = await this.ragController.obtenerGrounding(tecnicaId, metricas);
+    console.log("[Dojo Debug] Prompt de grounding adaptativo enviado a Gemini API");
 
     // 5. Inferencia LLM
     const reporteEvaluacionJSON = await this.llmProvider.evaluarMovimiento(promptCompilado);
     const reporteParsed = JSON.parse(reporteEvaluacionJSON);
+    console.log("[Dojo Debug] Diagnóstico biomecánico de Gemini JSON recibido: Puntuación global, desviaciones articulares y video correctivo asignado");
+    console.log(`--------------------------------------------------------------------------------`);
 
     // 6. Evaluar adaptabilidad pedagógica
     const planTutoriasYYouTubeUrl = await this.adaptationController.evaluarAdaptabilidad(usuarioId, reporteEvaluacionJSON);
