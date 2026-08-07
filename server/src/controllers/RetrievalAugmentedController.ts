@@ -38,8 +38,12 @@ export class RetrievalAugmentedController {
         return this.promptBuilder.compilarPromptBaseline(metricas);
       }
     } catch (error: any) {
-      if (error instanceof VectorDBUnavailableException) {
-        console.warn(`[RAG - Graceful Degradation] ChromaDB no disponible: ${error.message}. Conmutando a Modo Baseline Fallback.`);
+      const isVectorDBOffline = error instanceof VectorDBUnavailableException || 
+                                error.name === "VectorDBUnavailableException" || 
+                                (error.message && error.message.includes("ChromaDB"));
+      
+      if (isVectorDBOffline) {
+        console.warn(`[Dojo Fallback] ChromaDB no disponible, activando prompt Baseline. Detalle: ${error.message}`);
         return this.promptBuilder.compilarPromptBaseline(metricas);
       }
       throw error;
@@ -47,22 +51,51 @@ export class RetrievalAugmentedController {
   }
 
   private async extraerMetadatosYouTube(url: string): Promise<string> {
+    // Intento principal: YouTube oEmbed oficial
     try {
-      if (typeof fetch !== "undefined") {
-        const cleanUrl = url.split("&list=")[0].split("?list=")[0];
-        const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(cleanUrl)}&format=json`;
-        const res = await fetch(oembedUrl);
-        if (res.ok) {
-          const json: any = await res.json();
-          if (json && json.title) {
-            return `Título del Video de YouTube: ${json.title}. Canal/Autor: ${json.author_name || ""}.`;
-          }
+      const cleanUrl = url.split("&list=")[0].split("?list=")[0];
+      const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(cleanUrl)}&format=json`;
+      const res = await fetch(oembedUrl, { signal: AbortSignal.timeout(5000) });
+      if (res.ok) {
+        const json: any = await res.json();
+        if (json && json.title) {
+          const metaText = [
+            json.title,
+            json.author_name ? `Canal: ${json.author_name}` : "",
+            json.provider_name ? `Plataforma: ${json.provider_name}` : ""
+          ].filter(Boolean).join(". ");
+          console.log(`[oEmbed YouTube] Metadatos obtenidos: ${metaText.substring(0, 120)}`);
+          return metaText;
+        }
+      } else {
+        console.warn(`[oEmbed YouTube] HTTP ${res.status} desde youtube.com/oembed. Probando noembed.com...`);
+      }
+    } catch (e: any) {
+      console.warn("[oEmbed YouTube] Fallo en oEmbed primario:", e.message);
+    }
+
+    // Intento secundario: noembed.com (proxy alternativo de oEmbed)
+    try {
+      const noembedUrl = `https://noembed.com/embed?url=${encodeURIComponent(url)}`;
+      const res2 = await fetch(noembedUrl, { signal: AbortSignal.timeout(5000) });
+      if (res2.ok) {
+        const json2: any = await res2.json();
+        if (json2 && json2.title) {
+          const metaText2 = [
+            json2.title,
+            json2.author_name ? `Canal: ${json2.author_name}` : ""
+          ].filter(Boolean).join(". ");
+          console.log(`[oEmbed noembed.com] Metadatos obtenidos: ${metaText2.substring(0, 120)}`);
+          return metaText2;
         }
       }
-    } catch (e) {
-      console.warn("[oEmbed YouTube] No se pudo resolver oEmbed:", e);
+    } catch (e2: any) {
+      console.warn("[oEmbed noembed.com] Fallo en oEmbed secundario:", e2.message);
     }
-    return `Video de YouTube: ${url}`;
+
+    // Ultimo recurso: usar la URL directamente como identificador de contenido
+    console.warn(`[oEmbed YouTube] Ambos intentos fallaron. Usando URL como identificador: ${url}`);
+    return `Video de YouTube BJJ: ${url}`;
   }
 
   async procesarEIngestarFuente(archivoBlob: any, metadata: SourceMetadata, usuarioIdParam?: string): Promise<{ success: boolean; error?: string; razon?: string } | boolean> {
@@ -72,11 +105,16 @@ export class RetrievalAugmentedController {
       const infoYouTube = await this.extraerMetadatosYouTube(metadata.url);
       textoExtraido = infoYouTube;
     } else {
-      textoExtraido = metadata.titulo || "Documento de texto sin título.";
+      textoExtraido = metadata.titulo || "Documento de texto sin titulo.";
     }
-    
-    // Muestra de los primeros 1000 caracteres para validación semántica (RD-03)
-    const muestra1000 = textoExtraido.substring(0, 1000);
+
+    // El moderador local trabaja con texto en minusculas.
+    // Normalizamos aqui para garantizar matching de palabras clave BJJ
+    // independientemente de como vengan los metadatos de oEmbed (mayusculas, titulos, etc.).
+    const textoNormalizado = textoExtraido.toLowerCase();
+
+    // Muestra de los primeros 1000 caracteres para validacion semantica (RD-03)
+    const muestra1000 = textoNormalizado.substring(0, 1000);
 
     if (this.contentModerator) {
       const resultado = await this.contentModerator.validarPertinenciaBJJ(muestra1000);
@@ -133,7 +171,7 @@ export class RetrievalAugmentedController {
     }
 
     if (vectorError) {
-      throw vectorError;
+      console.warn(`[Dojo Fallback] Ingesta vectorial fallida. Fuente relacional preservada en PostgreSQL.`);
     }
 
     return exitoVectorStore;

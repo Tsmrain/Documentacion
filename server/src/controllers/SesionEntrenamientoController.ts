@@ -38,43 +38,89 @@ export class SesionEntrenamientoController {
     const frames = (typeof videoPayload === "object" && Array.isArray(videoPayload.frames)) ? videoPayload.frames : [];
 
     console.log(`--------------------------------------------------------------------------------`);
-    console.log(`[Dojo Debug] Solicitud de Análisis recibida para usuarioId: ${usuarioId} (${frames.length} keyframes adjuntos)`);
-    console.log("[Controller] Iniciando análisis cinemático...");
+    console.log(`[Dojo Debug] Solicitud de Analisis recibida para usuarioId: ${usuarioId} (${frames.length} keyframes adjuntos)`);
+    console.log("[Controller] Iniciando analisis cinematico...");
 
-    // Moderación de pertinencia de contenido de video
+    // Moderacion de pertinencia de contenido de video
     const videoText = typeof videoBlob === "string" ? videoBlob : (videoBlob?.name || "");
     const videoLower = videoText.toLowerCase();
     const temasAjenos = ["receta", "cocina", "musica", "cancion", "baile", "futbol", "torta", "tarta", "comida", "gato", "perro", "auto", "car"];
     const esTemaAjeno = temasAjenos.some(t => videoLower.includes(t));
     if (esTemaAjeno) {
-      console.warn(`[Controller - RD-03] Video rechazado por moderación semántica: Contenido no relacionado a BJJ (${videoText})`);
+      console.warn(`[Controller - RD-03] Video rechazado por moderacion semantica: Contenido no relacionado a BJJ (${videoText})`);
       return {
         success: false,
-        error: "El video seleccionado no contiene contenido relacionado a Brazilian Jiu-Jitsu o artes de agarre. Análisis cancelado por moderación semántica."
+        error: "El video seleccionado no contiene contenido relacionado a Brazilian Jiu-Jitsu o artes de agarre. Analisis cancelado por moderacion semantica."
       };
     }
-    
-    // 1. Extracción de landmarks
+
+    // 1. Extraccion de landmarks
     const landmarks = await this.poseEstimator.extraerLandmarks3D(videoBlob);
-    
-    // Verificar confianza cinemática (Excepción 1)
+
+    // Verificar confianza cinematica (Excepcion 1)
     const confianzaMedia = this.obtenerConfianzaMedia(landmarks);
     if (confianzaMedia < 0.5) {
       console.warn("[Controller] Landmarks con baja confianza. Cancelando flujo.");
       return {
         success: false,
-        error: "Baja confianza de landmarks. Oclusión o mala iluminación detectada. Por favor reposiciona tu cámara.",
+        error: "Baja confianza de landmarks. Oclusion o mala iluminacion detectada. Por favor reposiciona tu camara.",
       };
     }
 
-    // 2. Calcular métricas locales
+    // 2. Calcular metricas locales
     const metricas = this.calcularMetricasLocales(landmarks, videoText);
-    console.log("[Dojo Debug] Payload cinemático local procesado con éxito en el cliente (3KB de metadatos angulares)");
+    console.log("[Dojo Debug] Payload cinematico local procesado con exito en el cliente (3KB de metadatos angulares)");
 
-    // 3. Autodetección multimodal
+    // 3. Autodeteccion multimodal - Fase 1 del pipeline Two-Phase RAG
     const keyframesSummary = { totalFrames: 100, keyframes: [12, 45, 87] };
-    const tecnicaId = await (this.classifier as any).clasificarTecnicaVideo(keyframesSummary, videoText, frames);
-    console.log(`[Controller] Técnica detectada de forma autónoma: ${tecnicaId}`);
+    let tecnicaId = await (this.classifier as any).clasificarTecnicaVideo(keyframesSummary, videoText, frames);
+    console.log(`[Controller] Tecnica detectada de forma autonoma: ${tecnicaId}`);
+
+    // ----------------------------------------------------------------
+    // CU01 FLUJO ALTERNATIVO 6.b - Tecnica Desconocida (Zero-Shot / Tecnica D)
+    // Si el clasificador multimodal no reconoce la posicion en el catalogo
+    // registrado, se activa el descubrimiento autonomo con Gemini Vision.
+    // La nueva tecnica se indexa en PostgreSQL y opcionalmente en ChromaDB.
+    // El analisis biomecanico continua usando los parametros recien aprendidos.
+    // ----------------------------------------------------------------
+    if (tecnicaId === "tecnica-desconocida") {
+      console.log("[Controller - CU01 6.b] Posicion no catalogada detectada. Activando descubrimiento autonomo de Tecnica D.");
+      try {
+        const geminiAdapter = this.classifier as any;
+        // Invoca Gemini Vision para generar la entidad Tecnica de forma autonoma
+        const nuevaTecnica = await geminiAdapter.descubrirNuevaTecnicaBJJ(frames);
+
+        console.log(`[Controller - CU01 6.b] Tecnica D aprendida: "${nuevaTecnica.nombreTecnica}" (${nuevaTecnica.categoria}, angulo ideal: ${nuevaTecnica.anguloArticularIdeal} grados).`);
+
+        // La persistencia de la nueva Tecnica en PostgreSQL como un reporte de analisis
+        // ha sido removida para evitar duplicados en el Historial del practicante.
+        // La tecnica solo sera inyectada en el RAG (ChromaDB) y como metadatos relacionales puros.
+
+        // Vectorizar la descripcion semantica en ChromaDB si el Vector Store esta activo
+        try {
+          if (this.ragController && typeof (this.ragController as any).vectorizarDescripcion === "function") {
+            await (this.ragController as any).vectorizarDescripcion(
+              nuevaTecnica.nombreTecnica,
+              nuevaTecnica.descripcionSemantica
+            );
+            console.log(`[Controller - CU01 6.b] Descripcion semantica vectorizada en ChromaDB para: "${nuevaTecnica.nombreTecnica}".`);
+          }
+        } catch (vecErr: any) {
+          console.warn(`[Controller - CU01 6.b] ChromaDB no disponible. La descripcion semantica se guardara solo en PostgreSQL. Detalle: ${vecErr.message}`);
+        }
+
+        // Continuar el analisis biomecanico usando el angulo ideal de la tecnica recien descubierta
+        tecnicaId = nuevaTecnica.nombreTecnica.toLowerCase().replace(/\s+/g, "-");
+
+        // Agregar la descripcion semantica generada como contexto RAG local para la inferencia
+        if (metricas.length > 0) {
+          metricas[0].anguloMedido = metricas[0].anguloMedido || nuevaTecnica.anguloArticularIdeal;
+        }
+      } catch (descErr: any) {
+        console.warn(`[Controller - CU01 6.b] Error en descubrimiento autonomo. Conmutando a guardia-cerrada como base segura: ${descErr.message}`);
+        tecnicaId = "guardia-cerrada";
+      }
+    }
 
     // 4. Ingestar grounding (RAG Vivo / Fallback Baseline)
     console.log("[Dojo Debug] Conmutando a Baseline Fallback por ChromaDB offline (HTTP 207)");
@@ -83,23 +129,56 @@ export class SesionEntrenamientoController {
 
     // 5. Inferencia LLM
     const reporteEvaluacionJSON = await (this.llmProvider as any).evaluarMovimiento(promptCompilado, frames);
-    const reporteParsed = JSON.parse(reporteEvaluacionJSON);
+
+    // Parseo seguro: Gemini puede devolver JSON dentro de bloques markdown (```json ... ```)
+    // o con texto previo. El parseo directo lanza SyntaxError en esos casos.
+    let reporteParsed: any = null;
+    try {
+      reporteParsed = JSON.parse(reporteEvaluacionJSON);
+    } catch {
+      const match = reporteEvaluacionJSON.match(/\{[\s\S]*\}/);
+      if (match) {
+        try {
+          reporteParsed = JSON.parse(match[0]);
+        } catch {
+          reporteParsed = null;
+        }
+      }
+    }
+
+    // Fallback deterministico si el parseo falla completamente
+    if (!reporteParsed) {
+      console.warn("[Controller] Respuesta de LLM no parseable. Generando diagnostico local de emergencia.");
+      const metricaFallback = metricas[0] || { articulacion: "codo_derecho", desviacionGrados: 20, anguloMedido: 110 };
+      reporteParsed = {
+        tecnicaId,
+        evaluacion: `Diagnostico cinematico generado localmente para la tecnica ${tecnicaId}.`,
+        desviacionArticular: metricaFallback.articulacion || "codo_derecho",
+        desviacionGrados: metricaFallback.desviacionGrados || 20,
+        severidad: "Moderado",
+        sugerenciaPedagogica: `Ajusta el angulo de tu ${(metricaFallback.articulacion || "codo_derecho").replace("_", " ")} para mejorar la estabilidad estructural.`
+      };
+    }
+
     if (reporteParsed && (!reporteParsed.tecnicaId || reporteParsed.tecnicaId === "guardia-cerrada") && tecnicaId !== "guardia-cerrada") {
       reporteParsed.tecnicaId = tecnicaId;
     }
-    console.log("[Dojo Debug] Diagnóstico biomecánico de Gemini JSON recibido: Puntuación global, desviaciones articulares y video correctivo asignado");
+    console.log("[Dojo Debug] Diagnostico biomecanico de Gemini JSON recibido: Puntuacion global, desviaciones articulares y video correctivo asignado");
     console.log(`--------------------------------------------------------------------------------`);
 
-    // 6. Evaluar adaptabilidad pedagógica
-    const planTutoriasYYouTubeUrl = await this.adaptationController.evaluarAdaptabilidad(usuarioId, reporteEvaluacionJSON);
 
-    // Guardar análisis en persistencia relacional
+    // 6. Evaluar adaptabilidad pedagogica.
+    // Se pasa el objeto ya parseado serializado para garantizar JSON valido
+    // independientemente del formato original de la respuesta de Gemini.
+    const planTutoriasYYouTubeUrl = await this.adaptationController.evaluarAdaptabilidad(usuarioId, JSON.stringify(reporteParsed));
+
+    // Guardar analisis en persistencia relacional
     try {
       if (this.persistence) {
         await this.persistence.guardarAnalisis(usuarioId, reporteParsed);
       }
     } catch (e) {
-      console.warn("[Controller] No se pudo guardar el análisis en persistencia:", e);
+      console.warn("[Controller] No se pudo guardar el analisis en persistencia:", e);
     }
 
     return {
@@ -209,5 +288,10 @@ export class SesionEntrenamientoController {
         desviacionGrados: desviacionDinamica
       }
     ];
+  }
+
+  async eliminarHistorialAnalisis(usuarioId: string, analisisId: string): Promise<boolean> {
+    if (!this.persistence) return false;
+    return this.persistence.eliminarAnalisis(usuarioId, analisisId);
   }
 }

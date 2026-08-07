@@ -35,9 +35,11 @@ export interface IPersistenceService {
 
 export class AdaptationController {
   private persistence: IPersistenceService;
+  private ragController?: any;
 
-  constructor(persistence: IPersistenceService) {
+  constructor(persistence: IPersistenceService, ragController?: any) {
     this.persistence = persistence;
+    this.ragController = ragController;
   }
 
   private calcularMaestriaPorPosicion(historial: any[]): { nombre: string; porcentaje: number }[] {
@@ -123,10 +125,42 @@ export class AdaptationController {
       return resConmutada;
     }
 
+    // Buscar en RAG un video de YouTube inyectado para esta tecnica
+    const tecnicaBusqueda = (evaluacion.tecnicaId || "bjj").replace(/-/g, " ").toLowerCase();
+    let videoRecomendado = "https://www.youtube.com/results?search_query=" + encodeURIComponent(tecnicaBusqueda + " bjj tutorial"); // Fallback dinamico
+
+    
+    if (this.ragController) {
+      try {
+        const fuentes = await this.ragController.obtenerFuentes(usuarioId);
+        const fuentesYouTube = fuentes.filter((f: any) => f.tipo === "youtube" && f.url);
+        
+        if (fuentesYouTube.length > 0) {
+          // Intentar buscar uno que coincida con la tecnica actual o articulacion
+          const artBusqueda = errorArticular.replace(/_/g, " ").toLowerCase();
+          
+          const match = fuentesYouTube.find((f: any) => 
+            f.titulo.toLowerCase().includes(tecnicaBusqueda) || 
+            f.titulo.toLowerCase().includes(artBusqueda)
+          );
+          
+          if (match) {
+            videoRecomendado = match.url;
+            console.log(`[Adaptacion] Video RAG encontrado para '${tecnicaBusqueda}': ${videoRecomendado}`);
+          } else {
+            videoRecomendado = fuentesYouTube[0].url;
+            console.log(`[Adaptacion] Video RAG generico seleccionado: ${videoRecomendado}`);
+          }
+        }
+      } catch (e) {
+        console.warn("[Adaptacion] Error al consultar fuentes RAG:", e);
+      }
+    }
+
     return {
       nivelCompetenciaActual: "Principiante",
-      drillRecomendado: "Drill de Guardia Cerrada Estándar",
-      videoYouTubeUrl: "https://youtube.com/watch?v=guardia_cerrada_basic",
+      drillRecomendado: `Drill enfocado en ${evaluacion.tecnicaId || "Guardia Cerrada"}`,
+      videoYouTubeUrl: videoRecomendado,
       mensajeAdaptativo: `Intento registrado. Cuida el ángulo de tu ${errorArticular.replace("_", " ")}.`,
       ultimaTecnica: evaluacion.tecnicaId,
       posicionesMaestria: posicionesActualizadas

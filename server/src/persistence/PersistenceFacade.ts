@@ -212,6 +212,25 @@ export class PersistenceFacade implements IPersistenceService {
     }
   }
 
+  async eliminarAnalisis(usuarioId: string, analisisId: string): Promise<boolean> {
+    try {
+      const normalizedId = this.normalizarUsuarioId(usuarioId);
+      const list = this.analisis.get(normalizedId) || [];
+      const originalLength = list.length;
+      const filtered = list.filter(a => a.id !== analisisId);
+      
+      if (filtered.length < originalLength) {
+        this.analisis.set(normalizedId, filtered);
+        console.log(`[PersistenceFacade - Prisma] Análisis ${analisisId} eliminado para usuario: ${normalizedId}`);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.warn("[PersistenceFacade] Error al eliminar análisis:", error);
+      return false;
+    }
+  }
+
   private fuentesConocimiento: Map<string, any[]> = new Map();
 
   async guardarFuenteConocimiento(usuarioId: string, fuente: any): Promise<boolean> {

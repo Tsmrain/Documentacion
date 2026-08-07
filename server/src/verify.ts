@@ -67,7 +67,7 @@ async function runIntegrationTests() {
   
   const ragController = new RetrievalAugmentedController(vectorStore, promptBuilder, geminiAdapter);
   const persistenceFacade = new PersistenceFacade(); // Capa de acceso a datos GoF Facade
-  const adaptationController = new AdaptationController(persistenceFacade);
+  const adaptationController = new AdaptationController(persistenceFacade, ragController);
   
   const sessionController = new SesionEntrenamientoController(
     poseEstimator,

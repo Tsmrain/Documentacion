@@ -49,6 +49,23 @@ export function createSesionRouter(sessionController: SesionEntrenamientoControl
     }
   });
 
+  router.delete("/historial/:id", async (req: Request, res: Response) => {
+    try {
+      const usuarioId = req.query.usuarioId as string || "user-default";
+      const analisisId = req.params.id;
+      const success = await sessionController.eliminarHistorialAnalisis(usuarioId, analisisId);
+      
+      if (success) {
+        return res.status(200).json({ success: true, message: "Historial eliminado correctamente" });
+      } else {
+        return res.status(404).json({ success: false, message: "Análisis no encontrado" });
+      }
+    } catch (error) {
+      console.warn("[sesionRoutes] Error al eliminar historial:", error);
+      return res.status(500).json({ success: false, message: "Error interno del servidor" });
+    }
+  });
+
   router.get("/perfil", async (req: Request, res: Response) => {
     try {
       const usuarioId = (req.query.usuarioId as string) || "user-default";

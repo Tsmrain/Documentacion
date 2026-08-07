@@ -10,7 +10,9 @@ export function RagIngestionPanel({ onClose, usuarioId = "user-default" }: RagIn
   const [url, setUrl] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<{ type: "success" | "warning" | "error", text: string } | null>(null);
+  // "rejection" es el estado especifico para el rechazo por moderacion autonoma (RD-03 HTTP 400).
+  // Difiere de "error" (fallo de red/servidor) y de "warning" (ChromaDB offline HTTP 207).
+  const [statusMessage, setStatusMessage] = useState<{ type: "success" | "warning" | "error" | "rejection", text: string } | null>(null);
   const [fuentes, setFuentes] = useState<any[]>([]);
 
   useEffect(() => {
@@ -84,26 +86,38 @@ export function RagIngestionPanel({ onClose, usuarioId = "user-default" }: RagIn
 
       const data = await response.json();
 
+      // HTTP 400 / 422: Rechazo por moderacion autonoma de la IA (RD-03).
+      // El banner debe mostrar la razon exacta devuelta por el moderador de Gemini.
       if (response.status === 400 || response.status === 422) {
-        const detalleRazon = data.razon ? ` Detalle: ${data.razon}` : (data.error ? ` Detalle: ${data.error}` : "");
+        const razonModeracion =
+          data.razon ||
+          data.error ||
+          "El contenido no contiene referencias validas a Jiu-Jitsu o artes de agarre.";
         setStatusMessage({
-          type: "error",
-          text: `Rechazado: El documento no está relacionado con el Jiu-Jitsu.${detalleRazon}`
+          type: "rejection",
+          text: `Rechazado por Moderacion Autonoma (RD-03): ${razonModeracion}`
         });
         return;
       }
 
+      // HTTP 207: Fuente persistida en PostgreSQL pero Vector Store (ChromaDB) fuera de linea.
+      // Es un estado de degradacion del sistema, no un rechazo de contenido.
       if (response.status === 207 || data.degraded) {
         setStatusMessage({
           type: "warning",
-          text: "Atención: La fuente se procesó pero no pudo ser indexada en el Vector Store (ChromaDB fuera de línea). El sistema operará con el conocimiento nativo de la IA."
+          text: "Advertencia de Infraestructura: La fuente fue aceptada y guardada en la base de datos relacional (PostgreSQL), pero no pudo ser vectorizada (ChromaDB fuera de linea). El sistema operara con el conocimiento nativo de la IA hasta que el Vector Store se restaure."
         });
-      } else if (!response.ok) {
-        throw new Error(data.error || "Error al agregar la fuente.");
-      } else {
-        setStatusMessage({ type: "success", text: "Fuente agregada y vectorizada con éxito." });
+        setUrl("");
+        setSelectedFile(null);
+        await fetchFuentes();
+        return;
       }
 
+      if (!response.ok) {
+        throw new Error(data.error || "Error al agregar la fuente.");
+      }
+
+      setStatusMessage({ type: "success", text: "Fuente agregada y vectorizada con exito. Disponible en el Vector Store RAG." });
       setUrl("");
       setSelectedFile(null);
       await fetchFuentes();
@@ -135,14 +149,36 @@ export function RagIngestionPanel({ onClose, usuarioId = "user-default" }: RagIn
 
       {statusMessage && (
         <div style={{
-          padding: '12px',
-          background: statusMessage.type === "success" ? 'rgba(16,185,129,0.1)' : statusMessage.type === "warning" ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)',
-          color: statusMessage.type === "success" ? '#34d399' : statusMessage.type === "warning" ? '#fbbf24' : '#f87171',
-          border: `1px solid ${statusMessage.type === "success" ? 'rgba(16,185,129,0.2)' : statusMessage.type === "warning" ? 'rgba(245,158,11,0.3)' : 'rgba(239,68,68,0.2)'}`,
+          padding: statusMessage.type === "rejection" ? '14px 16px' : '12px',
+          background:
+            statusMessage.type === "success" ? 'rgba(16,185,129,0.1)' :
+            statusMessage.type === "warning" ? 'rgba(245,158,11,0.08)' :
+            statusMessage.type === "rejection" ? 'rgba(239,68,68,0.12)' :
+            'rgba(239,68,68,0.1)',
+          color:
+            statusMessage.type === "success" ? '#34d399' :
+            statusMessage.type === "warning" ? '#fbbf24' :
+            '#f87171',
+          border: `1px solid ${
+            statusMessage.type === "success" ? 'rgba(16,185,129,0.2)' :
+            statusMessage.type === "warning" ? 'rgba(245,158,11,0.3)' :
+            'rgba(239,68,68,0.35)'
+          }`,
           borderRadius: '8px',
           marginBottom: '16px',
-          fontSize: '0.85rem'
+          fontSize: '0.85rem',
+          borderLeft: statusMessage.type === "rejection" ? '4px solid #ef4444' : undefined
         }}>
+          {statusMessage.type === "rejection" && (
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '4px', color: '#fca5a5' }}>
+              Moderacion Autonoma RD-03
+            </span>
+          )}
+          {statusMessage.type === "warning" && (
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '4px', color: '#fde68a' }}>
+              ChromaDB Offline - Modo Degradado
+            </span>
+          )}
           {statusMessage.text}
         </div>
       )}

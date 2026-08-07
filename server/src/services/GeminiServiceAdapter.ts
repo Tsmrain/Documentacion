@@ -198,13 +198,49 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
 
         if (response.ok) {
           const data: any = await response.json();
-          const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+          const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toLowerCase() || "";
           if (textResponse) {
-            const cleanId = textResponse.toLowerCase().replace(/[^a-z0-9-]/g, "");
-            const validIds = ["montada", "guardia-cerrada", "pasaje-guardia", "control-lateral", "espalda", "derribo-double-leg", "triangulo-guardia", "armbar-cerrada"];
-            const matched = validIds.find(id => cleanId.includes(id.replace("-", ""))) || validIds.find(id => cleanId === id) || cleanId;
-            console.log(`[Gemini Classifier] Tecnica detectada por vision multimodal: ${matched}`);
-            return matched;
+            // Mapeo semantico bidireccional (Ingles/Espanol -> ID Canonico)
+            const mapSemantico: Record<string, string> = {
+              "mount": "montada",
+              "seated mount": "montada",
+              "montada": "montada",
+              "closed guard": "guardia-cerrada",
+              "guardia cerrada": "guardia-cerrada",
+              "guardia-cerrada": "guardia-cerrada",
+              "side control": "control-lateral",
+              "control lateral": "control-lateral",
+              "lateral": "control-lateral",
+              "half guard": "media-guardia",
+              "media guardia": "media-guardia",
+              "media-guardia": "media-guardia",
+              "back": "espalda",
+              "espalda": "espalda",
+              "back control": "espalda"
+            };
+
+            // Intentar match directo o parcial
+            let matchedId: string | null = null;
+            for (const [key, canonicalId] of Object.entries(mapSemantico)) {
+              if (textResponse.includes(key)) {
+                matchedId = canonicalId;
+                break;
+              }
+            }
+
+            if (!matchedId) {
+              const cleanId = textResponse.replace(/[^a-z0-9-]/g, "");
+              const validIds = ["montada", "guardia-cerrada", "pasaje-guardia", "control-lateral", "espalda", "derribo-double-leg", "triangulo-guardia", "armbar-cerrada", "media-guardia", "guardia-abierta"];
+              matchedId = validIds.find(id => cleanId.includes(id.replace(/-/g, ""))) || validIds.find(id => cleanId === id) || null;
+            }
+
+            if (matchedId) {
+              console.log(`[Gemini Classifier] Tecnica detectada por vision multimodal: ${matchedId}`);
+              return matchedId;
+            }
+            // Respuesta de Gemini que no coincide con ningun ID conocido -> Tecnica Desconocida (Zero-Shot / Tecnica D)
+            console.log(`[Gemini Classifier] Posicion no reconocida en el catalogo actual: "${textResponse}". Activando flujo de descubrimiento autonomo (CU01 Flow 6.b).`);
+            return "tecnica-desconocida";
           }
         }
       } catch (err: any) {
@@ -212,16 +248,98 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
       }
     }
 
-    // Deduccion dinamica local si no hay API Key o falla la llamada
+    // Deduccion dinamica local si no hay API Key o falla la llamada (Fallback determinista)
     const summaryStr = (JSON.stringify(keyframesSummary) + " " + (videoName || "")).toLowerCase();
-    if (summaryStr.includes("montad") || summaryStr.includes("mount")) return "montada";
-    if (summaryStr.includes("side") || summaryStr.includes("lateral")) return "control-lateral";
-    if (summaryStr.includes("back") || summaryStr.includes("espalda")) return "espalda";
-    if (summaryStr.includes("pass") || summaryStr.includes("pasaje")) return "pasaje-guardia";
-    if (summaryStr.includes("derribo") || summaryStr.includes("takedown")) return "derribo-double-leg";
-    if (summaryStr.includes("triangulo") || summaryStr.includes("triangle")) return "triangulo-guardia";
-    if (summaryStr.includes("armbar") || summaryStr.includes("palanca")) return "armbar-cerrada";
+    
+    // Mapeo robusto local
+    if (summaryStr.match(/montada|mount/)) return "montada";
+    if (summaryStr.match(/side|lateral/)) return "control-lateral";
+    if (summaryStr.match(/back|espalda/)) return "espalda";
+    if (summaryStr.match(/pass|pasaje/)) return "pasaje-guardia";
+    if (summaryStr.match(/derribo|takedown/)) return "derribo-double-leg";
+    if (summaryStr.match(/triangulo|triangle/)) return "triangulo-guardia";
+    if (summaryStr.match(/armbar|palanca/)) return "armbar-cerrada";
+    if (summaryStr.match(/half|media/)) return "media-guardia";
+    if (summaryStr.match(/open|abierta/)) return "guardia-abierta";
+    
     return "guardia-cerrada";
+  }
+
+  // ============================================================
+  // FLUJO 6.b - Descubrimiento Autonomo de Tecnica Desconocida
+  // (CU01 Alternativo / Zero-Shot Discovery / Tecnica D)
+  // Se invoca cuando clasificarTecnicaVideo devuelve "tecnica-desconocida".
+  // Usa Gemini Vision con los 9 keyframes para generar de forma autonoma
+  // una nueva entidad Tecnica estructurada en JSON.
+  // Si el API Key no esta disponible usa deduccion local determinista.
+  // ============================================================
+  async descubrirNuevaTecnicaBJJ(frames: string[]): Promise<{
+    nombreTecnica: string;
+    descripcionSemantica: string;
+    categoria: string;
+    anguloArticularIdeal: number;
+  }> {
+    const activeKey = this.getApiKey();
+    console.log(`[Gemini Zero-Shot] Iniciando descubrimiento autonomo de tecnica desconocida con ${frames.length} keyframes.`);
+
+    if (activeKey && frames.length > 0) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.defaultModel}:generateContent?key=${activeKey}`;
+        const imageParts = frames.slice(0, 9).map(f => ({
+          inlineData: { mimeType: "image/jpeg", data: f }
+        }));
+
+        const textPart = {
+          text: `ROL: Motor de descubrimiento cinetico autonomo de OpenBJJ (Zero-Shot BJJ Discovery).\n\nSe han enviado imagenes de un sparring que muestra una posicion de Jiu-Jitsu NO catalogada previamente.\n\nAnaliza las imagenes y genera una nueva entidad de tecnica BJJ respondiendo UNICAMENTE con un JSON valido con exactamente estos campos:\n{ "nombreTecnica": "<nombre descriptivo en español, max 4 palabras>", "descripcionSemantica": "<descripcion biomecanica de la posicion, max 80 palabras, en español>", "categoria": "<una de: guardia | posicion-superior | transicion | sumision | derribo>", "anguloArticularIdeal": <numero entero entre 60 y 150 representando el angulo articular ideal en grados para esta posicion> }`
+        };
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [textPart, ...imageParts] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.2,
+              maxOutputTokens: 200
+            }
+          })
+        });
+
+        if (response.ok) {
+          const data: any = await response.json();
+          const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (textResponse) {
+            const parsed = JSON.parse(textResponse);
+            if (parsed.nombreTecnica && parsed.descripcionSemantica) {
+              console.log(`[Gemini Zero-Shot] Nueva tecnica descubierta autonomamente: "${parsed.nombreTecnica}" (categoria: ${parsed.categoria}).`);
+              return {
+                nombreTecnica: parsed.nombreTecnica,
+                descripcionSemantica: parsed.descripcionSemantica,
+                categoria: parsed.categoria || "transicion",
+                anguloArticularIdeal: typeof parsed.anguloArticularIdeal === "number" ? parsed.anguloArticularIdeal : 90
+              };
+            }
+          }
+        } else {
+          console.warn(`[Gemini Zero-Shot] HTTP ${response.status} al intentar descubrimiento. Activando deduccion local.`);
+        }
+      } catch (err: any) {
+        console.warn(`[Gemini Zero-Shot] Fallo en llamada remota: ${err.message}. Activando deduccion local.`);
+      }
+    }
+
+    // Deduccion local determinista como fallback cuando no hay API Key o falla la llamada remota.
+    // Genera un nombre unico basado en timestamp para evitar colisiones en la base de datos.
+    const timestamp = Date.now();
+    const nombreFallback = `Posicion Descubierta ${timestamp % 10000}`;
+    console.log(`[Gemini Zero-Shot Fallback] Generando tecnica local: "${nombreFallback}".`);
+    return {
+      nombreTecnica: nombreFallback,
+      descripcionSemantica: "Posicion de grappling identificada por el sistema de vision cinematica. Requiere revision manual por instructor certificado antes de su inclusion en el catalogo oficial.",
+      categoria: "transicion",
+      anguloArticularIdeal: 90
+    };
   }
 
   async validarPertinenciaBJJ(texto: string, modelName?: string): Promise<ModerationResult> {

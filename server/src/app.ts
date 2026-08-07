@@ -36,7 +36,7 @@ export function createApp(sessionController: SesionEntrenamientoController): exp
         planAdaptativo: {
           nivelCompetenciaActual: "Principiante",
           drillRecomendado: "Drill de Guardia Cerrada Estándar",
-          videoYouTubeUrl: "https://youtube.com/watch?v=guardia_cerrada_basic",
+          videoYouTubeUrl: "https://www.youtube.com/results?search_query=" + encodeURIComponent("guardia-cerrada bjj tutorial"),
           mensajeAdaptativo: "Operación de emergencia activa. Se evaluó con el conocimiento nativo de Gemini BJJ."
         }
       });

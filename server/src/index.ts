@@ -38,7 +38,7 @@ const promptBuilder = new DynamicPromptBuilder();
 const geminiAdapter = new GeminiServiceAdapter();
 const ragController = new RetrievalAugmentedController(vectorStore, promptBuilder, geminiAdapter);
 const persistenceFacade = new PersistenceFacade();
-const adaptationController = new AdaptationController(persistenceFacade);
+const adaptationController = new AdaptationController(persistenceFacade, ragController);
 
 const sessionController = new SesionEntrenamientoController(
   poseEstimator,
