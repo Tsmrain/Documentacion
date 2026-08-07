@@ -4,36 +4,39 @@ Plataforma inteligente de tutoría adaptativa e inspección biomecánica tridime
 
 ---
 
-## Instrucciones de Despliegue Rapido (Docker Compose)
+## Instrucciones de Despliegue Rapido (One-Step Startup)
 
-Para evitar conflictos de puertos host (`EADDRINUSE`) y garantizar el aislamiento total del entorno de acuerdo con el **Diagrama de Despliegue Físico (Figura 10)** del Proceso Unificado (UP), la aplicación completa se despliega mediante **Docker Compose**:
+Para garantizar la maxima simplicidad operativa (**RNF07 - Simplicidad Operativa**) y la alineacion estricta con la trazabilidad arquitectonica del **Capitulo V y VI** del Proceso Unificado (UP), el ecosistema completo de OpenBJJ se inicia mediante un unico comando unificado desde la raiz del proyecto:
 
-### 1. Levantar toda la infraestructura (Contenerización Total)
+### Modo Desarrollo Unificado (Arranque de Un Solo Paso)
+
 ```bash
+npm run dev
+```
+*(Opcionalmente se puede ejecutar `npm run dojo` para el mismo efecto).*
+
+#### Puertos Activos del Ecosistema:
+- **Cliente React PWA (Vite):** `http://localhost:5173`
+- **API Gateway Backend (Express):** `http://localhost:3001`
+- **Vector Store (ChromaDB):** `http://localhost:8000`
+
+#### Orquestacion Concurrente Automatizada (Tras Bambalinas):
+Al ejecutar el comando unificado, la infraestructura realiza concurrentemente y de forma transparente las siguientes acciones:
+1. **Verificacion y Gestion de ChromaDB Vector Store (Puerto 8000):** Invoca el script de orquestacion `scripts/ensure-chroma.js` el cual verifica la conectividad HTTP en `http://localhost:8000`. Si ChromaDB no se encuentra activo y la maquina host dispone del demonio Docker, levanta de forma transparente el contenedor mediante la instruccion `docker run -d -p 8000:8000 chromadb/chroma`. Si Docker no estuviera disponible en el sistema, conmuta con elegancia al modo de degradacion graciosa (*Baseline Fallback* con respuesta HTTP 207).
+2. **Servidor API Gateway Express (Puerto 3001):** Inicializa concurrentemente el backend Express cargando los controladores GRASP (`SesionEntrenamientoController`, `AdaptationController`, `RetrievalAugmentedController`) y el ORM relacional Prisma a traves del patron GoF Facade (`PersistenceFacade`).
+3. **Cliente PWA React Vite (Puerto 5173):** Inicializa concurrentemente el servidor de desarrollo del frontend activando la vista interactiva del tutor biomecanico 3D y el motor cinematico WebGL.
+
+---
+
+### Despliegue por Contenerizacion Total (Docker Compose)
+
+Para entornos de produccion o pruebas aisladas basadas en el **Diagrama de Despliegue Fisico (Figura 10)**:
+
+```bash
+# Levantar toda la infraestructura contenerizada
 docker-compose up --build -d
-```
-- **Cliente React PWA:** `http://localhost:5173`
-- **Servidor Express API Gateway:** `http://localhost:3001`
-- **ChromaDB Vector Store:** `http://localhost:8000`
 
-### 1.b Levantar aisladamente ChromaDB Vector Store (Desarrollo Local npm)
-Si ejecutas el backend con `npm` y necesitas activar el almacenamiento vectorial ChromaDB de forma rápida en el puerto 8000:
-```bash
-docker run -d -p 8000:8000 chromadb/chroma
-```
-
-### 2. Verificar el estado de los contenedores
-```bash
-docker-compose ps
-```
-
-### 3. Inspeccionar logs del sistema en tiempo real
-```bash
-docker-compose logs -f
-```
-
-### 4. Apagado limpio y seguro (Sin dejar puertos retenidos)
-```bash
+# Apagado limpio y seguro
 docker-compose down
 ```
 
@@ -163,8 +166,8 @@ En este trabajo se expone el diseño y modelado orientado a objetos de una plata
 - [**Capítulo II: Descripción de la Entidad (Corpo \& Mente)**](#capítulo-ii-descripción-de-la-entidad-corpo--mente)
   - [2.1 Descripción de la organización](#21-descripción-de-la-organización)
   - [2.2 Descripción organizacional](#22-descripción-organizacional)
-  - [2.3 Manual de funciones](#23-manual-de-funciones)
-  - [2.4 Descripción de los productos y servicios](#24-descripción-de-los-productos-y-servicios)
+  - [2.3 Descripción de los productos y servicios](#23-descripción-de-los-productos-y-servicios)
+  - [2.4 Manual de funciones](#24-manual-de-funciones)
   - [2.5 Flujo del negocio](#25-flujo-del-negocio)
 - [**Capítulo III: Marco Teórico y Estado del Arte**](#capítulo-iii-marco-teórico-y-estado-del-arte)
   - [3.1 Conceptos y definiciones](#31-conceptos-y-definiciones)
@@ -312,13 +315,7 @@ La estructura interna de la academia en Bolivia es de carácter lineal, lo que p
 
 ![Estructura Organizacional de Corpo & Mente Bolivia](src/assets/organizational_structure.png)
 
-## **2.3 Manual de funciones**
-Bajo el modelo de operación actual, las responsabilidades están distribuidas de la siguiente manera:
-*   **Administrador:** Se encarga de la gestión operativa: organización de horarios, cobros, pagos y coordinación de eventos o seminarios.
-*   **Profesores (Instructores):** Son los únicos responsables de enseñar, planificar y ejecutar las sesiones de entrenamiento. Su función principal es observar el desempeño de los alumnos y proporcionar correcciones técnicas manuales durante la clase.
-*   **Practicantes/Alumnos:** Su rol es participar activamente en las sesiones, cumplir con la puntualidad y depender de la observación del profesor para identificar sus errores y progresar.
-
-## **2.4 Descripción de los productos y servicios**
+## **2.3 Descripción de los productos y servicios**
 La academia ofrece servicios especializados que validan el progreso del alumno de forma tradicional:
 *   **Enseñanza Regular de BJJ:** Clases grupales e individuales para todos los niveles, desde principiantes hasta avanzados.
 *   **Exámenes de Graduación:** Sesiones oficiales donde se evalúa el conocimiento técnico para la obtención de cinturones con validez nacional e internacional.
@@ -329,6 +326,12 @@ La academia ofrece servicios especializados que validan el progreso del alumno d
 *Sistema de Cinturones de Jiu-Jitsu Brasileño*
 
 ![Sistema de Cinturones de Jiu-Jitsu Brasileño](src/assets/bjj_belt_progression.png)
+
+## **2.4 Manual de funciones**
+Bajo el modelo de operación actual, las responsabilidades están distribuidas de la siguiente manera:
+*   **Administrador:** Se encarga de la gestión operativa: organización de horarios, cobros, pagos y coordinación de eventos o seminarios.
+*   **Profesores (Instructores):** Son los únicos responsables de enseñar, planificar y ejecutar las sesiones de entrenamiento. Su función principal es observar el desempeño de los alumnos y proporcionar correcciones técnicas manuales durante la clase.
+*   **Practicantes/Alumnos:** Su rol es participar activamente en las sesiones, cumplir con la puntualidad y depender de la observación del profesor para identificar sus errores y progresar.
 
 ## **2.5 Flujo del negocio**
 El flujo actual de la academia se basa en un ciclo de retroalimentación puramente presencial y manual. Este proceso, aunque efectivo, está limitado por la capacidad de observación del ojo humano en tiempo real.

@@ -29,7 +29,7 @@ export class CentralVectorDBAdapter implements IVectorStore {
       const res = await fetch(`${this.apiEndpoint}/api/v2/tenants/default_tenant/databases/default_database/collections`, {
         signal: AbortSignal.timeout(3000)
       });
-      if (res.ok) {
+      if (res.ok || res.status === 207) {
         const collections: any[] = await res.json();
         const bjjCol = collections.find((c: any) => c.name === "bjj") || collections[0];
         if (bjjCol && bjjCol.id) {
@@ -43,7 +43,7 @@ export class CentralVectorDBAdapter implements IVectorStore {
           body: JSON.stringify({ name: "bjj" }),
           signal: AbortSignal.timeout(3000)
         });
-        if (createRes.ok) {
+        if (createRes.ok || createRes.status === 207) {
           const newCol = await createRes.json();
           if (newCol && newCol.id) {
             this.collectionId = newCol.id;
@@ -72,7 +72,7 @@ export class CentralVectorDBAdapter implements IVectorStore {
         signal: AbortSignal.timeout(5000),
       });
 
-      if (!response.ok) {
+      if (!response.ok && response.status !== 207) {
         throw new Error(`HTTP status: ${response.status}`);
       }
 
@@ -110,7 +110,7 @@ export class CentralVectorDBAdapter implements IVectorStore {
         signal: AbortSignal.timeout(5000),
       });
 
-      if (!response.ok) {
+      if (!response.ok && response.status !== 207) {
         throw new Error(`HTTP status: ${response.status}`);
       }
 
