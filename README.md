@@ -1950,6 +1950,9 @@ function recomendarVideoYouTube(
   return videosNoVistosSinProgreso.sort((a, b) => {
     return b.efectividadHistorica - a.efectividadHistorica;
   })[0];
+}
+```
+
 ---
 
 # **CAPÍTULO VI: DESARROLLO / IMPLEMENTACIÓN**
