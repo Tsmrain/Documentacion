@@ -3,6 +3,7 @@ import { useState } from "react";
 interface VideoAnalyzerProps {
   onAnalysisComplete: (result: any) => void;
   usuarioId: string;
+  onNavigateToReport?: () => void;
 }
 
 const extractFramesFromVideo = async (videoBlob: Blob, numFrames: number = 9): Promise<string[]> => {
@@ -18,14 +19,14 @@ const extractFramesFromVideo = async (videoBlob: Blob, numFrames: number = 9): P
       const duration = video.duration || 1;
       const frames: string[] = [];
       let processed = 0;
-      // Escalar canvas a máximo 360px para optimizar consumo de tokens de Gemini y reducir ancho de banda
+      // Escalar canvas a maximo 360px para optimizar consumo de tokens de Gemini y reducir ancho de banda
       const scale = Math.min(360 / (video.videoWidth || 640), 1);
       canvas.width = (video.videoWidth || 640) * scale;
       canvas.height = (video.videoHeight || 480) * scale;
 
       video.onseeked = () => {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        // Calidad 0.4: Óptima para pose y visión multimodal, reduce ~75% del peso base64
+        // Calidad 0.4: Optima para pose y vision multimodal, reduce ~75% del peso base64
         const dataUrl = canvas.toDataURL("image/jpeg", 0.4);
         const base64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
         frames.push(base64);
@@ -47,15 +48,18 @@ const extractFramesFromVideo = async (videoBlob: Blob, numFrames: number = 9): P
   });
 };
 
-export function VideoAnalyzer({ onAnalysisComplete, usuarioId }: VideoAnalyzerProps) {
+export function VideoAnalyzer({ onAnalysisComplete, usuarioId, onNavigateToReport }: VideoAnalyzerProps) {
   const [file, setFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [progressStep, setProgressStep] = useState<string>("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
       setErrorMessage(null);
+      setSuccess(false);
     }
   };
 
@@ -67,6 +71,7 @@ export function VideoAnalyzer({ onAnalysisComplete, usuarioId }: VideoAnalyzerPr
 
     setAnalyzing(true);
     setErrorMessage(null);
+    setSuccess(false);
     await sendVideoToAPI();
   };
 
@@ -75,11 +80,14 @@ export function VideoAnalyzer({ onAnalysisComplete, usuarioId }: VideoAnalyzerPr
       let frames: string[] = [];
       if (file) {
         try {
+          setProgressStep("Extrayendo 9 keyframes del combate (360px, JPEG 40%)...");
           frames = await extractFramesFromVideo(file, 9);
         } catch (frameErr) {
           console.warn("[VideoAnalyzer] No se pudieron extraer frames del video HTML5:", frameErr);
         }
       }
+
+      setProgressStep("Fase 1: Clasificacion visual de posicion (gemini-2.5-flash)...");
 
       const response = await fetch("/api/sesion/analizar", {
         method: "POST",
@@ -92,14 +100,27 @@ export function VideoAnalyzer({ onAnalysisComplete, usuarioId }: VideoAnalyzerPr
         })
       });
 
+      setProgressStep("Fase 2: Evaluacion biomecanica focalizada (grounding RAG)...");
+
       const data = await response.json();
-      if (!response.ok) {
+      if (!response.ok && response.status !== 207) {
         throw new Error(data.error || "Ocurrio un error en la evaluacion.");
       }
 
+      setSuccess(true);
+      setProgressStep("Analisis completado. Redirigiendo al reporte...");
       onAnalysisComplete(data);
+
+      // Redireccion automatica al Reporte tras analisis exitoso (HTTP 200 / 207)
+      setTimeout(() => {
+        if (onNavigateToReport) {
+          onNavigateToReport();
+        }
+      }, 800);
+
     } catch (err: any) {
       setErrorMessage(err.message);
+      setProgressStep("");
     } finally {
       setAnalyzing(false);
     }
@@ -109,7 +130,7 @@ export function VideoAnalyzer({ onAnalysisComplete, usuarioId }: VideoAnalyzerPr
     <div className="glass-panel p-6 animate-fade-in mb-6" style={{ padding: '24px' }}>
       <h2 style={{ marginTop: 0, color: '#818cf8' }}>Analizador cinematico de combate / Sparring</h2>
       <p style={{ color: '#94a3b8' }}>
-        Sube un video de tu lucha o drill tecnico para obtener retroalimentacion cinematica instantanea basada en literatura RAG.
+        Sube un video de tu lucha o drill tecnico para obtener retroalimentacion cinematica instantanea basada en literatura RAG (Two-Phase Inference).
       </p>
 
       {errorMessage && (
@@ -118,11 +139,20 @@ export function VideoAnalyzer({ onAnalysisComplete, usuarioId }: VideoAnalyzerPr
         </div>
       )}
 
+      {success && (
+        <div style={{ padding: '12px', background: 'rgba(16,185,129,0.1)', color: '#34d399', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '8px', marginBottom: '16px' }}>
+          Analisis completado. Redirigiendo al Reporte de Evaluacion...
+        </div>
+      )}
+
       {analyzing ? (
         <div style={{ textAlign: 'center', padding: '32px 0' }}>
           <div className="spinner" style={{ border: '4px solid rgba(255,255,255,0.1)', width: '36px', height: '36px', borderRadius: '50%', borderLeftColor: '#6366f1', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }}></div>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          <p style={{ fontWeight: 500, color: '#e2e8f0' }}>Extraendo landmarks 3D y ejecutando inferencia cinemática...</p>
+          <p style={{ fontWeight: 500, color: '#e2e8f0', marginBottom: '8px' }}>Ejecutando pipeline Two-Phase RAG...</p>
+          {progressStep && (
+            <p style={{ fontSize: '0.8rem', color: '#64748b' }}>{progressStep}</p>
+          )}
         </div>
       ) : (
         <div>

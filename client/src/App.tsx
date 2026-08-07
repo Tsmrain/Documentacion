@@ -39,6 +39,12 @@ function App() {
 
   const handleAnalysisComplete = (result: any) => {
     setReport(result);
+    // El reporte se muestra en la pestaña analizador tras la redireccion automatica
+    setActiveTab("analizador");
+  };
+
+  const handleNavigateToReport = () => {
+    // Garantiza que la vista del Reporte sea visible inmediatamente
     setActiveTab("analizador");
   };
 
@@ -108,7 +114,7 @@ function App() {
           ) : report ? (
             <AnalysisReportView report={report} onClear={handleClearReport} />
           ) : (
-            <VideoAnalyzer onAnalysisComplete={handleAnalysisComplete} usuarioId={usuarioId} />
+            <VideoAnalyzer onAnalysisComplete={handleAnalysisComplete} usuarioId={usuarioId} onNavigateToReport={handleNavigateToReport} />
           )}
         </section>
       </main>
