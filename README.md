@@ -1500,7 +1500,7 @@ sequenceDiagram
             VDB-->>RAC: chunksAceptadosText (pueden ser 0 chunks)
         else Catch VectorDBUnavailableException (Graceful Degradation local)
             RAC-->>RAC: activarDegradacionLocal()
-            Note over RAC: La consulta vectorial falla; se fuerza 0 chunks en memoria
+            Note over RAC: La consulta vectorial falla, se fuerza 0 chunks en memoria
             RAC-->>RAC: chunksAceptadosText = NULL
         end
         
