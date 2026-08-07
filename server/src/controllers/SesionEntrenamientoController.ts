@@ -32,9 +32,13 @@ export class SesionEntrenamientoController {
     this.persistence = persistence;
   }
 
-  async analizarVideo(videoBlob: any, usuarioId: string = "user-default"): Promise<any> {
+  async analizarVideo(videoPayload: any, usuarioIdParam: string = "user-default"): Promise<any> {
+    const videoBlob = typeof videoPayload === "object" ? (videoPayload.videoBlob || videoPayload.fileName || "video-sparring.mp4") : videoPayload;
+    const usuarioId = (typeof videoPayload === "object" && videoPayload.usuarioId) ? videoPayload.usuarioId : usuarioIdParam;
+    const frames = (typeof videoPayload === "object" && Array.isArray(videoPayload.frames)) ? videoPayload.frames : [];
+
     console.log(`--------------------------------------------------------------------------------`);
-    console.log(`[Dojo Debug] Solicitud de Análisis recibida para usuarioId: ${usuarioId}`);
+    console.log(`[Dojo Debug] Solicitud de Análisis recibida para usuarioId: ${usuarioId} (${frames.length} keyframes adjuntos)`);
     console.log("[Controller] Iniciando análisis cinemático...");
 
     // Moderación de pertinencia de contenido de video
@@ -78,7 +82,7 @@ export class SesionEntrenamientoController {
     console.log("[Dojo Debug] Prompt de grounding adaptativo enviado a Gemini API");
 
     // 5. Inferencia LLM
-    const reporteEvaluacionJSON = await this.llmProvider.evaluarMovimiento(promptCompilado);
+    const reporteEvaluacionJSON = await (this.llmProvider as any).evaluarMovimiento(promptCompilado, frames);
     const reporteParsed = JSON.parse(reporteEvaluacionJSON);
     console.log("[Dojo Debug] Diagnóstico biomecánico de Gemini JSON recibido: Puntuación global, desviaciones articulares y video correctivo asignado");
     console.log(`--------------------------------------------------------------------------------`);

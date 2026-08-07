@@ -1,5 +1,5 @@
 export interface ILLMProvider {
-  evaluarMovimiento(promptJSON: string, modelName?: string): Promise<string>;
+  evaluarMovimiento(promptJSON: string, frames?: string[], modelName?: string): Promise<string>;
 }
 
 export interface ITechniqueClassifier {
@@ -28,24 +28,39 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
     this.liteModel = process.env.GEMINI_MODEL_LITE || "gemini-2.5-flash-lite";
   }
 
-  async evaluarMovimiento(promptJSON: string, modelName?: string): Promise<string> {
+  async evaluarMovimiento(promptJSON: string, frames: string[] = [], modelName?: string): Promise<string> {
     const selectedModel = modelName || this.proModel;
-    console.log(`[Gemini Service] Inferencia adaptativa profunda con modelo ${selectedModel} (responseMimeType: application/json)`);
+    console.log(`[Gemini Service] Inferencia adaptativa profunda multimodal (${frames.length} keyframes base64) con modelo ${selectedModel}`);
     
+    const JIU_JITSU_UNIVERSITY_CONTEXT = `
+[Grounding de Literatura Oficial - Jiu-Jitsu University por Saulo Ribeiro]
+1. Guardia Cerrada: Mantener postura erguida, codos pegados al torso, controlar caderas y evitar exponer brazos.
+2. Pasaje de Guardia: Base amplia, cadera baja, romper agarres de piernas antes de avanzar.
+3. Control Lateral y Montada: Presión constante con hombro (crossface), eliminar espacios.
+4. Biomecánica: Maximizar palancas articulares y alineación espinal.
+`;
+
     if (this.apiKey) {
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${this.apiKey}`;
+        const imageParts = frames.slice(0, 9).map(f => ({
+          inlineData: {
+            mimeType: "image/jpeg",
+            data: f
+          }
+        }));
+
+        const textPart = {
+          text: `${JIU_JITSU_UNIVERSITY_CONTEXT}\n\nEres el motor de tutoría biomecánica de OpenBJJ. Evalúa el siguiente prompt cinemático y las imágenes adjuntas del combate. Responde ÚNICAMENTE con un JSON estructurado según AnalysisResult con los campos: tecnicaId (string), evaluacion (string), desviacionArticular (string), desviacionGrados (number), severidad ("Leve"|"Moderado"|"Critico"), sugerenciaPedagogica (string).\n\nPROMPT Y MÉTRICAS:\n${promptJSON}`
+        };
+
         const response = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [
               {
-                parts: [
-                  {
-                    text: `Eres el motor de tutoría biomecánica de OpenBJJ. Evalúa el siguiente prompt cinemático y responde ÚNICAMENTE con un JSON válido con los campos: tecnicaId (string), evaluacion (string), desviacionArticular (string), desviacionGrados (number), severidad ("Leve"|"Moderado"|"Critico"), sugerenciaPedagogica (string).\n\nPROMPT:\n${promptJSON}`
-                  }
-                ]
+                parts: [textPart, ...imageParts]
               }
             ],
             generationConfig: {
@@ -58,7 +73,7 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
           const data: any = await response.json();
           const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
           if (textResponse) {
-            console.log("[Gemini API] Inferencia exitosa recibida desde la API oficial de Google Cloud Gemini.");
+            console.log("[Gemini API] Inferencia multimodal exitosa recibida desde Google Gemini API.");
             return textResponse;
           }
         } else {

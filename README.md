@@ -1960,7 +1960,7 @@ function recomendarVideoYouTube(
 ## **6.1 Análisis de tecnologías usadas**
 
 ### **6.1.1 Cliente Web PWA**
-El cliente web se encuentra desarrollado como una Aplicación Web Progresiva (PWA) utilizando **React 19**, **TypeScript** y **Vite**. La renderización del avatar biomecánico tridimensional y el lienzo interactivo se implementa mediante **`@react-three/fiber`** y **Three.js**, permitiendo visualizar en tiempo real la topología de 33 landmarks cinemáticos extraída directamente en el navegador por **MediaPipe Pose** sobre la API WebGL del dispositivo.
+El cliente web se encuentra desarrollado como una Aplicación Web Progresiva (PWA) utilizando **React 19**, **TypeScript** y **Vite**. La renderización del avatar biomecánico tridimensional y el lienzo interactivo se implementa mediante **`@react-three/fiber`** y **Three.js**, permitiendo visualizar en tiempo real la topología de 33 landmarks cinemáticos extraída directamente en el navegador por **MediaPipe Pose** sobre la API WebGL del dispositivo. La extracción cinemática es híbrida: el cliente realiza la estimación corporal 3D con MediaPipe y el submuestreo de 9 keyframes en formato Base64 para mitigar el tráfico de red, transmitiendo un payload cinemático estructurado de metadatos angulares al servidor.
 
 ### **6.1.2 Base de datos relacional y ORM**
 La capa de persistencia relacional utiliza **PostgreSQL** administrado a través de **Prisma ORM** (v6+). El esquema relacional define 8 entidades (`Usuario`, `PerfilCompetencia`, `SesionEntrenamiento`, `AnalisisBiomecanico`, `ErrorBiomecanico`, `HistorialVisualizacion`, `RutaAprendizaje`, `FuenteConocimiento`), garantizando la integridad referencial mediante borrados en cascada (`onDelete: Cascade`) e índices de búsqueda rápida sobre UUIDs.
@@ -1969,9 +1969,9 @@ La capa de persistencia relacional utiliza **PostgreSQL** administrado a través
 El almacenamiento vectorial y la recuperación semántica RAG se ejecutan sobre **ChromaDB API v2** operando en un contenedor Docker en el puerto 8000 (`/api/v2/tenants/default_tenant/databases/default_database/collections`). La generación de embeddings para los fragmentos de conocimiento se realiza de forma autónoma con el adaptador **`LocalEmbeddingAdapter`** respaldado por la librería **`@xenova/transformers`** e inferencia local del modelo **`Xenova/all-MiniLM-L6-v2`** en 384 dimensiones.
 
 ### **6.1.4 Inferencia y orquestación cognitiva**
-La inteligencia artificial generativa y el razonamiento multimodal se basan en la **Google Gemini API**:
+La inteligencia artificial generativa y el razonamiento multimodal procesan la inferencia utilizando la API oficial de Google Gemini a través del conector `@google/genai`:
 - **`gemini-2.5-flash`**: Encargado de la clasificación acelerada de keyframes de video, autodetección de técnicas de Jiu-Jitsu y moderación semántica autónoma de ingesta (Filtro RD-03).
-- **`gemini-2.5-pro`**: Responsable del diagnóstico biomecánico profundo, evaluación de desviaciones articulares en grados y estructuración de planes pedagógicos adaptativos bajo coerción JSON estricta (`responseMimeType: 'application/json'`).
+- **`gemini-2.5-pro`**: Responsable del diagnóstico biomecánico profundo, evaluación multimodal recibiendo los 9 keyframes en Base64 y el prompt de grounding (*Jiu-Jitsu University* por Saulo Ribeiro), garantizando la estructuración JSON estricta del esquema `AnalysisResult` (`responseMimeType: 'application/json'`).
 
 ## **6.2 Herramientas utilizadas**
 

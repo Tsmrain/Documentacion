@@ -5,6 +5,44 @@ interface VideoAnalyzerProps {
   usuarioId: string;
 }
 
+const extractFramesFromVideo = async (videoBlob: Blob, numFrames: number = 9): Promise<string[]> => {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.src = URL.createObjectURL(videoBlob);
+    video.muted = true;
+    video.playsInline = true;
+    video.onloadedmetadata = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject("No 2D context");
+      const duration = video.duration || 1;
+      const frames: string[] = [];
+      let processed = 0;
+      video.onseeked = () => {
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+        const base64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
+        frames.push(base64);
+        processed++;
+        if (processed === numFrames) {
+          URL.revokeObjectURL(video.src);
+          resolve(frames);
+        } else {
+          seekNext();
+        }
+      };
+      const seekNext = () => {
+        const time = (duration / (numFrames + 1)) * (processed + 1);
+        video.currentTime = time;
+      };
+      seekNext();
+    };
+    video.onerror = (e) => reject(e);
+  });
+};
+
 export function VideoAnalyzer({ onAnalysisComplete, usuarioId }: VideoAnalyzerProps) {
   const [file, setFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -30,11 +68,22 @@ export function VideoAnalyzer({ onAnalysisComplete, usuarioId }: VideoAnalyzerPr
 
   const sendVideoToAPI = async () => {
     try {
+      let frames: string[] = [];
+      if (file) {
+        try {
+          frames = await extractFramesFromVideo(file, 9);
+        } catch (frameErr) {
+          console.warn("[VideoAnalyzer] No se pudieron extraer frames del video HTML5:", frameErr);
+        }
+      }
+
       const response = await fetch("/api/sesion/analizar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          videoBlob: "dummy-video-data-uri",
+          videoBlob: file ? file.name : "video-sparring.mp4",
+          fileName: file ? file.name : "video-sparring.mp4",
+          frames,
           usuarioId
         })
       });
