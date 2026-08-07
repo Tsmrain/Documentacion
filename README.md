@@ -1973,6 +1973,8 @@ La inteligencia artificial generativa y el razonamiento multimodal procesan la i
 - **`gemini-2.5-flash`**: Encargado de la clasificación acelerada de keyframes de video, autodetección de técnicas de Jiu-Jitsu y moderación semántica autónoma de ingesta (Filtro RD-03).
 - **`gemini-2.5-pro`**: Responsable del diagnóstico biomecánico profundo, evaluación multimodal recibiendo los 9 keyframes en Base64 y el prompt de grounding (*Jiu-Jitsu University* por Saulo Ribeiro), garantizando la estructuración JSON estricta del esquema `AnalysisResult` (`responseMimeType: 'application/json'`).
 
+Para respaldar la transferencia multimodal híbrida de los 9 keyframes en Base64 sin interrumpir el flujo operativo por desbordamientos de buffer (PayloadTooLargeError), el API Gateway local de Express cuenta con una configuración de middleware con límite de payload extendido a **50 MB** (`express.json({ limit: '50mb' })` y `express.urlencoded({ limit: '50mb' })`).
+
 ## **6.2 Herramientas utilizadas**
 
 ### **6.2.1 Lenguajes de programación, frameworks y librerías**
