@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { createApp } from "./app";
 import { SesionEntrenamientoController } from "./controllers/SesionEntrenamientoController";
 import { RetrievalAugmentedController } from "./controllers/RetrievalAugmentedController";
@@ -6,6 +8,22 @@ import { PersistenceFacade } from "./persistence/PersistenceFacade";
 import { GeminiServiceAdapter } from "./services/GeminiServiceAdapter";
 import { CentralVectorDBAdapter } from "./services/CentralVectorDBAdapter";
 import { DynamicPromptBuilder } from "./services/DynamicPromptBuilder";
+
+// Cargar variables de entorno desde .env en la raíz del proyecto
+const envPath = path.resolve(__dirname, "../../.env");
+if (fs.existsSync(envPath)) {
+  const envConfig = fs.readFileSync(envPath, "utf-8");
+  envConfig.split("\n").forEach(line => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith("#")) {
+      const [key, ...valParts] = trimmed.split("=");
+      if (key && valParts.length > 0) {
+        const val = valParts.join("=").trim().replace(/^["']|["']$/g, "");
+        process.env[key.trim()] = val;
+      }
+    }
+  });
+}
 
 const port = process.env.PORT || 3001;
 

@@ -22,65 +22,77 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
   private liteModel: string;
 
   constructor() {
-    this.apiKey = process.env.GEMINI_API_KEY || "";
+    this.apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "";
     this.defaultModel = process.env.GEMINI_MODEL || "gemini-2.5-flash";
     this.proModel = process.env.GEMINI_MODEL_PRO || "gemini-2.5-pro";
     this.liteModel = process.env.GEMINI_MODEL_LITE || "gemini-2.5-flash-lite";
   }
 
+  private getApiKey(): string {
+    return process.env.GEMINI_API_KEY || process.env.API_KEY || this.apiKey || "";
+  }
+
   async evaluarMovimiento(promptJSON: string, frames: string[] = [], modelName?: string): Promise<string> {
-    const selectedModel = modelName || this.proModel;
-    console.log(`[Gemini Service] Inferencia adaptativa profunda multimodal (${frames.length} keyframes base64) con modelo ${selectedModel}`);
+    const activeKey = this.getApiKey();
+    const primaryModel = modelName || this.proModel;
+    console.log(`[Gemini Service] Inferencia adaptativa profunda multimodal (${frames.length} keyframes base64) con modelo ${primaryModel}`);
     
     const JIU_JITSU_UNIVERSITY_CONTEXT = `
-[Grounding de Literatura Oficial - Jiu-Jitsu University por Saulo Ribeiro]
-1. Guardia Cerrada: Mantener postura erguida, codos pegados al torso, controlar caderas y evitar exponer brazos.
-2. Pasaje de Guardia: Base amplia, cadera baja, romper agarres de piernas antes de avanzar.
-3. Control Lateral y Montada: Presión constante con hombro (crossface), eliminar espacios.
-4. Biomecánica: Maximizar palancas articulares y alineación espinal.
+ROLE: Saulo Ribeiro. Book: "Jiu-Jitsu University" (ISBN: 978-0-9815044-2-9).
+MINDSET: White=Survival, Blue=Escapes, Purple=Guard, Brown=Passing, Black=Subs.
+
+[PRINCIPLES]
+1. CLOSED GUARD: Mantener postura erguida, controlar solapas y codos pegados al torso. Evitar extender brazos.
+2. PASSING THE GUARD: Base amplia, cadera baja, romper agarres antes de avanzar.
+3. SIDE CONTROL & MOUNT: Presión de hombro constante (crossface), eliminar espacios internos.
+4. BIOMECÁNICA: La fuerza proviene de palancas articulares y alineación espinal.
 `;
 
-    if (this.apiKey) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${this.apiKey}`;
-        const imageParts = frames.slice(0, 9).map(f => ({
-          inlineData: {
-            mimeType: "image/jpeg",
-            data: f
-          }
-        }));
+    if (activeKey) {
+      const modelsToTry = Array.from(new Set([primaryModel, "gemini-2.5-flash", "gemini-1.5-flash"]));
 
-        const textPart = {
-          text: `${JIU_JITSU_UNIVERSITY_CONTEXT}\n\nEres el motor de tutoría biomecánica de OpenBJJ. Evalúa el siguiente prompt cinemático y las imágenes adjuntas del combate. Responde ÚNICAMENTE con un JSON estructurado según AnalysisResult con los campos: tecnicaId (string), evaluacion (string), desviacionArticular (string), desviacionGrados (number), severidad ("Leve"|"Moderado"|"Critico"), sugerenciaPedagogica (string).\n\nPROMPT Y MÉTRICAS:\n${promptJSON}`
-        };
-
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [textPart, ...imageParts]
-              }
-            ],
-            generationConfig: {
-              responseMimeType: "application/json"
+      for (const currentModel of modelsToTry) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${activeKey}`;
+          const imageParts = frames.slice(0, 9).map(f => ({
+            inlineData: {
+              mimeType: "image/jpeg",
+              data: f
             }
-          })
-        });
+          }));
 
-        if (response.ok) {
-          const data: any = await response.json();
-          const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (textResponse) {
-            console.log("[Gemini API] Inferencia multimodal exitosa recibida desde Google Gemini API.");
-            return textResponse;
+          const textPart = {
+            text: `${JIU_JITSU_UNIVERSITY_CONTEXT}\n\nEres el motor de tutoría biomecánica de OpenBJJ. Evalúa el siguiente prompt cinemático y las imágenes adjuntas del combate. Responde ÚNICAMENTE con un JSON estructurado según AnalysisResult con los campos: tecnicaId (string), evaluacion (string), desviacionArticular (string), desviacionGrados (number), severidad ("Leve"|"Moderado"|"Critico"), sugerenciaPedagogica (string).\n\nPROMPT Y MÉTRICAS:\n${promptJSON}`
+          };
+
+          const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [textPart, ...imageParts]
+                }
+              ],
+              generationConfig: {
+                responseMimeType: "application/json"
+              }
+            })
+          });
+
+          if (response.ok) {
+            const data: any = await response.json();
+            const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (textResponse) {
+              console.log(`[Gemini API] Inferencia multimodal exitosa recibida desde modelo ${currentModel}.`);
+              return textResponse;
+            }
+          } else {
+            console.warn(`[Gemini API Warning] HTTP Status ${response.status} en modelo ${currentModel}. Probando siguiente modelo si aplica.`);
           }
-        } else {
-          console.warn(`[Gemini API Warning] HTTP Status ${response.status} al consultar Gemini API.`);
+        } catch (err: any) {
+          console.warn(`[Gemini API Error] Fallo al conectar con modelo ${currentModel}: ${err.message}.`);
         }
-      } catch (err: any) {
-        console.warn(`[Gemini API Error] Fallo al conectar con Gemini API: ${err.message}. Activando inferencia dinámica local.`);
       }
     } else {
       console.log("[Gemini Service Warning] GEMINI_API_KEY no configurada. Ejecutando inferencia cinemática adaptativa local dinámica.");
