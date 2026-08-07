@@ -73,7 +73,7 @@ export class SesionEntrenamientoController {
 
     // 3. Autodetección multimodal
     const keyframesSummary = { totalFrames: 100, keyframes: [12, 45, 87] };
-    const tecnicaId = await (this.classifier as any).clasificarTecnicaVideo(keyframesSummary, videoText);
+    const tecnicaId = await (this.classifier as any).clasificarTecnicaVideo(keyframesSummary, videoText, frames);
     console.log(`[Controller] Técnica detectada de forma autónoma: ${tecnicaId}`);
 
     // 4. Ingestar grounding (RAG Vivo / Fallback Baseline)
@@ -84,6 +84,9 @@ export class SesionEntrenamientoController {
     // 5. Inferencia LLM
     const reporteEvaluacionJSON = await (this.llmProvider as any).evaluarMovimiento(promptCompilado, frames);
     const reporteParsed = JSON.parse(reporteEvaluacionJSON);
+    if (reporteParsed && (!reporteParsed.tecnicaId || reporteParsed.tecnicaId === "guardia-cerrada") && tecnicaId !== "guardia-cerrada") {
+      reporteParsed.tecnicaId = tecnicaId;
+    }
     console.log("[Dojo Debug] Diagnóstico biomecánico de Gemini JSON recibido: Puntuación global, desviaciones articulares y video correctivo asignado");
     console.log(`--------------------------------------------------------------------------------`);
 

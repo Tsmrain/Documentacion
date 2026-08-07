@@ -3,7 +3,7 @@ export interface ILLMProvider {
 }
 
 export interface ITechniqueClassifier {
-  clasificarTecnicaVideo(keyframesSummary: any, modelName?: string): Promise<string>;
+  clasificarTecnicaVideo(keyframesSummary: any, videoName?: string, frames?: string[], modelName?: string): Promise<string>;
 }
 
 export interface ModerationResult {
@@ -127,24 +127,32 @@ MINDSET: White=Survival, Blue=Escapes, Purple=Guard, Brown=Passing, Black=Subs.
     return JSON.stringify(dynamicResponse);
   }
 
-  async clasificarTecnicaVideo(keyframesSummary: any, videoName?: string, modelName?: string): Promise<string> {
+  async clasificarTecnicaVideo(keyframesSummary: any, videoName?: string, frames: string[] = [], modelName?: string): Promise<string> {
+    const activeKey = this.getApiKey();
     const selectedModel = modelName || this.defaultModel;
-    console.log(`[Gemini Multimodal] Clasificando keyframes rápidos con modelo ${selectedModel}`);
+    console.log(`[Gemini Multimodal] Clasificando ${frames.length} keyframes de video con modelo ${selectedModel}`);
 
-    if (this.apiKey) {
+    if (activeKey) {
       try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${this.apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${activeKey}`;
+        const imageParts = frames.slice(0, 9).map(f => ({
+          inlineData: {
+            mimeType: "image/jpeg",
+            data: f
+          }
+        }));
+
+        const textPart = {
+          text: `Observa atentamente las imágenes clave adjuntas del combate de Jiu-Jitsu (BJJ). Clasifica la posición dominante entre los luchadores en una de las siguientes opciones exactas: "montada", "guardia-cerrada", "pasaje-guardia", "control-lateral", "espalda", "derribo-double-leg", "triangulo-guardia", "armbar-cerrada". Responde ÚNICAMENTE con el ID de la técnica (por ejemplo: "montada").\n\nRESUMEN:\n${JSON.stringify(keyframesSummary)}`
+        };
+
         const response = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [
               {
-                parts: [
-                  {
-                    text: `Clasifica el siguiente resumen cinemático en un ID de técnica de Jiu-Jitsu (ej. "guardia-cerrada", "pasaje-guardia", "derribo-double-leg", "triangulo-guardia", "armbar-cerrada"). Responde ÚNICAMENTE con una cadena de texto sin comillas conteniendo el ID.\n\nRESUMEN:\n${JSON.stringify(keyframesSummary)}`
-                  }
-                ]
+                parts: [textPart, ...imageParts]
               }
             ]
           })
@@ -154,17 +162,21 @@ MINDSET: White=Survival, Blue=Escapes, Purple=Guard, Brown=Passing, Black=Subs.
           const data: any = await response.json();
           const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
           if (textResponse) {
-            return textResponse.toLowerCase().replace(/\s+/g, "-");
+            const cleanId = textResponse.toLowerCase().replace(/[^a-z0-9-]/g, "");
+            console.log(`[Gemini Classifier] Técnica detectada por visión multimodal: ${cleanId}`);
+            return cleanId;
           }
         }
-      } catch (err) {
-        console.warn("[Gemini Classifier Warning] Fallo en clasificación remota, aplicando deducción dinámica local.");
+      } catch (err: any) {
+        console.warn(`[Gemini Classifier Warning] Fallo en clasificación remota: ${err.message}`);
       }
     }
 
     // Deducción dinámica local si no hay API Key o falla la llamada
     const summaryStr = (JSON.stringify(keyframesSummary) + " " + (videoName || "")).toLowerCase();
+    if (summaryStr.includes("montad") || summaryStr.includes("mount")) return "montada";
     if (summaryStr.includes("pass") || summaryStr.includes("pasaje")) return "pasaje-guardia";
+    if (summaryStr.includes("side") || summaryStr.includes("lateral")) return "control-lateral";
     if (summaryStr.includes("derribo") || summaryStr.includes("takedown")) return "derribo-double-leg";
     if (summaryStr.includes("triangulo") || summaryStr.includes("triangle")) return "triangulo-guardia";
     if (summaryStr.includes("armbar") || summaryStr.includes("palanca")) return "armbar-cerrada";

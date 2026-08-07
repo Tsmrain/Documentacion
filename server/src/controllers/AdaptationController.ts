@@ -22,6 +22,7 @@ export interface RutaAprendizaje {
   drillRecomendado: string;
   videoYouTubeUrl: string;
   mensajeAdaptativo: string;
+  posicionesMaestria?: { nombre: string; porcentaje: number }[];
 }
 
 export interface IPersistenceService {
@@ -38,21 +39,62 @@ export class AdaptationController {
     this.persistence = persistence;
   }
 
+  private calcularMaestriaPorPosicion(historial: any[]): { nombre: string; porcentaje: number }[] {
+    const scoresGuardia: number[] = [];
+    const scoresPasaje: number[] = [];
+    const scoresMontada: number[] = [];
+
+    if (Array.isArray(historial)) {
+      historial.forEach(h => {
+        const tecnica = (h.tecnicaId || "").toLowerCase();
+        const desviacion = h.desviacionGrados || 0;
+        const score = Math.max(0, Math.min(100, 100 - Math.round(desviacion * 1.8)));
+
+        if (tecnica.includes("guardia") || tecnica.includes("triangulo") || tecnica.includes("armbar")) {
+          scoresGuardia.push(score);
+        } else if (tecnica.includes("pasaje") || tecnica.includes("derribo")) {
+          scoresPasaje.push(score);
+        } else if (tecnica.includes("montada") || tecnica.includes("lateral") || tecnica.includes("espalda")) {
+          scoresMontada.push(score);
+        } else {
+          scoresGuardia.push(score);
+        }
+      });
+    }
+
+    const calcAvg = (arr: number[]) => arr.length > 0 ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0;
+
+    return [
+      { nombre: "Guardia Cerrada", porcentaje: calcAvg(scoresGuardia) },
+      { nombre: "Pasaje de Guardia", porcentaje: calcAvg(scoresPasaje) },
+      { nombre: "Control Lateral y Montada", porcentaje: calcAvg(scoresMontada) }
+    ];
+  }
+
   async evaluarAdaptabilidad(usuarioId: string, reporte: string | null): Promise<RutaAprendizaje> {
     const perfil = await this.persistence.cargarPerfil(usuarioId);
+    let historial: any[] = [];
+    try {
+      historial = await this.persistence.obtenerHistorialAnalisis(usuarioId);
+    } catch (e) {
+      historial = [];
+    }
+
+    const posicionesMaestria = this.calcularMaestriaPorPosicion(historial);
     
     if (!reporte) {
       return {
-        nivelCompetenciaActual: "Intermedio",
+        nivelCompetenciaActual: "Principiante",
         drillRecomendado: "Movimiento de cadera (Shrimping) básico",
         videoYouTubeUrl: "https://youtube.com/watch?v=shrimp101",
-        mensajeAdaptativo: "Continúa practicando los drills básicos para consolidar la guardia."
+        mensajeAdaptativo: "Continúa practicando los drills básicos para consolidar tus posiciones.",
+        posicionesMaestria
       };
     }
 
     const evaluacion = JSON.parse(reporte);
-    const errorArticular = evaluacion.desviacionArticular;
-    const desviacionGrados = evaluacion.desviacionGrados;
+    const errorArticular = evaluacion.desviacionArticular || "codo_derecho";
+    const desviacionGrados = evaluacion.desviacionGrados || 0;
 
     let hayFalloRecurrente = false;
 
@@ -63,20 +105,29 @@ export class AdaptationController {
       perfil.erroresHistoricos[errorArticular] = 0;
     }
 
+    // Recalcular posicionesMaestria agregando el reporte actual
+    const tecnicaActual = (evaluacion.tecnicaId || "").toLowerCase();
+    const scoreActual = Math.max(0, Math.min(100, 100 - Math.round(desviacionGrados * 1.8)));
+    const historialConActual = [...historial, { tecnicaId: tecnicaActual, desviacionGrados }];
+    const posicionesActualizadas = this.calcularMaestriaPorPosicion(historialConActual);
+
     if (hayFalloRecurrente) {
       console.log(`[Adaptación] Fallo recurrente (> 3) en ${errorArticular}. Conmutando estrategia didáctica.`);
-      return this.conmutarEstrategiaDidactica(perfil, {
+      const resConmutada = this.conmutarEstrategiaDidactica(perfil, {
         desviacionArticular: errorArticular,
         desviacionGrados,
-        severidad: evaluacion.severidad
+        severidad: evaluacion.severidad || "Moderado"
       });
+      resConmutada.posicionesMaestria = posicionesActualizadas;
+      return resConmutada;
     }
 
     return {
       nivelCompetenciaActual: "Principiante",
       drillRecomendado: "Drill de Guardia Cerrada Estándar",
       videoYouTubeUrl: "https://youtube.com/watch?v=guardia_cerrada_basic",
-      mensajeAdaptativo: `Intento registrado. Cuida el ángulo de tu ${errorArticular.replace("_", " ")}.`
+      mensajeAdaptativo: `Intento registrado. Cuida el ángulo de tu ${errorArticular.replace("_", " ")}.`,
+      posicionesMaestria: posicionesActualizadas
     };
   }
 

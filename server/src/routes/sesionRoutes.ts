@@ -6,8 +6,7 @@ export function createSesionRouter(sessionController: SesionEntrenamientoControl
 
   router.post("/analizar", async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { videoBlob, usuarioId } = req.body;
-      const result = await sessionController.analizarVideo(videoBlob || "dummy-blob", usuarioId || "user-default");
+      const result = await sessionController.analizarVideo(req.body);
       
       if (!result.success) {
         return res.status(400).json(result);
