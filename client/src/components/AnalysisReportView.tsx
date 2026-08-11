@@ -58,18 +58,6 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
 
       <div style={{ padding: '20px' }}>
         
-        {/* Fake Segmented Control (to match UI exactly) */}
-        <div style={{ display: 'flex', background: '#e2e8f0', borderRadius: '8px', padding: '4px', marginBottom: '20px' }}>
-          <div style={{ flex: 1, background: '#ffffff', borderRadius: '6px', textAlign: 'center', padding: '8px', fontSize: '0.8rem', fontWeight: 600, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', marginRight: '6px' }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            Practicante Analizado
-          </div>
-          <div style={{ flex: 1, color: '#64748b', textAlign: 'center', padding: '8px', fontSize: '0.8rem', fontWeight: 500 }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', marginRight: '6px' }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            Oponente
-          </div>
-        </div>
-
         {/* Verdict Card */}
         <div style={{ background: '#ffffff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', marginBottom: '20px' }}>
           <div style={{ background: cardBg, padding: '30px 20px', color: '#ffffff', textAlign: 'center' }}>
@@ -137,19 +125,10 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
           <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '12px' }}>
             RECURSOS DE APRENDIZAJE
           </span>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button 
-              onClick={() => handleResourceClick('manual')}
-              style={{ flex: 1, background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 12px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
-              onMouseOver={e => e.currentTarget.style.background = '#f8fafc'}
-              onMouseOut={e => e.currentTarget.style.background = '#ffffff'}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1e293b' }}>Manual Técnico</span>
-            </button>
+          <div style={{ display: 'flex' }}>
             <button 
               onClick={() => handleResourceClick('video')}
-              style={{ flex: 1, background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 12px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
+              style={{ width: '100%', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 12px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
               onMouseOver={e => e.currentTarget.style.background = '#f8fafc'}
               onMouseOut={e => e.currentTarget.style.background = '#ffffff'}
             >
