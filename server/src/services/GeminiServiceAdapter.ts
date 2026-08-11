@@ -110,7 +110,7 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
               generationConfig: {
                 responseMimeType: "application/json",
                 temperature: 0.1,
-                maxOutputTokens: 400
+                maxOutputTokens: 2048
               }
             })
           });
@@ -191,7 +191,7 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
             ],
             generationConfig: {
               temperature: 0.0,
-              maxOutputTokens: 20
+              maxOutputTokens: 1024
             }
           })
         });
@@ -301,7 +301,7 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
             generationConfig: {
               responseMimeType: "application/json",
               temperature: 0.2,
-              maxOutputTokens: 200
+              maxOutputTokens: 2048
             }
           })
         });

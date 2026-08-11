@@ -231,7 +231,13 @@ export function RagIngestionPanel({ onClose, usuarioId = "user-default" }: RagIn
             {fuentes.map((item) => (
               <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '6px' }}>
                 <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '75%' }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0', display: 'block' }}>{item.titulo}</span>
+                  {item.tipo === "youtube" && item.url ? (
+                    <a href={item.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.85rem', fontWeight: 600, color: '#38bdf8', textDecoration: 'none', display: 'block' }}>
+                      {item.titulo}
+                    </a>
+                  ) : (
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0', display: 'block' }}>{item.titulo}</span>
+                  )}
                   <span style={{ fontSize: '0.7rem', color: '#64748b' }}>{item.tipo === "youtube" ? "Enlace de YouTube" : "Documento Local"}</span>
                 </div>
                 <button className="btn-secondary" style={{ padding: '4px 10px', fontSize: '0.75rem', color: '#f87171', borderColor: 'rgba(239,68,68,0.3)' }} onClick={() => handleDeleteFuente(item.id)}>

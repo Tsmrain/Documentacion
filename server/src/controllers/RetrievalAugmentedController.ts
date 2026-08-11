@@ -140,7 +140,7 @@ export class RetrievalAugmentedController {
 
     const nuevaFuente = {
       id: fuenteId,
-      titulo: metadata.titulo || metadata.url || "Fuente de Conocimiento",
+      titulo: metadata.url ? textoExtraido : (metadata.titulo || "Fuente de Conocimiento"),
       tipo: metadata.url ? "youtube" : "archivo",
       url: metadata.url,
       fecha: new Date().toISOString(),
