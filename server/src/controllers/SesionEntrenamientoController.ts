@@ -129,6 +129,7 @@ export class SesionEntrenamientoController {
 
     // 5. Inferencia LLM
     const reporteEvaluacionJSON = await (this.llmProvider as any).evaluarMovimiento(promptCompilado, frames);
+    console.log(`[Dojo Debug] RAW Gemini JSON: ${reporteEvaluacionJSON}`);
 
     // Parseo seguro: Gemini puede devolver JSON dentro de bloques markdown (```json ... ```)
     // o con texto previo. El parseo directo lanza SyntaxError en esos casos.
@@ -152,11 +153,11 @@ export class SesionEntrenamientoController {
       const metricaFallback = metricas[0] || { articulacion: "codo_derecho", desviacionGrados: 20, anguloMedido: 110 };
       reporteParsed = {
         tecnicaId,
-        evaluacion: `Diagnostico cinematico generado localmente para la tecnica ${tecnicaId}.`,
+        evaluacion: `Falla temporal en IA. Ángulo incorrecto detectado en la postura base.`,
         desviacionArticular: metricaFallback.articulacion || "codo_derecho",
         desviacionGrados: metricaFallback.desviacionGrados || 20,
         severidad: "Moderado",
-        sugerenciaPedagogica: `Ajusta el angulo de tu ${(metricaFallback.articulacion || "codo_derecho").replace("_", " ")} para mejorar la estabilidad estructural.`
+        sugerenciaPedagogica: `Corrige el ángulo de tu ${(metricaFallback.articulacion || "codo_derecho").replace("_", " ")} para tener buena base y no regalar la posición.`
       };
     }
 
