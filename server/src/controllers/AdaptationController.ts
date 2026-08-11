@@ -159,9 +159,9 @@ export class AdaptationController {
 
     return {
       nivelCompetenciaActual: "Principiante",
-      drillRecomendado: `Drill enfocado en ${evaluacion.tecnicaId || "Guardia Cerrada"}`,
+      drillRecomendado: `Practica repeticiones (drills) para mejorar tu ${evaluacion.tecnicaId || "Guardia Cerrada"}`,
       videoYouTubeUrl: videoRecomendado,
-      mensajeAdaptativo: `Intento registrado. Cuida el ángulo de tu ${errorArticular.replace("_", " ")}.`,
+      mensajeAdaptativo: `No descuides tu ${errorArticular.replace("_", " ")}, ajusta la posición antes de que el oponente aproveche el espacio.`,
       ultimaTecnica: evaluacion.tecnicaId,
       posicionesMaestria: posicionesActualizadas
     };

@@ -31,7 +31,7 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
   // RAG Content
   let evaluacionText = "No se detectaron problemas mayores en la técnica.";
   if (!isApproved) {
-    evaluacionText = reporte.sugerenciaPedagogica || "La ejecución presenta desviaciones importantes que podrían exponer las extremidades o romper la postura. Se requiere ajuste estructural inmediato.";
+    evaluacionText = reporte.sugerenciaPedagogica || "Estás perdiendo tu base y postura. Corrige tus frames y distribución de peso para evitar ser raspado o finalizado.";
   } else if (reporte.sugerenciaPedagogica) {
     evaluacionText = reporte.sugerenciaPedagogica;
   }
@@ -93,11 +93,11 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
           <div style={{ background: '#fff0f2', border: '1px solid #ffe4e6', borderLeft: '4px solid #ef4444', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#b91c1c', marginBottom: '12px' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-              <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>Errores Críticos</h4>
+              <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>Detalles a Corregir</h4>
             </div>
             <ul style={{ margin: 0, paddingLeft: '20px', color: '#475569', fontSize: '0.85rem', lineHeight: '1.6' }}>
-              {reporte.desviacionArticular && <li>Desviación significativa en: {reporte.desviacionArticular.replace(/_/g, " ")} ({desviacion} grados).</li>}
-              <li>Postura comprometida permitiendo ventaja mecánica al oponente.</li>
+              {reporte.desviacionArticular && <li>Ángulo incorrecto en: {reporte.desviacionArticular.replace(/_/g, " ")} ({desviacion} grados).</li>}
+              <li>Postura débil, estás regalando el espacio y la posición.</li>
             </ul>
           </div>
         )}
@@ -106,13 +106,13 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
         <div style={{ background: '#f0fdf4', border: '1px solid #dcfce3', borderLeft: '4px solid #22c55e', borderRadius: '12px', padding: '16px', marginBottom: '30px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#15803d', marginBottom: '12px' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>Plan de Mejora (RAG)</h4>
+            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>Plan de Entrenamiento (RAG)</h4>
           </div>
           <ul style={{ margin: 0, paddingLeft: '20px', color: '#475569', fontSize: '0.85rem', lineHeight: '1.6' }}>
             {planAdaptativo?.drillRecomendado ? (
               <li>{planAdaptativo.drillRecomendado}</li>
             ) : (
-              <li>Manten tu peso distribuido y usa los frames correctamente para evitar pérdida de posición.</li>
+              <li>Mantén buena base, cede peso adecuadamente y usa tus frames/marcos para no perder la posición.</li>
             )}
             {planAdaptativo?.mensajeAdaptativo && (
               <li>{planAdaptativo.mensajeAdaptativo}</li>

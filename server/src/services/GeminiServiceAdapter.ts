@@ -95,7 +95,14 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
 
           // Fase 2: Prompt compacto con solo el fragmento relevante de Saulo Ribeiro
           const textPart = {
-            text: `ROL: Motor de tutoria biomecanica de OpenBJJ.\nFUENTE RAG FOCALIZADA:\n${fragmentoFocalizado}\n\nEvalua el siguiente prompt cinematico y las imagenes adjuntas del combate. Responde UNICAMENTE con un JSON segun el esquema AnalysisResult: tecnicaId (string), evaluacion (string, max 120 palabras), desviacionArticular (string), desviacionGrados (number 0-90), severidad ("Leve"|"Moderado"|"Critico"), sugerenciaPedagogica (string, max 60 palabras).\n\nPROMPT Y METRICAS:\n${promptJSON}`
+            text: `ROL: Motor de tutoria biomecanica de OpenBJJ.
+FUENTE RAG FOCALIZADA:
+${fragmentoFocalizado}
+
+Evalua el siguiente prompt cinematico y las imagenes adjuntas del combate. Usa lenguaje directo de tatami de BJJ (e.g. 'buena base', 'postura', 'ceder peso', 'regalar posicion', 'frame') en lugar de terminos muy academicos o mecanicos. Responde UNICAMENTE con un JSON segun el esquema AnalysisResult: tecnicaId (string), evaluacion (string, max 120 palabras), desviacionArticular (string), desviacionGrados (number 0-90), severidad ("Leve"|"Moderado"|"Critico"), sugerenciaPedagogica (string, max 60 palabras).
+
+PROMPT Y METRICAS:
+${promptJSON}`
           };
 
           const response = await fetch(url, {
@@ -145,11 +152,11 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
 
     const dynamicResponse = {
       tecnicaId,
-      evaluacion: `Evaluacion cinematica calculada para la tecnica ${tecnicaId}. Desviacion angular de ${desviacionGrados} grados en ${primeraMetrica.articulacion.replace("_", " ")}.`,
+      evaluacion: `Análisis para ${tecnicaId}. Tienes un ángulo incorrecto de ${desviacionGrados} grados en ${primeraMetrica.articulacion.replace("_", " ")}.`,
       desviacionArticular: primeraMetrica.articulacion || "codo_derecho",
       desviacionGrados,
       severidad,
-      sugerenciaPedagogica: `Ajusta el angulo de ${primeraMetrica.articulacion.replace("_", " ")} para mantener la estabilidad estructural en ${tecnicaId}.`
+      sugerenciaPedagogica: `Corrige el ángulo de tu ${primeraMetrica.articulacion.replace("_", " ")} para tener buena base y no regalar la posición desde ${tecnicaId}.`
     };
 
     return JSON.stringify(dynamicResponse);
