@@ -6,7 +6,7 @@ interface VideoAnalyzerProps {
   analysisProgress: string;
   analysisError: string | null;
   selectedFile: File | null;
-  onFileSelected: (file: File) => void;
+  onFileSelected: (file: File | null) => void;
   onStartAnalysis: (file: File) => void;
 }
 
@@ -129,14 +129,24 @@ export function VideoAnalyzer({
             </div>
           )}
 
-          <button
-            className="btn-primary"
-            style={{ width: "100%", padding: "14px", fontSize: "1rem", opacity: selectedFile ? 1 : 0.5 }}
-            onClick={handleStartClick}
-            disabled={!selectedFile}
-          >
-            Iniciar Analisis
-          </button>
+          <div style={{ display: "flex", gap: "12px", width: "100%" }}>
+            <button
+              className="btn-secondary"
+              style={{ flex: 1, padding: "14px", fontSize: "1rem", opacity: selectedFile ? 1 : 0.5, border: "1px solid rgba(255,255,255,0.1)" }}
+              onClick={() => onFileSelected(null)}
+              disabled={!selectedFile}
+            >
+              Cambiar Video
+            </button>
+            <button
+              className="btn-primary"
+              style={{ flex: 2, padding: "14px", fontSize: "1rem", opacity: selectedFile ? 1 : 0.5 }}
+              onClick={handleStartClick}
+              disabled={!selectedFile}
+            >
+              Iniciar Analisis
+            </button>
+          </div>
         </div>
       )}
     </div>
