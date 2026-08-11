@@ -10,8 +10,6 @@ export function RagIngestionPanel({ onClose, usuarioId = "user-default" }: RagIn
   const [url, setUrl] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  // "rejection" es el estado especifico para el rechazo por moderacion autonoma (RD-03 HTTP 400).
-  // Difiere de "error" (fallo de red/servidor) y de "warning" (ChromaDB offline HTTP 207).
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "warning" | "error" | "rejection", text: string } | null>(null);
   const [fuentes, setFuentes] = useState<any[]>([]);
 
@@ -21,7 +19,10 @@ export function RagIngestionPanel({ onClose, usuarioId = "user-default" }: RagIn
 
   const fetchFuentes = async () => {
     try {
-      const res = await fetch(`/api/rag/fuentes?usuarioId=${usuarioId}`);
+      const token = localStorage.getItem("openbjj_jwt");
+      const res = await fetch(`/api/rag/fuentes?usuarioId=${usuarioId}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
       if (res.ok) {
         const json = await res.json();
         setFuentes(json);
@@ -39,7 +40,11 @@ export function RagIngestionPanel({ onClose, usuarioId = "user-default" }: RagIn
 
   const handleDeleteFuente = async (id: string) => {
     try {
-      const res = await fetch(`/api/rag/fuentes/${id}?usuarioId=${usuarioId}`, { method: "DELETE" });
+      const token = localStorage.getItem("openbjj_jwt");
+      const res = await fetch(`/api/rag/fuentes/${id}?usuarioId=${usuarioId}`, { 
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
       if (res.ok) {
         setStatusMessage({ type: "success", text: "Fuente eliminada del sistema." });
         fetchFuentes();
@@ -56,13 +61,19 @@ export function RagIngestionPanel({ onClose, usuarioId = "user-default" }: RagIn
 
     try {
       let response;
+      const token = localStorage.getItem("openbjj_jwt");
+      
       if (tab === "file") {
         if (!selectedFile) {
           throw new Error("Por favor selecciona un archivo PDF o TXT.");
         }
+        
         response = await fetch(`/api/rag/ingestar?usuarioId=${usuarioId}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}` 
+          },
           body: JSON.stringify({
             archivoBlob: "dummy",
             usuarioId,
@@ -75,9 +86,13 @@ export function RagIngestionPanel({ onClose, usuarioId = "user-default" }: RagIn
         }
         response = await fetch(`/api/rag/ingestar?usuarioId=${usuarioId}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
           body: JSON.stringify({
             archivoBlob: "dummy",
+            url,
             usuarioId,
             metadata: { titulo: url, url, usuarioId }
           })
@@ -86,13 +101,8 @@ export function RagIngestionPanel({ onClose, usuarioId = "user-default" }: RagIn
 
       const data = await response.json();
 
-      // HTTP 400 / 422: Rechazo por moderacion autonoma de la IA (RD-03).
-      // El banner debe mostrar la razon exacta devuelta por el moderador de Gemini.
       if (response.status === 400 || response.status === 422) {
-        const razonModeracion =
-          data.razon ||
-          data.error ||
-          "El contenido no contiene referencias validas a Jiu-Jitsu o artes de agarre.";
+        const razonModeracion = data.razon || data.error || "El contenido no contiene referencias validas a Jiu-Jitsu o artes de agarre.";
         setStatusMessage({
           type: "rejection",
           text: `Rechazado por Moderacion Autonoma (RD-03): ${razonModeracion}`
@@ -100,8 +110,6 @@ export function RagIngestionPanel({ onClose, usuarioId = "user-default" }: RagIn
         return;
       }
 
-      // HTTP 207: Fuente persistida en PostgreSQL pero Vector Store (ChromaDB) fuera de linea.
-      // Es un estado de degradacion del sistema, no un rechazo de contenido.
       if (response.status === 207 || data.degraded) {
         setStatusMessage({
           type: "warning",
@@ -215,7 +223,7 @@ export function RagIngestionPanel({ onClose, usuarioId = "user-default" }: RagIn
 
       {/* Lista de Fuentes Activas con Borrado en 1 Clic */}
       <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px' }}>
-        <h3 style={{ fontSize: '1rem', color: '#f1f5f9', marginTop: 0, marginBottom: '12px' }}>Fuentes Activas en tu Vector Store</h3>
+        <h3 style={{ fontSize: '1rem', color: '#f1f5f9', marginTop: 0, marginBottom: '12px' }}>Fuentes Agregadas</h3>
         {fuentes.length === 0 ? (
           <p style={{ color: '#64748b', fontSize: '0.85rem', margin: 0 }}>No has agregado fuentes personalizadas aún.</p>
         ) : (

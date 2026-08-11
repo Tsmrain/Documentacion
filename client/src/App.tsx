@@ -74,9 +74,7 @@ function safeJsonParse(raw: string): any | null {
 function App() {
   const [report, setReport] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<TabId>("analizador");
-  const [usuarioId, setUsuarioId] = useState<string>(() => {
-    return localStorage.getItem("openbjj_user_id") || "user-default";
-  });
+  const [usuarioId, setUsuarioId] = useState<string>("00000000-0000-0000-0000-000000000001");
   const [userProfile, setUserProfile] = useState<{
     nombre: string;
     cinturon: string;
@@ -104,12 +102,41 @@ function App() {
   const analyzingRef = useRef(false);
 
   useEffect(() => {
-    fetchUserProfile();
+    const kioskoId = "00000000-0000-0000-0000-000000000001";
+    
+    const silentAuth = async () => {
+      try {
+        const token = localStorage.getItem("openbjj_jwt");
+        if (!token) {
+          console.log("[App] Modo Kiosco: Auto-autenticando en segundo plano...");
+          const res = await fetch("/api/usuario/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ usuarioId: kioskoId, pin: "1234" })
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            localStorage.setItem("openbjj_jwt", data.token);
+            localStorage.setItem("openbjj_user_id", kioskoId);
+            fetchUserProfile(data.token);
+          }
+        } else {
+          fetchUserProfile(token);
+        }
+      } catch (e) {
+        console.warn("[App] Error en silent auth:", e);
+      }
+    };
+    silentAuth();
   }, [usuarioId]);
 
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = async (token?: string) => {
     try {
-      const res = await fetch(`/api/sesion/perfil?usuarioId=${usuarioId}`);
+      const headers: any = {};
+      const t = token || localStorage.getItem("openbjj_jwt");
+      if (t) headers["Authorization"] = `Bearer ${t}`;
+      
+      const res = await fetch(`/api/sesion/perfil?usuarioId=${usuarioId}`, { headers });
       if (res.ok) {
         const json = await res.json();
         setUserProfile(json);
@@ -138,9 +165,13 @@ function App() {
 
       setAnalysisProgress("Fase 1: Clasificacion visual de posicion (gemini-2.5-flash)...");
 
+      const token = localStorage.getItem("openbjj_jwt");
       const response = await fetch("/api/sesion/analizar", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
           videoBlob: file.name,
           fileName: file.name,

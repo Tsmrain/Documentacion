@@ -2,6 +2,7 @@ import { IVectorStore, ChunkText } from "../services/CentralVectorDBAdapter";
 import { DynamicPromptBuilder, MetricaCinematica } from "../services/DynamicPromptBuilder";
 import { VectorDBUnavailableException } from "../exceptions/VectorDBUnavailableException";
 import { ModerationResult, IContentModerator } from "../services/GeminiServiceAdapter";
+import { PersistenceFacade } from "../persistence/PersistenceFacade";
 
 export interface SourceMetadata {
   titulo: string;
@@ -18,12 +19,13 @@ export class RetrievalAugmentedController {
   private vectorStore: IVectorStore;
   private promptBuilder: DynamicPromptBuilder;
   private contentModerator?: IContentModerator;
-  private fuentesMemoria: Map<string, any[]> = new Map();
+  private persistence: PersistenceFacade;
 
   constructor(vectorStore: IVectorStore, promptBuilder: DynamicPromptBuilder, contentModerator?: IContentModerator) {
     this.vectorStore = vectorStore;
     this.promptBuilder = promptBuilder;
     this.contentModerator = contentModerator;
+    this.persistence = new PersistenceFacade();
   }
 
   async obtenerGrounding(tecnicaId: string, metricas: MetricaCinematica[]): Promise<string> {
@@ -31,7 +33,7 @@ export class RetrievalAugmentedController {
       const chunks = await this.vectorStore.buscarSimilitud(tecnicaId, []);
       
       if (chunks && chunks.length > 0) {
-        console.log(`[RAG] Chunks recuperados para técnica ${tecnicaId}. Aplicando RAG Vivo Personalizado.`);
+        console.log(`[RAG] Chunks recuperados para tecnica ${tecnicaId}. Aplicando RAG Vivo Personalizado.`);
         return this.promptBuilder.compilarPromptRAG(metricas, chunks);
       } else {
         console.log(`[RAG] 0 chunks recuperados. Conmutando a Modo Baseline Fallback.`);
@@ -51,7 +53,6 @@ export class RetrievalAugmentedController {
   }
 
   private async extraerMetadatosYouTube(url: string): Promise<string> {
-    // Intento principal: YouTube oEmbed oficial
     try {
       const cleanUrl = url.split("&list=")[0].split("?list=")[0];
       const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(cleanUrl)}&format=json`;
@@ -74,7 +75,6 @@ export class RetrievalAugmentedController {
       console.warn("[oEmbed YouTube] Fallo en oEmbed primario:", e.message);
     }
 
-    // Intento secundario: noembed.com (proxy alternativo de oEmbed)
     try {
       const noembedUrl = `https://noembed.com/embed?url=${encodeURIComponent(url)}`;
       const res2 = await fetch(noembedUrl, { signal: AbortSignal.timeout(5000) });
@@ -93,12 +93,11 @@ export class RetrievalAugmentedController {
       console.warn("[oEmbed noembed.com] Fallo en oEmbed secundario:", e2.message);
     }
 
-    // Ultimo recurso: usar la URL directamente como identificador de contenido
     console.warn(`[oEmbed YouTube] Ambos intentos fallaron. Usando URL como identificador: ${url}`);
     return `Video de YouTube BJJ: ${url}`;
   }
 
-  async procesarEIngestarFuente(archivoBlob: any, metadata: SourceMetadata, usuarioIdParam?: string): Promise<{ success: boolean; error?: string; razon?: string } | boolean> {
+  async procesarEIngestarFuente(archivoBlob: any, metadata: SourceMetadata, usuarioIdParam?: string): Promise<{ success: boolean; error?: string; razon?: string; degraded?: boolean; vectorizado?: boolean }> {
     let textoExtraido = "";
 
     if (metadata.url && (metadata.url.includes("youtube.com") || metadata.url.includes("youtu.be"))) {
@@ -108,21 +107,16 @@ export class RetrievalAugmentedController {
       textoExtraido = metadata.titulo || "Documento de texto sin titulo.";
     }
 
-    // El moderador local trabaja con texto en minusculas.
-    // Normalizamos aqui para garantizar matching de palabras clave BJJ
-    // independientemente de como vengan los metadatos de oEmbed (mayusculas, titulos, etc.).
     const textoNormalizado = textoExtraido.toLowerCase();
-
-    // Muestra de los primeros 1000 caracteres para validacion semantica (RD-03)
     const muestra1000 = textoNormalizado.substring(0, 1000);
 
     if (this.contentModerator) {
       const resultado = await this.contentModerator.validarPertinenciaBJJ(muestra1000);
       if (!resultado.esPertinente) {
-        console.log(`[RAG Controller - RD-03] Ingesta rechazada por moderación autónoma: ${resultado.razon}`);
+        console.log(`[RAG Controller - RD-03] Ingesta rechazada por moderacion autonoma: ${resultado.razon}`);
         return {
           success: false,
-          error: "Contenido no relacionado con BJJ. Moderación autónoma rechazada.",
+          error: "Contenido no relacionado con BJJ. Moderacion autonoma rechazada.",
           razon: resultado.razon
         };
       }
@@ -154,54 +148,40 @@ export class RetrievalAugmentedController {
       vectorizado: exitoVectorStore
     };
 
-    const fuentesTarget = this.fuentesMemoria.get(targetUserId) || [];
-    fuentesTarget.push(nuevaFuente);
-    this.fuentesMemoria.set(targetUserId, fuentesTarget);
-
-    const fuentesDefault = this.fuentesMemoria.get("user-default") || [];
-    if (targetUserId !== "user-default" && !fuentesDefault.some(f => f.id === fuenteId)) {
-      fuentesDefault.push(nuevaFuente);
-      this.fuentesMemoria.set("user-default", fuentesDefault);
-    }
-
-    const fuentesUUID = this.fuentesMemoria.get(DEFAULT_UUID) || [];
-    if (targetUserId !== DEFAULT_UUID && !fuentesUUID.some(f => f.id === fuenteId)) {
-      fuentesUUID.push(nuevaFuente);
-      this.fuentesMemoria.set(DEFAULT_UUID, fuentesUUID);
+    try {
+      await this.persistence.guardarFuenteConocimiento(targetUserId, nuevaFuente);
+    } catch (dbErr: any) {
+      console.warn(`[RAG Controller] Error al guardar fuente relacional: ${dbErr.message}`);
     }
 
     if (vectorError) {
       console.warn(`[Dojo Fallback] Ingesta vectorial fallida. Fuente relacional preservada en PostgreSQL.`);
     }
 
-    return exitoVectorStore;
+    return {
+      success: true,
+      degraded: !exitoVectorStore,
+      vectorizado: exitoVectorStore
+    };
   }
 
   async obtenerFuentes(usuarioId: string): Promise<any[]> {
     const targetUserId = usuarioId || "user-default";
-    let fuentes = this.fuentesMemoria.get(targetUserId);
-    if (!fuentes || fuentes.length === 0) {
-      fuentes = this.fuentesMemoria.get(DEFAULT_UUID) || this.fuentesMemoria.get("user-default") || [];
-    }
-    return fuentes;
+    return this.persistence.obtenerFuentesConocimiento(targetUserId);
   }
 
   async eliminarFuente(usuarioId: string, fuenteId: string): Promise<boolean> {
     const targetUserId = usuarioId || "user-default";
-    const fuentes = this.fuentesMemoria.get(targetUserId) || [];
-    const filtradas = fuentes.filter(f => f.id !== fuenteId);
-    this.fuentesMemoria.set(targetUserId, filtradas);
-
-    // Mantener sincronizado
-    if (targetUserId === "user-default" || targetUserId === DEFAULT_UUID) {
-      this.fuentesMemoria.set("user-default", filtradas);
-      this.fuentesMemoria.set(DEFAULT_UUID, filtradas);
+    try {
+      await this.persistence.eliminarFuenteConocimiento(targetUserId, fuenteId);
+    } catch (dbErr: any) {
+      console.warn(`[RAG Controller] Error al eliminar fuente relacional: ${dbErr.message}`);
     }
     
     try {
       await this.vectorStore.eliminarChunk(fuenteId);
-    } catch (e) {
-      console.warn("[RAG] Error al purgar chunk de ChromaDB:", e);
+    } catch (e: any) {
+      console.warn("[RAG] Error al purgar chunk de ChromaDB:", e.message);
     }
     
     return true;

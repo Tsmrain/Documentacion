@@ -5,6 +5,7 @@ import { createRagRouter } from "./routes/ragRoutes";
 import { createUsuarioRouter } from "./routes/usuarioRoutes";
 import { SesionEntrenamientoController } from "./controllers/SesionEntrenamientoController";
 import { VectorDBUnavailableException } from "./exceptions/VectorDBUnavailableException";
+import { verifyToken, sanitizePayload } from "./middlewares/securityHandler";
 
 export function createApp(sessionController: SesionEntrenamientoController): express.Application {
   const app = express();
@@ -12,9 +13,10 @@ export function createApp(sessionController: SesionEntrenamientoController): exp
   app.use(cors());
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  app.use(sanitizePayload);
 
-  app.use("/api/sesion", createSesionRouter(sessionController));
-  app.use("/api/rag", createRagRouter(sessionController));
+  app.use("/api/sesion", verifyToken, createSesionRouter(sessionController));
+  app.use("/api/rag", verifyToken, createRagRouter(sessionController));
   app.use("/api/usuario", createUsuarioRouter(sessionController));
 
   // Middleware de manejo de errores global (Graceful Degradation de API)

@@ -5,6 +5,7 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../server/node_modules/.prisma/client"
 }
 
 enum Cinturon {
@@ -43,11 +44,13 @@ model Usuario {
   id                String             @id @default(uuid())
   nombre            String
   email             String             @unique
+  pinHash           String?
   cinturon          Cinturon           @default(BLANCO)
   altura            Decimal            @db.Decimal(3, 2)
   peso              Decimal            @db.Decimal(5, 2)
   perfilCompetencia PerfilCompetencia?
   sesiones          SesionEntrenamiento[]
+  fuentes           FuenteConocimiento[]
   createdAt         DateTime           @default(now())
 }
 
@@ -107,6 +110,8 @@ model RutaAprendizaje {
 
 model FuenteConocimiento {
   id               String           @id @default(uuid())
+  usuarioId        String
+  usuario          Usuario          @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   titulo           String
   autor            String?
   url              String?

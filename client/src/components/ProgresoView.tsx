@@ -16,7 +16,10 @@ export function ProgresoView({ usuarioId }: ProgresoViewProps) {
   const fetchProgreso = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/sesion/progreso?usuarioId=${usuarioId}`);
+      const token = localStorage.getItem("openbjj_jwt");
+      const res = await fetch(`/api/sesion/progreso?usuarioId=${usuarioId}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
       if (!res.ok) throw new Error("Error al obtener los datos de progreso.");
       const json = await res.json();
       setData(json);

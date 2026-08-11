@@ -1,4 +1,5 @@
 import { VectorDBUnavailableException } from "../exceptions/VectorDBUnavailableException";
+import { LocalEmbeddingAdapter } from "./LocalEmbeddingAdapter";
 
 export interface ChunkText {
   id: string;
@@ -16,10 +17,12 @@ export class CentralVectorDBAdapter implements IVectorStore {
   private apiEndpoint: string;
   private authToken: string;
   private collectionId: string | null = null;
+  private embeddingAdapter: LocalEmbeddingAdapter;
 
   constructor() {
     this.apiEndpoint = process.env.CHROMA_URL || "http://localhost:8000";
     this.authToken = process.env.CHROMA_TOKEN || "";
+    this.embeddingAdapter = new LocalEmbeddingAdapter();
   }
 
   private async asegurarColeccion(): Promise<string> {
@@ -52,7 +55,7 @@ export class CentralVectorDBAdapter implements IVectorStore {
         }
       }
     } catch (e) {
-      console.warn("[ChromaDB Adapter] Error al resolver colección v2:", e);
+      console.warn("[ChromaDB Adapter] Error al resolver coleccion v2:", e);
     }
     return "6d3f3b28-c815-4e1c-bc58-218e22f7dc3e";
   }
@@ -60,7 +63,10 @@ export class CentralVectorDBAdapter implements IVectorStore {
   async buscarSimilitud(tecnicaId: string, queryVector: number[]): Promise<ChunkText[]> {
     try {
       const colId = await this.asegurarColeccion();
-      const vector = (queryVector && queryVector.length > 0) ? queryVector : [0.1, 0.2, 0.3];
+      let vector = queryVector;
+      if (!vector || vector.length === 0) {
+        vector = await this.embeddingAdapter.generarEmbedding(tecnicaId);
+      }
       
       const response = await fetch(`${this.apiEndpoint}/api/v2/tenants/default_tenant/databases/default_database/collections/${colId}/query`, {
         method: "POST",
@@ -93,7 +99,7 @@ export class CentralVectorDBAdapter implements IVectorStore {
   async ingestarChunk(chunk: ChunkText): Promise<boolean> {
     try {
       const colId = await this.asegurarColeccion();
-      const vector = [0.1, 0.2, 0.3];
+      const vector = await this.embeddingAdapter.generarEmbedding(chunk.text);
 
       const response = await fetch(`${this.apiEndpoint}/api/v2/tenants/default_tenant/databases/default_database/collections/${colId}/add`, {
         method: "POST",

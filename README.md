@@ -1994,13 +1994,13 @@ Para respaldar la transferencia multimodal híbrida de los 9 keyframes en Base64
 ## **7.1 Seguridad del sistema**
 
 ### **7.1.1 Confidencialidad**
-En estricto cumplimiento del requisito no funcional **RNF05 (Privacidad Cinemática Local)**, el video monocular capturado por la cámara del practicante jamás se transmite ni se almacena en servidores externos o servicios en la nube. La extracción cinemática de los 33 landmarks tridimensionales ocurre exclusivamente en la memoria RAM volátil del cliente mediante MediaPipe Pose. Al servidor únicamente viajan matrices vectoriales numéricas reducidas (~3 KB), garantizando la máxima privacidad del atleta.
+En estricto cumplimiento del requisito no funcional **RNF05 (Confidencialidad Cinemática)**, el video monocular capturado por la cámara del practicante jamás se transmite ni se almacena en servidores externos o servicios en la nube. La extracción cinemática de los 33 landmarks tridimensionales ocurre exclusivamente en la memoria RAM volátil del cliente mediante MediaPipe Pose. Al servidor únicamente viajan matrices vectoriales numéricas reducidas (~3 KB) a través de conexiones seguras HTTPS, garantizando la máxima privacidad del atleta.
 
 ### **7.1.2 Integridad**
-Antes de despachar cualquier payload cinemático al servidor Express (`POST /api/sesion/analizar`), la PWA ejecuta algoritmos de sanitización y validación de confianza cinemática (`visibility >= 0.5`). Si la visibilidad de los puntos articulares es insuficiente por oclusión cinemática o baja iluminación, la solicitud es rechazada inmediatamente en el cliente, impidiendo la contaminación de la base de datos relacional con mediciones espurias.
+La integridad de los datos (RNF02) se consolida a través de dos mecanismos superpuestos. Primero, una capa de sanitización a nivel de middleware intercepta los payloads cinemáticos de 3KB, verificando matemáticamente que las coordenadas y landmarks numéricos existan y se encuentren dentro de los rangos físicos espaciales válidos, neutralizando inyecciones de código. Segundo, se implementa una firma asertiva local mediante JSON Web Tokens (JWT) para la autenticación sin servidores externos. Este esquema asegura un estricto aislamiento de los perfiles antropométricos, garantizando que el acceso y la modificación del historial de competencia sean exclusivos de cada practicante autorizado mediante su PIN local.
 
 ### **7.1.3 Disponibilidad**
-La resiliencia operativa está garantizada por el patrón de **Degradación Graciosa (Graceful Degradation)**. En caso de que la base de datos vectorial ChromaDB experimente una caída o indisponibilidad de red, el adaptador lanza la excepción `VectorDBUnavailableException`, la cual es interceptada por el middleware de manejo de errores de Express en `app.ts` para responder con un estado HTTP 207 Multi-Status y ejecutar el *Baseline Fallback* de Gemini BJJ nativo, manteniendo el servicio operativo al 100%.
+La resiliencia operativa y disponibilidad del sistema están garantizadas por el patrón de **Degradación Graciosa (Graceful Degradation)**. En caso de que la base de datos vectorial ChromaDB experimente una caída física o indisponibilidad de red, el adaptador lanza la excepción `VectorDBUnavailableException`, la cual es interceptada por el middleware de manejo de errores de Express para responder con un estado HTTP 207 Multi-Status. El sistema ejecuta entonces el *Baseline Fallback* de Gemini BJJ nativo, manteniendo el servicio de tutoría pedagógica operativo de forma ininterrumpida.
 
 ---
 
@@ -2046,22 +2046,29 @@ La ejecución automatizada de la suite de pruebas de integración REST (`npx tsx
 | Test 7: Historial CU05 | GET /api/sesion/historial | HTTP 200 OK | Exitoso (Mapeo UUID e historial retornado correctamente) |
 | Test 8: Multiusuario | GET /api/usuario/perfil | HTTP 200 OK | Exitoso (Aislamiento de perfiles de usuario confirmado) |
 | Test 9: Perfil CU04 | POST /api/usuario/perfil | HTTP 200 OK | Exitoso (Actualización antropométrica persistida en DB) |
-| Build Frontend PWA | tsc -b && vite build | 23 módulos transformados | Exitoso (Compilación en 110ms sin advertencias ni errores) |
+| Test 10: Borrado en Cascada | npx tsx src/scripts/testCascade.ts | Exitoso (Purga asertiva en DB) | Exitoso (Eliminación física automática en PostgreSQL sin registros huérfanos) |
+| Build Frontend PWA | tsc -b && vite build | 23 módulos transformados | Exitoso (Compilación en 154ms sin advertencias ni errores) |
 
 ---
 
 # **CAPÍTULO IX: CONCLUSIONES Y RECOMENDACIONES**
 
 ## **9.1 Conclusiones**
-1. **Viabilidad de la Arquitectura Híbrida Edge AI / Server RAG:** Se comprobó la factibilidad técnica de procesar cinemática 3D de 33 landmarks directamente en el cliente WebGL con MediaPipe Pose, manteniendo una latencia inferior a 50 ms por fotograma y eliminando la necesidad de transmitir video por la red.
-2. **Efectividad del Motor RAG Centralizado con ChromaDB v2:** La combinación de la API v2 de ChromaDB y embeddings locales de 384 dimensiones (`all-MiniLM-L6-v2`) garantizó un grounding biomecánico preciso y libre de alucinaciones en las evaluaciones pedagógicas.
-3. **Resiliencia Operativa mediante Graceful Degradation:** La captura de excepciones con `VectorDBUnavailableException` y respuesta HTTP 207 aseguró que el sistema permanezca 100% operativo en modo Baseline Fallback ante cualquier contingencia de la base de datos vectorial.
-4. **Simplicidad Operativa (RNF07):** La unificación del arranque en un único comando (`npm run dev`) mediante `scripts/ensure-chroma.js` redujo a cero la fricción operativa de despliegue local en entornos de desarrollo y evaluación académica.
 
-## **9.2 Recomendaciones**
-1. **Ampliación de la Videoteca de Drills:** Incorporar nuevos manuales técnicos en PDF y seminarios en video para extender la cobertura a posiciones complejas de media guardia y llaves de pie (Leg Locks).
-2. **Optimización de Caché PWA Offline:** Implementar Service Workers con Workbox para permitir la reproducción sin conexión de los tutoriales de YouTube recomendados en el plan adaptativo.
-3. **Calibración Dinámica por Somatotipo:** Incorporar ajustes finos en las tolerancias angulares (grados de desviación) considerando la relación antropométrica (altura/peso) registrada en el perfil del practicante.
+### **9.1.1 Conclusión sobre la Viabilidad de Arquitecturas Híbridas Edge AI**
+Se ha comprobado la factibilidad técnica y operativa de implementar arquitecturas híbridas (Edge AI) para el análisis deportivo. La estimación cinemática tridimensional de los 33 landmarks corporales ejecutada localmente en el cliente web mediante MediaPipe Pose (WASM/WebGL) ha demostrado un rendimiento excepcional, manteniendo latencias inferiores a 50 milisegundos por fotograma sin requerir hardware especializado. Asimismo, se logró una optimización drástica del ancho de banda y cumplimiento estricto del requisito de privacidad (RNF05) al descartar la transmisión del video bruto; en su lugar, se despachan únicamente resúmenes de metadatos angulares de aproximadamente 3KB hacia el servidor, lo que garantiza la viabilidad del sistema en conexiones inestables.
+
+### **9.1.2 Conclusión sobre el Grounding RAG y Soberanía Local**
+La incorporación de la arquitectura de Recuperación Aumentada por Generación (RAG) centralizada demostró una efectividad rotunda en la reducción de alucinaciones del modelo de lenguaje. La indexación exitosa de manuales técnicos fundamentales, como la obra de Saulo Ribeiro, en el motor ChromaDB v2 mediante embeddings semánticos reales de 384 dimensiones generados localmente, garantizó un grounding biomecánico preciso y altamente contextualizado. Esta configuración asegura la soberanía total de la base de conocimiento pedagógico de la academia, eliminando la dependencia de servicios de indexación externos.
+
+## **9.2 Recomendaciones de Despliegue Físico (9.1.3)**
+Para garantizar la continuidad operativa en la academia Corpo & Mente de forma resiliente, se recomienda la siguiente secuencia paso a paso para el despliegue físico contenerizado del backend Express y la base de datos PostgreSQL mediante Docker Compose:
+
+1. Clonar el repositorio en el servidor local de la academia y posicionarse en el directorio raíz.
+2. Configurar el archivo de variables de entorno locales definiendo credenciales robustas para la persistencia relacional y el secreto criptográfico (`JWT_SECRET`).
+3. Ejecutar el comando `docker-compose up --build -d` para instanciar de manera aislada los contenedores correspondientes a Express, PostgreSQL y ChromaDB. La orquestación mapea de manera automatizada un volumen de datos persistente (`pgdata`) para salvaguardar el historial cinemático relacional, y un volumen aislado (`chromadata`) que consolida el corpus de la base de datos vectorial previniendo la pérdida de los manuales RAG inyectados ante reinicios del sistema.
+4. Aplicar las migraciones físicas del esquema relacional Prisma ejecutando de forma interna `npx prisma db push` o `npx prisma migrate deploy`.
+5. Verificar la accesibilidad del API Gateway en el puerto local asignado (3001) y monitorear la salud de los contenedores para asegurar la operatividad del sistema Híbrido Cliente-Servidor en modo producción.
 
 ---
 

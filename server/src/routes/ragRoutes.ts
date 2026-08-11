@@ -12,17 +12,18 @@ export function createRagRouter(sessionController: SesionEntrenamientoController
       
       const result = await sessionController.ingestarFuenteConocimiento(archivoBlob || "dummy", fullMetadata);
       
-      if (typeof result === "object" && result.success === false) {
+      if (!result || result.success === false) {
         return res.status(400).json({
-          error: result.error || "Contenido no relacionado con BJJ. Moderación autónoma rechazada.",
-          razon: result.razon || "El texto no corresponde al dominio de Brazilian Jiu-Jitsu ni disciplinas de agarre afines."
+          error: result?.error || "Contenido no relacionado con BJJ. Moderación autónoma rechazada.",
+          razon: result?.razon || "El texto no corresponde al dominio de Brazilian Jiu-Jitsu ni disciplinas de agarre afines."
         });
       }
 
-      if (!result) {
-        return res.status(400).json({
-          error: "Contenido no relacionado con BJJ. Moderación autónoma rechazada.",
-          razon: "El texto no corresponde al dominio de Brazilian Jiu-Jitsu ni disciplinas de agarre afines."
+      if (result.degraded) {
+        return res.status(207).json({
+          success: true,
+          degraded: true,
+          message: "Fuente agregada en repositorio local. Vector Store ChromaDB fuera de línea."
         });
       }
 

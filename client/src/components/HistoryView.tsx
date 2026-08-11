@@ -21,7 +21,10 @@ export function HistoryView({ usuarioId, onSelectReport, refreshVersion }: Histo
   const fetchHistorial = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/sesion/historial?usuarioId=${usuarioId}`);
+      const token = localStorage.getItem("openbjj_jwt");
+      const res = await fetch(`/api/sesion/historial?usuarioId=${usuarioId}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
       if (!res.ok) throw new Error("Error al obtener el historial de análisis.");
       const json = await res.json();
       setHistorial(json);
@@ -37,8 +40,10 @@ export function HistoryView({ usuarioId, onSelectReport, refreshVersion }: Histo
     if (!window.confirm("¿Seguro que deseas eliminar este análisis del historial?")) return;
     
     try {
+      const token = localStorage.getItem("openbjj_jwt");
       const res = await fetch(`/api/sesion/historial/${analisisId}?usuarioId=${usuarioId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: { "Authorization": `Bearer ${token}` }
       });
       if (res.ok) {
         setHistorial(prev => prev.filter(item => item.id !== analisisId));
