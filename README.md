@@ -2078,3 +2078,48 @@ Para garantizar la continuidad operativa en la academia Corpo & Mente de forma r
 2. Larman, C. (2003). *UML and Patterns: An Introduction to Object-Oriented Analysis and Design and the Unified Process* (2nd Ed.). Prentice Hall.
 3. Google Developers. (2023). *MediaPipe Pose Landmarker: Framework for ML Pipelines*.
 4. Google Cloud. (2023). *Gemini API: Multimodal AI Platform*.
+# Reporte de Actualización Tecnológica y Arquitectónica - OpenBJJ
+*Documento fuente para NotebookLM - Actualización de Tesis*
+
+## 1. Resumen de Cambios Recientes (Fase de Transición - UP)
+
+Durante la última iteración de la Fase de Transición, se implementaron cambios arquitectónicos profundos enfocados en la disponibilidad, resiliencia offline, usabilidad en el tatami (jerga BJJ) y orquestación de infraestructura.
+
+### 1.1. Orquestación y Despliegue Físico (RNF07 - Simplicidad Operativa)
+Se consolidó la infraestructura en un pliego de orquestación contenerizada mediante **Docker Compose**.
+- **Contenedores desplegados:**
+  - `openbjj-db`: PostgreSQL (Puerto 5432) para la persistencia de perfiles y sesiones.
+  - `openbjj-vector-store`: ChromaDB (Puerto 8000) para el almacenamiento de embeddings vectoriales de fuentes RAG.
+  - `openbjj-backend`: API Gateway Express (Puerto 3001) sirviendo la lógica de negocio y controladores.
+- **Impacto:** Cumplimiento de la soberanía de infraestructura y simplificación del despliegue en un único comando (`docker-compose up -d`), aislando el backend de dependencias locales.
+
+### 1.2. Resiliencia Offline y PWA (Service Workers)
+Se configuró la herramienta `vite-plugin-pwa` utilizando las estrategias de caché de **Workbox** para soportar el comportamiento sin conexión en el tatami:
+- **Cache-First:** Aplicado a los recursos estáticos del frontend, modelos de MediaPipe WASM y dependencias tridimensionales (Three.js), asegurando que el motor de extracción de pose 3D cargue instantáneamente incluso sin internet.
+- **Network-First con Fallback Local:** Aplicado a las llamadas REST del backend (ej. `/api/sesion/historial`). Si la red falla, el sistema devuelve los últimos datos cacheados localmente.
+
+### 1.3. Ajuste de Modelos Cognitivos y Límite de Tokens
+- **Cuotas de Tokens:** Se incrementó el `maxOutputTokens` en el `GeminiServiceAdapter` a 2048 para acomodar el proceso de "pensamiento" (*thinking*) interno de los modelos modernos de la familia Gemini 2.5, evitando que las respuestas JSON se truncaran prematuramente.
+- **Unificación de Modelo:** Se configuraron las variables de entorno (`GEMINI_MODEL`, `GEMINI_MODEL_PRO`, `GEMINI_MODEL_LITE`) para forzar el uso exclusivo de `gemini-2.5-flash` en todas las fases de inferencia (tanto clasificación como RAG profundo), optimizando la latencia y reduciendo costos sin perder precisión multimodal.
+
+### 1.4. Interfaz de Usuario y UX Orientado al Tatami
+- **Terminología Nativa de BJJ:** Se modificaron los Prompts de IA y las interfaces visuales para abandonar la jerga ingenieril/académica en favor de lenguaje directo de tatami (ej. *"Estabilidad estructural"* -> *"Buena base"*, *"Ventaja mecánica"* -> *"Regalar la posición"*).
+- **Simplificación del Reporte:** Se eliminó la pestaña redundante de "Practicante/Oponente" y botones obsoletos para darle prioridad absoluta al diagnóstico.
+- **Botón Rápido de Cambio de Video:** Se integró un flujo más ágil al subir sparrings, agregando un botón de *"Cambiar Video"* en caso de errores en la selección de archivos sin necesidad de recargar la PWA.
+- **Robustez de Parseo JSON:** Se optimizó el manejador de fallos en el `SesionEntrenamientoController`, asegurando que si el JSON de la IA contiene código markdown (```json ... ```), este se parsee correctamente mediante expresiones regulares, y en caso de fallo absoluto, el diagnóstico de emergencia utilice la jerga correcta.
+
+## 2. Análisis Crítico: Limitaciones Actuales del Motor RAG con YouTube
+
+Durante la revisión del módulo de *Recuperación Aumentada por Generación (RAG)*, se identificó un comportamiento específico en la asimilación de videos de YouTube:
+- **Extracción de Metadatos:** El sistema actual utiliza el protocolo `oEmbed` para extraer únicamente el **Título, Canal y Plataforma** del video aportado por el practicante.
+- **Consecuencia en la Búsqueda Vectorial:** ChromaDB indexa y busca similitud semántica *exclusivamente* basada en estos títulos, no en el contenido hablado o visual del video. 
+- **Impacto Práctico:** Si múltiples usuarios suben el mismo video, o si los videos tienen títulos genéricos (ej. "Técnica de BJJ"), el motor RAG dependerá de la coincidencia exacta de palabras en el título (ej. "montada" o "codo") para recomendar el recurso correctivo. 
+- **Recomendación para la Tesis (Trabajos Futuros):** Se propone como trabajo futuro la integración de un modelo de transcripción de audio (Speech-to-Text como Whisper) o la lectura automatizada de la descripción del video para vectorizar el contenido real del tutorial, enriqueciendo drásticamente el espacio latente de ChromaDB.
+
+## 3. Estado de la Arquitectura Actual
+La plataforma funciona bajo un **modelo híbrido Cliente-Ligero (Edge AI)**:
+1. **Cliente WebGL/MediaPipe (Edge):** Asume toda la carga de inferencia cinemática 3D (extracción de landmarks y cálculo de ángulos).
+2. **Servidor Local (Node.js):** Orquesta el flujo, gestiona el prompt dinámico (Dynamic Prompt Builder) y se comunica con la API externa de Gemini.
+3. **Bases de Datos Locales:** PostgreSQL para la relacionalidad (historial y perfiles) y ChromaDB para la base de conocimiento semántico.
+
+*Este documento está diseñado para ser procesado por NotebookLM y facilitar la actualización automática de los Capítulos V (Diseño), VI (Implementación) y IX (Conclusiones y Trabajos Futuros) de la tesis.*
