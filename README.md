@@ -1,76 +1,5 @@
 # **OpenBJJ — Tutor Biomecánico Adaptativo 3D & Motor RAG para Jiu-Jitsu**
 
-Plataforma inteligente de tutoría adaptativa e inspección biomecánica tridimensional para Brazilian Jiu-Jitsu (BJJ), construida sobre una **Arquitectura Híbrida Cliente-Ligero (Edge AI)** y un motor **RAG (Retrieval-Augmented Generation)** en el servidor.
-
----
-
-## Instrucciones de Despliegue Rapido (One-Step Startup)
-
-Para garantizar la maxima simplicidad operativa (**RNF07 - Simplicidad Operativa**) y la alineacion estricta con la trazabilidad arquitectonica del **Capitulo V y VI** del Proceso Unificado (UP), el ecosistema completo de OpenBJJ se inicia mediante un unico comando unificado desde la raiz del proyecto:
-
-### Modo Desarrollo Unificado (Arranque de Un Solo Paso)
-
-```bash
-npm run dev
-```
-*(Opcionalmente se puede ejecutar `npm run dojo` para el mismo efecto).*
-
-#### Puertos Activos del Ecosistema:
-- **Cliente React PWA (Vite):** `http://localhost:5173`
-- **API Gateway Backend (Express):** `http://localhost:3001`
-- **Vector Store (ChromaDB):** `http://localhost:8000`
-
-#### Orquestacion Concurrente Automatizada (Tras Bambalinas):
-Al ejecutar el comando unificado, la infraestructura realiza concurrentemente y de forma transparente las siguientes acciones:
-1. **Verificacion y Gestion de ChromaDB Vector Store (Puerto 8000):** Invoca el script de orquestacion `scripts/ensure-chroma.js` el cual verifica la conectividad HTTP en `http://localhost:8000`. Si ChromaDB no se encuentra activo y la maquina host dispone del demonio Docker, levanta de forma transparente el contenedor mediante la instruccion `docker run -d -p 8000:8000 chromadb/chroma`. Si Docker no estuviera disponible en el sistema, conmuta con elegancia al modo de degradacion graciosa (*Baseline Fallback* con respuesta HTTP 207).
-2. **Servidor API Gateway Express (Puerto 3001):** Inicializa concurrentemente el backend Express cargando los controladores GRASP (`SesionEntrenamientoController`, `AdaptationController`, `RetrievalAugmentedController`) y el ORM relacional Prisma a traves del patron GoF Facade (`PersistenceFacade`).
-3. **Cliente PWA React Vite (Puerto 5173):** Inicializa concurrentemente el servidor de desarrollo del frontend activando la vista interactiva del tutor biomecanico 3D y el motor cinematico WebGL.
-
----
-
-### Despliegue por Contenerizacion Total (Docker Compose)
-
-Para entornos de produccion o pruebas aisladas basadas en el **Diagrama de Despliegue Fisico (Figura 10)**:
-
-```bash
-# Levantar toda la infraestructura contenerizada
-docker-compose up --build -d
-
-# Apagado limpio y seguro
-docker-compose down
-```
-
----
-
-## Resumen de la Arquitectura de Software
-
-- **Cliente PWA (React 19 + TypeScript + Vite + `@react-three/fiber`):**
-  - Extracción cinemática client-side en WebGL mediante **MediaPipe Pose** (Mitigación de riesgos R-01 y R-03).
-  - Canvas 3D semántico con resaltado automático de la articulación problemática en rojo inteso (`#e63946`).
-  - Interfaz Ergonómica para Tatami (RNF07): Selección y carga directa de video, botón masivo de acción (`> 60px`) y reporte gráfico.
-- **Servidor Backend (Node.js + Express API Gateway + Prisma):**
-  - **Coerción JSON Estricta:** `GeminiServiceAdapter` con `responseMimeType: 'application/json'` (Mitigación R-02).
-  - **Persistencia Aislada:** Patrones GoF `Facade` (`PersistenceFacade`) y `Template Method` / `Database Mapper` (`PerfilCompetenciaMapper`).
-  - **Tolerancia a Fallos:** Patrón `Convert Exceptions` (`VectorDBUnavailableException`) para Graceful Degradation local si ChromaDB falla.
-  - **Soberanía de Embeddings:** `LocalEmbeddingAdapter` con `@xenova/transformers` (`Xenova/all-MiniLM-L6-v2`) en 384 dimensiones.
-
----
-
-## Pruebas Automatizadas y Verificacion de Produccion
-
-```bash
-# Servidor (Verificación de compilación estática TypeScript)
-cd server && npm run build
-
-# Cliente (Suite de pruebas unitarias con Vitest y build PWA)
-cd client && npm run test
-cd client && npm run build
-```
-
----
-
-<br>
-
 <div align="center">
 
 <img src="logo-upsa.png" alt="Logo UPSA" width="350">
@@ -1976,7 +1905,7 @@ La inteligencia artificial generativa y el razonamiento multimodal procesan la i
 Para respaldar la transferencia multimodal híbrida de los 9 keyframes en Base64 sin interrumpir el flujo operativo por desbordamientos de buffer (PayloadTooLargeError), el API Gateway local de Express cuenta con una configuración de middleware con límite de payload extendido a **50 MB** (`express.json({ limit: '50mb' })` y `express.urlencoded({ limit: '50mb' })`).
 
 ### **6.1.5 Orquestación y Despliegue Físico Contenerizado**
-La consolidación de los servicios y la arquitectura se efectúa mediante **Docker Compose**. La ejecución del comando `docker-compose up --build -d` levanta tres contenedores interdependientes: el Gateway API (`openbjj-backend`), el motor de persistencia relacional (`openbjj-db` / PostgreSQL) y el repositorio vectorial (`openbjj-vector-store` / ChromaDB). Esta configuración cumple con el requisito no funcional RNF07 (Simplicidad Operativa), orquestando automáticamente el mapeo de puertos y volúmenes de datos persistentes (`pgdata` y `chromadata`) sin dependencias de hardware anfitrión.
+La distribución física de la infraestructura del dojo se implementa mediante un pliego de orquestación contenerizada multifísica (Docker Compose). Este pliego instancia y coordina de manera automatizada e independiente tres nodos de servicios en red local (API Gateway, PostgreSQL y ChromaDB), asegurando la portabilidad y el cumplimiento del RNF07 (Simplicidad Operativa). Los volúmenes persistentes (`pgdata` y `chromadata`) actúan como salvaguardas arquitectónicas críticas que preservan la integridad del historial cinemático relacional de las 8 tablas de dominio y el repositorio vectorial de 384 dimensiones ante eventuales interrupciones físicas de energía en el tatami, aislando completamente el servidor de dependencias del sistema operativo anfitrión.
 ## **6.2 Herramientas utilizadas**
 
 ### **6.2.1 Lenguajes de programación, frameworks y librerías**
@@ -2048,7 +1977,7 @@ La ejecución automatizada de la suite de pruebas de integración REST (`npx tsx
 | Test 7: Historial CU05 | GET /api/sesion/historial | HTTP 200 OK | Exitoso (Mapeo UUID e historial retornado correctamente) |
 | Test 8: Multiusuario | GET /api/usuario/perfil | HTTP 200 OK | Exitoso (Aislamiento de perfiles de usuario confirmado) |
 | Test 9: Perfil CU04 | POST /api/usuario/perfil | HTTP 200 OK | Exitoso (Actualización antropométrica persistida en DB) |
-| Test 10: Borrado en Cascada | npx tsx src/scripts/testCascade.ts | Exitoso (Purga asertiva en DB) | Exitoso (Eliminación física automática en PostgreSQL sin registros huérfanos) |
+| Test 10: Borrado en Cascada | npx tsx src/scripts/testCascade.ts | Exitoso (Purga asertiva en DB) | Exitoso (Eliminación física automática en PostgreSQL sobre el 100% de las 8 tablas de dominio sin registros huérfanos vía onDelete: Cascade) |
 | Build Frontend PWA | tsc -b && vite build | 23 módulos transformados | Exitoso (Compilación en 154ms sin advertencias ni errores) |
 
 ---
@@ -2066,14 +1995,8 @@ La incorporación de la arquitectura de Recuperación Aumentada por Generación 
 ### **9.1.3 Análisis Crítico: Limitación del Motor RAG por Metadatos oEmbed**
 Durante las pruebas exhaustivas del motor RAG en la asimilación de fuentes en video (YouTube), se identificó un cuello de botella arquitectónico severo. El sistema actual ingesta y vectoriza exclusivamente los metadatos superficiales del video (Título, Canal y Plataforma) mediante el protocolo `oEmbed`, omitiendo por completo el contenido acústico o visual. En consecuencia, la recuperación semántica en ChromaDB depende estrictamente de la coincidencia léxica en los títulos. Si múltiples usuarios ingresan tutoriales con títulos genéricos carentes de terminología técnica de BJJ, el motor será incapaz de vincularlos con el análisis biomecánico correspondiente. Se recomienda para trabajos futuros la integración de modelos *Speech-to-Text* (como Whisper) para transcribir y vectorizar el contenido verbal del instructor del video, enriqueciendo sustancialmente el espacio latente del tutor adaptativo.
 
-## **9.2 Recomendaciones de Despliegue Físico (9.1.3)**
-Para garantizar la continuidad operativa en la academia Corpo & Mente de forma resiliente, se recomienda la siguiente secuencia paso a paso para el despliegue físico contenerizado del backend Express y la base de datos PostgreSQL mediante Docker Compose:
-
-1. Clonar el repositorio en el servidor local de la academia y posicionarse en el directorio raíz.
-2. Configurar el archivo de variables de entorno locales definiendo credenciales robustas para la persistencia relacional y el secreto criptográfico (`JWT_SECRET`).
-3. Ejecutar el comando `docker-compose up --build -d` para instanciar de manera aislada los contenedores correspondientes a Express, PostgreSQL y ChromaDB. La orquestación mapea de manera automatizada un volumen de datos persistente (`pgdata`) para salvaguardar el historial cinemático relacional, y un volumen aislado (`chromadata`) que consolida el corpus de la base de datos vectorial previniendo la pérdida de los manuales RAG inyectados ante reinicios del sistema.
-4. Aplicar las migraciones físicas del esquema relacional Prisma ejecutando de forma interna `npx prisma db push` o `npx prisma migrate deploy`.
-5. Verificar la accesibilidad del API Gateway en el puerto local asignado (3001) y monitorear la salud de los contenedores para asegurar la operatividad del sistema Híbrido Cliente-Servidor en modo producción.
+## **9.2 Recomendaciones de Despliegue Físico**
+Para garantizar la continuidad operativa en la academia Corpo & Mente de forma altamente disponible y resiliente, la distribución física de la infraestructura se estructura mediante la orquestación contenerizada (Docker Compose) de los nodos de servicios. La arquitectura del ambiente de entrenamiento asegura que la base de datos relacional PostgreSQL, el almacén de vectores ChromaDB y el API Gateway de Express funcionen en red local aislada. Los volúmenes persistentes (`pgdata` y `chromadata`) constituyen salvaguardas arquitectónicas fundamentales que previenen la pérdida del historial biomecánico y del corpus vectorial RAG frente a eventuales fallos de suministro eléctrico en el tatami, permitiendo la reanudación transparente de los servicios.
 
 ---
 
@@ -2083,48 +2006,3 @@ Para garantizar la continuidad operativa en la academia Corpo & Mente de forma r
 2. Larman, C. (2003). *UML and Patterns: An Introduction to Object-Oriented Analysis and Design and the Unified Process* (2nd Ed.). Prentice Hall.
 3. Google Developers. (2023). *MediaPipe Pose Landmarker: Framework for ML Pipelines*.
 4. Google Cloud. (2023). *Gemini API: Multimodal AI Platform*.
-# Reporte de Actualización Tecnológica y Arquitectónica - OpenBJJ
-*Documento fuente para NotebookLM - Actualización de Tesis*
-
-## 1. Resumen de Cambios Recientes (Fase de Transición - UP)
-
-Durante la última iteración de la Fase de Transición, se implementaron cambios arquitectónicos profundos enfocados en la disponibilidad, resiliencia offline, usabilidad en el tatami (jerga BJJ) y orquestación de infraestructura.
-
-### 1.1. Orquestación y Despliegue Físico (RNF07 - Simplicidad Operativa)
-Se consolidó la infraestructura en un pliego de orquestación contenerizada mediante **Docker Compose**.
-- **Contenedores desplegados:**
-  - `openbjj-db`: PostgreSQL (Puerto 5432) para la persistencia de perfiles y sesiones.
-  - `openbjj-vector-store`: ChromaDB (Puerto 8000) para el almacenamiento de embeddings vectoriales de fuentes RAG.
-  - `openbjj-backend`: API Gateway Express (Puerto 3001) sirviendo la lógica de negocio y controladores.
-- **Impacto:** Cumplimiento de la soberanía de infraestructura y simplificación del despliegue en un único comando (`docker-compose up -d`), aislando el backend de dependencias locales.
-
-### 1.2. Resiliencia Offline y PWA (Service Workers)
-Se configuró la herramienta `vite-plugin-pwa` utilizando las estrategias de caché de **Workbox** para soportar el comportamiento sin conexión en el tatami:
-- **Cache-First:** Aplicado a los recursos estáticos del frontend, modelos de MediaPipe WASM y dependencias tridimensionales (Three.js), asegurando que el motor de extracción de pose 3D cargue instantáneamente incluso sin internet.
-- **Network-First con Fallback Local:** Aplicado a las llamadas REST del backend (ej. `/api/sesion/historial`). Si la red falla, el sistema devuelve los últimos datos cacheados localmente.
-
-### 1.3. Ajuste de Modelos Cognitivos y Límite de Tokens
-- **Cuotas de Tokens:** Se incrementó el `maxOutputTokens` en el `GeminiServiceAdapter` a 2048 para acomodar el proceso de "pensamiento" (*thinking*) interno de los modelos modernos de la familia Gemini 2.5, evitando que las respuestas JSON se truncaran prematuramente.
-- **Unificación de Modelo:** Se configuraron las variables de entorno (`GEMINI_MODEL`, `GEMINI_MODEL_PRO`, `GEMINI_MODEL_LITE`) para forzar el uso exclusivo de `gemini-2.5-flash` en todas las fases de inferencia (tanto clasificación como RAG profundo), optimizando la latencia y reduciendo costos sin perder precisión multimodal.
-
-### 1.4. Interfaz de Usuario y UX Orientado al Tatami
-- **Terminología Nativa de BJJ:** Se modificaron los Prompts de IA y las interfaces visuales para abandonar la jerga ingenieril/académica en favor de lenguaje directo de tatami (ej. *"Estabilidad estructural"* -> *"Buena base"*, *"Ventaja mecánica"* -> *"Regalar la posición"*).
-- **Simplificación del Reporte:** Se eliminó la pestaña redundante de "Practicante/Oponente" y botones obsoletos para darle prioridad absoluta al diagnóstico.
-- **Botón Rápido de Cambio de Video:** Se integró un flujo más ágil al subir sparrings, agregando un botón de *"Cambiar Video"* en caso de errores en la selección de archivos sin necesidad de recargar la PWA.
-- **Robustez de Parseo JSON:** Se optimizó el manejador de fallos en el `SesionEntrenamientoController`, asegurando que si el JSON de la IA contiene código markdown (```json ... ```), este se parsee correctamente mediante expresiones regulares, y en caso de fallo absoluto, el diagnóstico de emergencia utilice la jerga correcta.
-
-## 2. Análisis Crítico: Limitaciones Actuales del Motor RAG con YouTube
-
-Durante la revisión del módulo de *Recuperación Aumentada por Generación (RAG)*, se identificó un comportamiento específico en la asimilación de videos de YouTube:
-- **Extracción de Metadatos:** El sistema actual utiliza el protocolo `oEmbed` para extraer únicamente el **Título, Canal y Plataforma** del video aportado por el practicante.
-- **Consecuencia en la Búsqueda Vectorial:** ChromaDB indexa y busca similitud semántica *exclusivamente* basada en estos títulos, no en el contenido hablado o visual del video. 
-- **Impacto Práctico:** Si múltiples usuarios suben el mismo video, o si los videos tienen títulos genéricos (ej. "Técnica de BJJ"), el motor RAG dependerá de la coincidencia exacta de palabras en el título (ej. "montada" o "codo") para recomendar el recurso correctivo. 
-- **Recomendación para la Tesis (Trabajos Futuros):** Se propone como trabajo futuro la integración de un modelo de transcripción de audio (Speech-to-Text como Whisper) o la lectura automatizada de la descripción del video para vectorizar el contenido real del tutorial, enriqueciendo drásticamente el espacio latente de ChromaDB.
-
-## 3. Estado de la Arquitectura Actual
-La plataforma funciona bajo un **modelo híbrido Cliente-Ligero (Edge AI)**:
-1. **Cliente WebGL/MediaPipe (Edge):** Asume toda la carga de inferencia cinemática 3D (extracción de landmarks y cálculo de ángulos).
-2. **Servidor Local (Node.js):** Orquesta el flujo, gestiona el prompt dinámico (Dynamic Prompt Builder) y se comunica con la API externa de Gemini.
-3. **Bases de Datos Locales:** PostgreSQL para la relacionalidad (historial y perfiles) y ChromaDB para la base de conocimiento semántico.
-
-*Este documento está diseñado para ser procesado por NotebookLM y facilitar la actualización automática de los Capítulos V (Diseño), VI (Implementación) y IX (Conclusiones y Trabajos Futuros) de la tesis.*
