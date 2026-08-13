@@ -1,10 +1,9 @@
-import { pipeline } from '@xenova/transformers';
-
 export class LocalEmbeddingAdapter {
   private static extractor: any = null;
 
   private static async getExtractor(): Promise<any> {
     if (!this.extractor) {
+      const { pipeline } = await import('@xenova/transformers');
       this.extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
     }
     return this.extractor;

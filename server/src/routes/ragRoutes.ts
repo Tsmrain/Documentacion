@@ -53,7 +53,7 @@ export function createRagRouter(sessionController: SesionEntrenamientoController
 
   router.delete("/fuentes/:id", async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const fuenteId = req.params.id;
+      const fuenteId = req.params.id as string;
       const usuarioId = (req.query.usuarioId as string) || "user-default";
       const result = await sessionController.eliminarFuente(usuarioId, fuenteId);
       return res.status(200).json({ success: result, message: "Fuente eliminada del sistema." });

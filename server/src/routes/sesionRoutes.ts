@@ -52,7 +52,7 @@ export function createSesionRouter(sessionController: SesionEntrenamientoControl
   router.delete("/historial/:id", async (req: Request, res: Response) => {
     try {
       const usuarioId = req.query.usuarioId as string || "user-default";
-      const analisisId = req.params.id;
+      const analisisId = req.params.id as string;
       const success = await sessionController.eliminarHistorialAnalisis(usuarioId, analisisId);
       
       if (success) {

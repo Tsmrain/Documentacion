@@ -31,6 +31,7 @@ export interface IPersistenceService {
   guardarAnalisis(usuarioId: string, analisis: any): Promise<boolean>;
   registrarVisualizacion(usuarioId: string, videoId: string): Promise<boolean>;
   obtenerHistorialAnalisis(usuarioId: string): Promise<any[]>;
+  eliminarAnalisis(usuarioId: string, analisisId: string): Promise<boolean>;
 }
 
 export class AdaptationController {

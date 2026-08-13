@@ -8,7 +8,7 @@ COPY package*.json ./
 COPY server/package*.json ./server/
 
 # Instala todas las dependencias
-RUN npm run install:all
+RUN npm install && npm install --prefix server
 
 # Copia el código fuente
 COPY prisma ./prisma

@@ -1,5 +1,5 @@
 import { VectorDBUnavailableException } from "./exceptions/VectorDBUnavailableException";
-import { CentralVectorDBAdapter, ChunkText } from "./services/CentralVectorDBAdapter";
+import { IVectorStore, ChunkText } from "./services/CentralVectorDBAdapter";
 import { DynamicPromptBuilder, MetricaCinematica } from "./services/DynamicPromptBuilder";
 import { RetrievalAugmentedController } from "./controllers/RetrievalAugmentedController";
 import { GeminiServiceAdapter } from "./services/GeminiServiceAdapter";
@@ -25,10 +25,12 @@ class MockPoseEstimator implements IPoseEstimator {
   }
 }
 
-class MockVectorStore implements CentralVectorDBAdapter {
+class MockVectorStore implements IVectorStore {
   private shouldFail: boolean = false;
   private isStoreEmpty: boolean = false;
   private chunks: ChunkText[] = [{ id: "guardia-chunk-1", text: "Mantener codo pegado al cuerpo." }];
+
+  async eliminarChunk(id: string): Promise<boolean> { return true; }
 
   setFailure(fail: boolean) {
     this.shouldFail = fail;
