@@ -184,7 +184,7 @@ ${promptJSON}`
 
         // Prompt minimalista: clasifica y devuelve unicamente el ID de la tecnica
         const textPart = {
-          text: `Clasifica la posicion de BJJ dominante en las imagenes. Responde UNICAMENTE con uno de estos IDs exactos (sin espacios, sin comillas): montada | guardia-cerrada | pasaje-guardia | control-lateral | espalda | derribo-double-leg | triangulo-guardia | armbar-cerrada`
+          text: `Clasifica la posicion de BJJ dominante en las imagenes. Responde UNICAMENTE con uno de estos IDs exactos (sin espacios, sin comillas): montada | guardia-cerrada | pasaje-guardia | control-lateral | espalda | media-guardia | guardia-abierta | derribo-double-leg | triangulo-guardia | armbar-cerrada`
         };
 
         const response = await fetch(url, {
