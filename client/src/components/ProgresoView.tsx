@@ -70,7 +70,7 @@ export function ProgresoView({ usuarioId }: ProgresoViewProps) {
   // las posiciones sin historial aparecen en 0% para motivar la practica.
   const posicionesMaestria = POSICIONES_CANONICAS.map(nombre => {
     const found = posicionesServidor.find(p =>
-      p.nombre.toLowerCase().includes(nombre.split(" ")[0].toLowerCase())
+      p.nombre.toLowerCase().trim() === nombre.toLowerCase().trim()
     );
     return { nombre, porcentaje: found?.porcentaje ?? 0 };
   });

@@ -44,22 +44,38 @@ export class AdaptationController {
   }
 
   private calcularMaestriaPorPosicion(historial: any[]): { nombre: string; porcentaje: number }[] {
-    const scoresGuardia: number[] = [];
-    const scoresPasaje: number[] = [];
-    const scoresMontada: number[] = [];
+    const scores: Record<string, number[]> = {
+      "Guardia Cerrada": [],
+      "Pasaje de Guardia": [],
+      "Control Lateral": [],
+      "Montada": [],
+      "Espalda": [],
+      "Media Guardia": [],
+      "Guardia Abierta": []
+    };
 
     if (Array.isArray(historial)) {
       historial.forEach(h => {
         const tecnica = (h.tecnicaId || "").toLowerCase();
-        const desviacion = h.desviacionGrados || 0;
+        const desviacion = h.desviacionGrados ?? h.desviacion ?? 0;
         const score = Math.max(0, Math.min(100, 100 - Math.round(desviacion * 1.8)));
 
-        if (tecnica.includes("montada") || tecnica.includes("mount") || tecnica.includes("lateral") || tecnica.includes("side") || tecnica.includes("espalda") || tecnica.includes("back")) {
-          scoresMontada.push(score);
+        if (tecnica.includes("montada") || tecnica.includes("mount")) {
+          scores["Montada"].push(score);
+        } else if (tecnica.includes("espalda") || tecnica.includes("back")) {
+          scores["Espalda"].push(score);
+        } else if (tecnica.includes("lateral") || tecnica.includes("side") || tecnica.includes("100-kilos") || tecnica.includes("100kilos")) {
+          scores["Control Lateral"].push(score);
         } else if (tecnica.includes("pasaje") || tecnica.includes("pass") || tecnica.includes("derribo") || tecnica.includes("takedown")) {
-          scoresPasaje.push(score);
+          scores["Pasaje de Guardia"].push(score);
+        } else if (tecnica.includes("media") || tecnica.includes("half")) {
+          scores["Media Guardia"].push(score);
+        } else if (tecnica.includes("abierta") || tecnica.includes("open")) {
+          scores["Guardia Abierta"].push(score);
+        } else if (tecnica.includes("cerrada") || tecnica.includes("closed")) {
+          scores["Guardia Cerrada"].push(score);
         } else {
-          scoresGuardia.push(score);
+          scores["Guardia Cerrada"].push(score);
         }
       });
     }
@@ -67,9 +83,13 @@ export class AdaptationController {
     const calcAvg = (arr: number[]) => arr.length > 0 ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0;
 
     return [
-      { nombre: "Guardia Cerrada", porcentaje: calcAvg(scoresGuardia) },
-      { nombre: "Pasaje de Guardia", porcentaje: calcAvg(scoresPasaje) },
-      { nombre: "Control Lateral y Montada", porcentaje: calcAvg(scoresMontada) }
+      { nombre: "Guardia Cerrada", porcentaje: calcAvg(scores["Guardia Cerrada"]) },
+      { nombre: "Pasaje de Guardia", porcentaje: calcAvg(scores["Pasaje de Guardia"]) },
+      { nombre: "Control Lateral", porcentaje: calcAvg(scores["Control Lateral"]) },
+      { nombre: "Montada", porcentaje: calcAvg(scores["Montada"]) },
+      { nombre: "Espalda", porcentaje: calcAvg(scores["Espalda"]) },
+      { nombre: "Media Guardia", porcentaje: calcAvg(scores["Media Guardia"]) },
+      { nombre: "Guardia Abierta", porcentaje: calcAvg(scores["Guardia Abierta"]) }
     ];
   }
 
