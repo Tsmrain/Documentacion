@@ -8,6 +8,7 @@ import { SesionEntrenamientoController, IPoseEstimator } from "./controllers/Ses
 import { PersistenceFacade } from "./persistence/PersistenceFacade";
 import { createApp } from "./app";
 import { Server } from "http";
+import jwt from "jsonwebtoken";
 
 // Mocks y Drivers
 class MockPoseEstimator implements IPoseEstimator {
@@ -92,12 +93,19 @@ async function runIntegrationTests() {
     });
   });
 
+  const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_local_dev';
+  const testToken = jwt.sign({ usuarioId: "user-default" }, JWT_SECRET);
+  const authHeaders = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${testToken}`
+  };
+
   try {
     // 1. HAPPY PATH: POST /api/sesion/analizar
     console.log("\n[Test 1] POST /api/sesion/analizar (RAG Personalizado):");
     const res1 = await fetch(`http://localhost:${PORT}/api/sesion/analizar`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders,
       body: JSON.stringify({ videoBlob: "dummy-blob", usuarioId: "user-default" })
     });
     console.log("Status HTTP:", res1.status);
@@ -110,7 +118,7 @@ async function runIntegrationTests() {
     poseEstimator.setConfidence(0.25);
     const res2 = await fetch(`http://localhost:${PORT}/api/sesion/analizar`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders,
       body: JSON.stringify({ videoBlob: "dummy-blob", usuarioId: "user-default" })
     });
     console.log("Status HTTP:", res2.status);
@@ -123,7 +131,7 @@ async function runIntegrationTests() {
     vectorStore.setEmpty(true);
     const res3 = await fetch(`http://localhost:${PORT}/api/sesion/analizar`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders,
       body: JSON.stringify({ videoBlob: "dummy-blob", usuarioId: "user-default" })
     });
     console.log("Status HTTP:", res3.status);
@@ -135,7 +143,7 @@ async function runIntegrationTests() {
     console.log("\n[Test 4] POST /api/rag/ingestar de archivo no pertinente (Receta de cocina):");
     const res4 = await fetch(`http://localhost:${PORT}/api/rag/ingestar`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders,
       body: JSON.stringify({
         archivoBlob: "dummy",
         metadata: { titulo: "Receta de tarta de manzana con canela y azúcar" }
@@ -150,7 +158,7 @@ async function runIntegrationTests() {
     console.log("\n[Test 4b] POST /api/rag/ingestar de enlace de YouTube no relacionado (Video Musical Tito Double P):");
     const res4b = await fetch(`http://localhost:${PORT}/api/rag/ingestar`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders,
       body: JSON.stringify({
         archivoBlob: "dummy",
         metadata: { url: "https://www.youtube.com/watch?v=1yZFLRJ4F0Q&list=RD1yZFLRJ4F0Q&start_radio=1" }
@@ -165,7 +173,7 @@ async function runIntegrationTests() {
     console.log("\n[Test 4c] POST /api/rag/ingestar de enlace corto de YouTube no relacionado (Dareyes de la Sierra):");
     const res4c = await fetch(`http://localhost:${PORT}/api/rag/ingestar`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders,
       body: JSON.stringify({
         archivoBlob: "dummy",
         metadata: { url: "https://youtu.be/ebXEaHEYYng?si=KsqdCUX_nveJu3Zg" }
@@ -191,7 +199,7 @@ async function runIntegrationTests() {
 
     const res5 = await fetch(`http://localhost:${PORT}/api/sesion/analizar`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders,
       body: JSON.stringify({ videoBlob: "dummy-blob", usuarioId: "user-default" })
     });
     console.log("Status HTTP:", res5.status);
@@ -205,32 +213,31 @@ async function runIntegrationTests() {
 
     // 6. PERSISTENCIA Y CONSULTA: GET /api/sesion/progreso
     console.log("\n[Test 6] GET /api/sesion/progreso (Persistencia relacional en Facade):");
-    // Al realizar análisis previos, la visualización y errores se persistieron en el facade.
-    const res6 = await fetch(`http://localhost:${PORT}/api/sesion/progreso?usuarioId=user-default`);
+    const res6 = await fetch(`http://localhost:${PORT}/api/sesion/progreso?usuarioId=user-default`, { headers: authHeaders });
     console.log("Status HTTP:", res6.status);
     const data6 = await res6.json() as any;
     console.log("Ruta de Aprendizaje del Perfil Persistido:", data6.drillRecomendado);
 
     // 7. HISTORIAL (CU05): GET /api/sesion/historial (Mapeo UUID y Graceful Degradation HTTP 200 [])
     console.log("\n[Test 7] GET /api/sesion/historial (CU05 Graceful Degradation y Mapeo UUID):");
-    const res7 = await fetch(`http://localhost:${PORT}/api/sesion/historial?usuarioId=user-default`);
+    const res7 = await fetch(`http://localhost:${PORT}/api/sesion/historial?usuarioId=user-default`, { headers: authHeaders });
     console.log("Status HTTP usuario user-default:", res7.status);
     const data7 = await res7.json() as any;
     console.log("Historial devuelto (longitud):", Array.isArray(data7) ? data7.length : "No es arreglo");
 
-    const res7b = await fetch(`http://localhost:${PORT}/api/sesion/historial?usuarioId=usuario-inexistente`);
+    const res7b = await fetch(`http://localhost:${PORT}/api/sesion/historial?usuarioId=usuario-inexistente`, { headers: authHeaders });
     console.log("Status HTTP usuario inexistente:", res7b.status);
     const data7b = await res7b.json() as any;
     console.log("Historial devuelto para usuario inexistente:", data7b);
 
     // 8. ARQUITECTURA MULTIUSUARIO: GET /api/sesion/perfil & GET /api/usuario/perfil
     console.log("\n[Test 8] GET /api/sesion/perfil & /api/usuario/perfil (Consulta aislada multiusuario):");
-    const res8a = await fetch(`http://localhost:${PORT}/api/sesion/perfil?usuarioId=user-default`);
+    const res8a = await fetch(`http://localhost:${PORT}/api/sesion/perfil?usuarioId=user-default`, { headers: authHeaders });
     console.log("Status HTTP perfil user-default:", res8a.status);
     const data8a = await res8a.json() as any;
     console.log("Perfil user-default:", data8a.nombre, "| Cinturón:", data8a.cinturon);
 
-    const res8b = await fetch(`http://localhost:${PORT}/api/usuario/perfil?usuarioId=user-maria`);
+    const res8b = await fetch(`http://localhost:${PORT}/api/usuario/perfil?usuarioId=user-maria`, { headers: authHeaders });
     console.log("Status HTTP perfil user-maria:", res8b.status);
     const data8b = await res8b.json() as any;
     console.log("Perfil user-maria:", data8b.nombre, "| Cinturón:", data8b.cinturon);
@@ -239,12 +246,12 @@ async function runIntegrationTests() {
     console.log("\n[Test 9] POST /api/usuario/perfil (Actualizar datos antropométricos CU04 / CO04):");
     const res9 = await fetch(`http://localhost:${PORT}/api/usuario/perfil`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders,
       body: JSON.stringify({
         usuarioId: "user-carlos",
         nombre: "Carlos Gómez",
         cinturon: "AZUL",
-        altura: 184,
+        altura: 1.84,
         peso: 88
       })
     });

@@ -133,7 +133,9 @@ export class PersistenceFacade implements IPersistenceService {
       const updateData: any = {};
       if (datos.nombre !== undefined) updateData.nombre = datos.nombre;
       if (datos.cinturon !== undefined) updateData.cinturon = datos.cinturon as Cinturon;
-      if (datos.altura !== undefined) updateData.altura = datos.altura;
+      if (datos.altura !== undefined) {
+        updateData.altura = datos.altura > 3 ? (datos.altura / 100) : datos.altura;
+      }
       if (datos.peso !== undefined) updateData.peso = datos.peso;
 
       const dbUser = await prisma.usuario.update({
