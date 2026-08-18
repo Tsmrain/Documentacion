@@ -6,6 +6,8 @@ import { RetrievalAugmentedController } from "./controllers/RetrievalAugmentedCo
 import { AdaptationController } from "./controllers/AdaptationController";
 import { PersistenceFacade } from "./persistence/PersistenceFacade";
 import { GeminiServiceAdapter } from "./services/GeminiServiceAdapter";
+import { ChatGPTServiceAdapter } from "./services/ChatGPTServiceAdapter";
+import { LLMRedirectionProxy } from "./services/LLMRedirectionProxy";
 import { CentralVectorDBAdapter } from "./services/CentralVectorDBAdapter";
 import { DynamicPromptBuilder } from "./services/DynamicPromptBuilder";
 
@@ -36,13 +38,15 @@ const poseEstimator = {
 const vectorStore = new CentralVectorDBAdapter();
 const promptBuilder = new DynamicPromptBuilder();
 const geminiAdapter = new GeminiServiceAdapter();
+const chatGptAdapter = new ChatGPTServiceAdapter();
+const llmProxy = new LLMRedirectionProxy(geminiAdapter, chatGptAdapter);
 const ragController = new RetrievalAugmentedController(vectorStore, promptBuilder, geminiAdapter);
 const persistenceFacade = new PersistenceFacade();
 const adaptationController = new AdaptationController(persistenceFacade, ragController);
 
 const sessionController = new SesionEntrenamientoController(
   poseEstimator,
-  geminiAdapter,
+  llmProxy,
   geminiAdapter,
   ragController,
   adaptationController,
