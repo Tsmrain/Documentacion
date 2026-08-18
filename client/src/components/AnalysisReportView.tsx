@@ -46,22 +46,6 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
     }
   };
 
-  const handleExportShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Diagnóstico OpenBJJ - ${tecnicaName}`,
-          text: `Informe Biomecánico OpenBJJ: ${titleText} en ${tecnicaName} (${puntuacion}% precisión). ${evaluacionText}`,
-          url: window.location.href,
-        });
-        return;
-      } catch (err) {
-        // Fallback a impresión/PDF si se cancela la compartición
-      }
-    }
-    window.print();
-  };
-
   return (
     <div className="animate-fade-in" style={{ background: "#f8fafc", minHeight: "100%", paddingBottom: "20px", borderRadius: "16px", color: "#1e293b" }}>
       {/* Header */}
@@ -136,29 +120,20 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
           </ul>
         </div>
 
-        {/* Learning & Export Resources */}
+        {/* Learning Resources */}
         <div style={{ marginBottom: '30px' }}>
           <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '12px' }}>
-            RECURSOS DE APRENDIZAJE Y EXPORTACIÓN
+            RECURSOS DE APRENDIZAJE
           </span>
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex' }}>
             <button 
               onClick={() => handleResourceClick('video')}
-              style={{ flex: 1, background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 12px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
+              style={{ width: '100%', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 12px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
               onMouseOver={e => e.currentTarget.style.background = '#f8fafc'}
               onMouseOut={e => e.currentTarget.style.background = '#ffffff'}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33 2.78 2.78 0 0 0 1.94 2c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1e293b' }}>Video de Referencia</span>
-            </button>
-            <button 
-              onClick={handleExportShare}
-              style={{ flex: 1, background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 12px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
-              onMouseOver={e => e.currentTarget.style.background = '#f8fafc'}
-              onMouseOut={e => e.currentTarget.style.background = '#ffffff'}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4f46e5' }}>Compartir / PDF (CU06)</span>
             </button>
           </div>
         </div>
