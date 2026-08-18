@@ -442,11 +442,11 @@ El cliente requiere conectividad por red local con el Servidor Local. Toda petic
 ### **4.3.2 Requisitos Funcionales**
 - **RF01: Autodetección Multimodal de Sparring o Lucha:** El sistema debe procesar el archivo de video (duración máxima de 45 segundos) correspondiente a luchas, sparrings reales contra oponentes o drills individuales, y mediante la API de Gemini, autodetectar la técnica y disciplina ejecutada sin selección manual.
 - **RF02: Extracción de Landmarks 3D y cálculo cinemático local:** El sistema debe procesar localmente el video en el navegador mediante MediaPipe, extrayendo los 33 landmarks corporales y derivando ángulos, velocidad y aceleración de articulaciones en WebGL.
-- **RF03: Agregar Fuente Opcional y RAG Personalizado:** El sistema debe permitir al Practicante agregar de manera opcional archivos PDF y links de YouTube (mediante los endpoints `POST /api/rag/ingestar`, `GET /api/rag/fuentes` y `DELETE /api/rag/fuentes/:id` - CU02 / RD-03) para enriquecer el Vector DB de forma personalizada. Si el Practicante no provee ninguna fuente, el sistema no presentará fallos y entrará en "Modo Fallback Baseline".
+- **RF03: Agregar Fuente Opcional y RAG Multimodal Personalizado:** El sistema debe permitir al Practicante agregar de manera opcional archivos PDF y lecciones audiovisuales de YouTube (mediante los endpoints `POST /api/rag/ingestar`, `GET /api/rag/fuentes` y `DELETE /api/rag/fuentes/:id` - CU02 / RD-03) para enriquecer el Vector DB de forma personalizada. Para las fuentes de YouTube, el Servidor Local realiza una extracción multimodal profunda: el servidor "ve" (análisis y resumen de fotogramas clave con Gemini Vision) y "escucha" (transcripción de audio Speech-to-Text) el video tutorial para construir chunks vectoriales altamente semánticos enriquecidos persistidos en ChromaDB. Si el Practicante no provee ninguna fuente, el sistema no presentará fallos y entrará en "Modo Fallback Baseline".
 - **RF04: Motor de Tutoría Adaptativa:** El sistema debe contrastar la cinemática del video analizado con la verdad de grounding vectorial. Si detecta desviaciones reiteradas de forma sistemática en el historial (más de 3 fallos consecutivos), debe conmutar la estrategia pedagógica hacia drills de aislamiento o perspectivas anatómicas alternativas a través de la vista `ProgresoView` (CU03, CU09).
 - **RF05: Perfil de Competencia del Usuario Centralizado:** El sistema debe mantener un perfil aislado en la base de datos del Servidor Local (consultable vía `GET /api/sesion/perfil` y `GET /api/usuario/perfil`) que consolide históricamente las técnicas practicadas por cada estudiante, su cinturón y nivel de maestría, la frecuencia de sus errores cinemáticos, el historial de intentos (consultable vía `GET /api/sesion/historial` en `HistoryView` - CU05/CU06), los videos vistos y su registro de visualización vía `POST /api/sesion/visualizacion` (CU10) para personalizar dinámicamente su ruta de aprendizaje activa sin colisión entre practicantes.
 - **RF06: Dynamic Prompt Builder Condicional:** El sistema debe compilar en tiempo real el prompt inyectando métricas cinemáticas locales de 3KB y el contexto RAG. Si la consulta vectorial en ChromaDB retorna 0 chunks, debe conmutar a la plantilla Baseline Fallback para realizar la inferencia mediante el conocimiento nativo de Gemini sobre Jiu-Jitsu.
-- **RF07: Sistema de Recomendación de Videos de YouTube:** El sistema debe redirigir al usuario a URLs específicas de YouTube (deep link) para práctica técnica. Ante fallas recurrentes (más de 3 intentos en el mismo error), debe alternar la recomendación hacia videos alternativos o drills de aislamiento/fortalecimiento.
+- **RF07: Sistema de Recomendación de Unico Video de YouTube por Reporte:** Cada reporte de evaluación biomecánica debe retornar EXACTAMENTE 1 ÚNICO VIDEO de YouTube recomendado (deep link), seleccionado inteligentemente por el motor adaptativo según la articulación afectada de mayor severidad y la técnica autodetectada. Ante fallas recurrentes en combates posteriores (más de 3 intentos en el mismo error), el motor conmuta automáticamente la recomendación hacia un video tutorial de YouTube alternativo (otro ángulo, enfoque defensivo) o un drill de aislamiento.
 
 ### **4.3.3 Requisitos No Funcionales (Modelo FURPS+)**
 
@@ -704,7 +704,7 @@ flowchart TD
 8. El `DynamicPromptBuilder` compila el prompt en tiempo real: si existen fragmentos, inyecta el contexto (Modo RAG Vivo Personalizado); de lo contrario, conmuta a la plantilla Baseline Fallback.
 9. El Servidor Local realiza la inferencia de evaluación utilizando el prompt compilado.
 10. El Servidor responde con el reporte de evaluación interactiva en formato JSON estructurado.
-11. El Sistema en la PWA despliega el diagnóstico biomecánico y las recomendaciones pedagógicas adaptativas al Practicante.
+11. El Sistema en la PWA despliega el diagnóstico biomecánico y las recomendaciones pedagógicas adaptativas al Practicante, inyectando exactamente 1 única tarjeta de recomendación de video de YouTube guiada de forma determinista a corregir la desviación articular de mayor severidad.
 
 **Extensiones (Flujos Alternativos):**
 * **3.a. Fallo en estimación de landmarks (oclusión severa):**
@@ -748,7 +748,7 @@ flowchart TD
 **Actor Principal:** Practicante
 
 **Interesados y sus Intereses:**
-* **Practicante:** Desea aportar material de estudio propio o de la comunidad (PDFs, manuales técnicos o videos explicativos de YouTube) para enriquecer el motor de grounding de la IA, sin necesidad de esperar aprobación humana manual.
+* **Practicante:** Desea aportar material de estudio propio o de la comunidad (PDFs, manuales técnicos o lecciones audiovisuales de YouTube) para enriquecer el motor de grounding de la IA, sin necesidad de esperar aprobación humana manual.
 * **Sistema/IA:** Requiere filtrar de manera autónoma contenido basura o de otros deportes para mantener la especialización técnica de grounding del sistema y evitar la contaminación del Vector DB.
 * **Comunidad de la Academia:** Se beneficia de una base de datos de conocimiento técnico adaptativa y colaborativa en tiempo real (RAG Vivo).
 
@@ -764,10 +764,10 @@ flowchart TD
 2. El Sistema presenta las opciones de carga: archivo PDF técnico o enlace de YouTube.
 3. El Practicante carga un archivo PDF desde su dispositivo o pega una URL de YouTube.
 4. El Sistema valida el formato básico y accesibilidad del archivo.
-5. El Sistema (a través de `RetrievalAugmentedController`) extrae una muestra de texto o transcripción y la envía al API Gateway del Servidor Local.
-6. El Servidor Local (a través de Gemini Service) evalúa la muestra y determina de forma autónoma que pertenece estrictamente al dominio de Brazilian Jiu-Jitsu (estado "Aceptado").
-7. El Servidor Local segmenta la fuente en chunks de texto lógicos y genera sus correspondientes embeddings vectoriales.
-8. El Servidor Local persiste los fragmentos y vectores en la base de datos vectorial centralizada con el estado "Aceptado", quedando disponible de forma inmediata para el motor RAG de todos los usuarios.
+5. El `RetrievalAugmentedController` intercepta el enlace de YouTube y ejecuta el flujo de extracción multimodal profunda: el servidor "ve" (extrayendo e inspeccionando fotogramas clave con Gemini Vision) y "escucha" (transcribiendo la pista de audio del instructor mediante Speech-to-Text).
+6. El Servidor Local (`GeminiServiceAdapter`) evalúa el contenido multimodal extraído y determina de forma autónoma que pertenece estrictamente al dominio de Brazilian Jiu-Jitsu (estado "Aceptado").
+7. El Servidor Local segmenta la fuente en chunks de texto lógicos enriquecidos y calcula localmente sus correspondientes embeddings semánticos de 384 dimensiones (`all-MiniLM-L6-v2`).
+8. El Servidor Local persiste los fragmentos y vectores en la base de datos vectorial centralizada ChromaDB con el estado "Aceptado", quedando disponible de forma inmediata para el motor RAG de todos los usuarios.
 9. El Sistema en la PWA confirma al Practicante que el contenido fue validado y aceptado automáticamente.
 
 **Extensiones (Flujos Alternativos):**
@@ -775,8 +775,8 @@ flowchart TD
   1. El Sistema detecta la anomalía de formato.
   2. El Sistema muestra un mensaje de error y retorna al paso 3.
 * **6.a. El motor de IA (Gemini) clasifica el contenido como Fuera de Dominio (ej. Boxeo, Cocina, etc.):**
-  1. Al ingestar un enlace de YouTube, `RetrievalAugmentedController` realiza la extracción previa de metadatos vía el protocolo oEmbed para derivar el título y canal de la lección antes de moderar.
-  2. `GeminiServiceAdapter` evalúa semánticamente el título y texto extraído. Si el contenido pertenece a dominios afines (técnicas de Jiu-Jitsu, sparrings, guardias, raspados o artes marciales), la IA valida la pertinencia.
+  1. Al ingestar un enlace de YouTube, `RetrievalAugmentedController` realiza la extracción previa de metadatos y análisis multimodal del video antes de moderar.
+  2. `GeminiServiceAdapter` evalúa semánticamente el contenido hablado y visual. Si pertenece a dominios afines (técnicas de Jiu-Jitsu, sparrings, guardias, raspados o artes marciales), la IA valida la pertinencia.
   3. Si la clasificación es negativa, el Servidor Local rechaza la ingesta y notifica al Practicante: "Contenido rechazado: El material no está relacionado con el Jiu-Jitsu".
 * **7.a. Fallo de red en la comunicación con el Servidor Local:**
   1. El envío de chunks o embeddings al Servidor Local falla.
@@ -812,7 +812,7 @@ flowchart TD
 * Existe una instancia de `PerfilCompetencia` inicializada para el usuario.
 
 **Garantía de Éxito / Postcondiciones:**
-* Se calcula la evolución cinemática histórica del Practicante, se evalúa la recurrencia de desviaciones y se actualiza el plan pedagógico en `RutaAprendizaje`, sugiriendo drills o videos de YouTube alternativos si no se detectó mejoría cinemática.
+* Se calcula la evolución cinemática histórica del Practicante, se evalúa la recurrencia de desviaciones y se actualiza el plan pedagógico en `RutaAprendizaje`, sugiriendo un único video de YouTube recomendado o alternativo si no se detectó mejoría cinemática.
 
 **Escenario Principal de Éxito (Flujo Básico):**
 1. El Practicante navega a la sección "Progreso y Ruta de Aprendizaje" en la PWA.
@@ -820,9 +820,9 @@ flowchart TD
 3. El `AdaptationController` consulta el historial de `ErrorBiomecanico` y la efectividad de las tutorías pasadas asociadas al Practicante.
 4. El Sistema procesa la frecuencia de las desviaciones y detecta errores recurrentes donde `vecesDetectadoConsecutivas > 3`.
 5. El Sistema evalúa si la estrategia pedagógica actual ha producido mejoría cinemática comparando las métricas de las últimas tres sesiones.
-6. Si no hay mejoría cinemática (el practicante vio el video sugerido, volvió a grabar la técnica y el error biomecánico persiste), el Sistema activa el cambio de estrategia instruccional: es lo suficientemente inteligente para cambiar la estrategia pedagógica, sugiriendo un video de YouTube alternativo (que muestre la técnica desde otro ángulo, de otra academia, o en cámara lenta) o bien un drill físico de aislamiento diseñado para corregir la biomecánica de la articulación afectada.
+6. Si no hay mejoría cinemática (el practicante vio el video sugerido, volvió a grabar otro sparring y el error biomecánico en esa articulación persiste en `vecesDetectadoConsecutivas > 3`), el `AdaptationController` (Information Expert) altera dinámicamente la estrategia pedagógica: descarta el video estándar visto y recomienda un video tutorial de YouTube alternativo (que muestre la técnica desde otro ángulo de cámara, enfoque defensivo o en cámara lenta) o un drill físico de aislamiento anatómico extraído del manual oficial.
 7. El Sistema actualiza la entidad `RutaAprendizaje` y genera los reportes cinemáticos gráficos.
-8. El Sistema despliega la ruta de aprendizaje personalizada, incluyendo los enlaces de YouTube actualizados y los drills anatómicos recomendados.
+8. El Sistema despliega la ruta de aprendizaje personalizada, incluyendo la tarjeta con 1 único enlace de YouTube actualizado y los drills anatómicos recomendados.
 
 **Extensiones (Flujos Alternativos):**
 * **3.a. No existe historial de análisis previo:**
@@ -1904,8 +1904,9 @@ La inteligencia artificial generativa y el razonamiento multimodal procesan la i
 
 Para respaldar la transferencia multimodal híbrida de los 9 keyframes en Base64 sin interrumpir el flujo operativo por desbordamientos de buffer (PayloadTooLargeError), el API Gateway local de Express cuenta con una configuración de middleware con límite de payload extendido a **50 MB** (`express.json({ limit: '50mb' })` y `express.urlencoded({ limit: '50mb' })`).
 
-### **6.1.5 Orquestación y Despliegue Físico Contenerizado**
-La distribución física de la infraestructura del dojo se implementa mediante un pliego de orquestación contenerizada multifísica (Docker Compose). Este pliego instancia y coordina de manera automatizada e independiente tres nodos de servicios en red local (API Gateway, PostgreSQL y ChromaDB), asegurando la portabilidad y el cumplimiento del RNF07 (Simplicidad Operativa). Los volúmenes persistentes (`pgdata` y `chromadata`) actúan como salvaguardas arquitectónicas críticas que preservan la integridad del historial cinemático relacional de las 8 tablas de dominio y el repositorio vectorial de 384 dimensiones ante eventuales interrupciones físicas de energía en el tatami, aislando completamente el servidor de dependencias del sistema operativo anfitrión.
+### **6.1.6 Soberanía Cognitiva y Multiproveedor**
+El diseño del backend aplica el patrón GRASP de **Variaciones Protegidas (Protected Variations)** mediante las interfaces técnicas abstraídas `ILLMProvider` e `ITechniqueClassifier`. Esta arquitectura garantiza la soberanía cognitiva y el desacoplamiento total respecto a un proveedor único de IA. A través de variables de entorno en el archivo `.env`, el sistema permite el intercambio en caliente (*hot-swapping*) del motor de inferencia sin alterar el código fuente del dominio, pudiendo conmutar de forma transparente entre la API de Google Gemini, la API de OpenAI ChatGPT, o un modelo de visión de código abierto de ejecución local y soberana (como Llama 3.2 Vision o Qwen 2.5 procesados mediante Ollama en el puerto 11434).
+
 ## **6.2 Herramientas utilizadas**
 
 ### **6.2.1 Lenguajes de programación, frameworks y librerías**
@@ -1931,7 +1932,7 @@ En estricto cumplimiento del requisito no funcional **RNF05 (Confidencialidad Ci
 La integridad de los datos (RNF02) se consolida a través de dos mecanismos superpuestos. Primero, una capa de sanitización a nivel de middleware intercepta los payloads cinemáticos de 3KB, verificando matemáticamente que las coordenadas y landmarks numéricos existan y se encuentren dentro de los rangos físicos espaciales válidos, neutralizando inyecciones de código. Segundo, se implementa una firma asertiva local mediante JSON Web Tokens (JWT) para la autenticación sin servidores externos. Este esquema asegura un estricto aislamiento de los perfiles antropométricos, garantizando que el acceso y la modificación del historial de competencia sean exclusivos de cada practicante autorizado mediante su PIN local.
 
 ### **7.1.3 Disponibilidad**
-La resiliencia operativa y disponibilidad del sistema están garantizadas por el patrón de **Degradación Graciosa (Graceful Degradation)**. En caso de que la base de datos vectorial ChromaDB experimente una caída física o indisponibilidad de red, el adaptador lanza la excepción `VectorDBUnavailableException`, la cual es interceptada por el middleware de manejo de errores de Express para responder con un estado HTTP 207 Multi-Status. El sistema ejecuta entonces el *Baseline Fallback* de Gemini BJJ nativo, manteniendo el servicio de tutoría pedagógica operativo de forma ininterrumpida.
+La resiliencia operativa y disponibilidad del sistema están garantizadas por el patrón de **Degradación Graciosa (Graceful Degradation)** y el patrón GoF **Proxy de Redirección (LLMRedirectionProxy)**. En caso de que la base de datos vectorial ChromaDB experimente una caída física o indisponibilidad de red, el adaptador lanza la excepción `VectorDBUnavailableException`, la cual es interceptada por el middleware de manejo de errores de Express para responder con un estado HTTP 207 Multi-Status, ejecutando el *Baseline Fallback* de Gemini BJJ nativo. Asimismo, el `LLMRedirectionProxy` intercepta excepciones físicas de red, límites de cuota o caídas en la API primaria de Gemini, ejecutando un failover asíncrono y transparente en caliente hacia motores alternativos (como OpenAI ChatGPT o el servidor local Ollama), garantizando la continuidad operativa ininterrumpida de los análisis en el tatami.
 
 ---
 
