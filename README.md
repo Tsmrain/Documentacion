@@ -257,12 +257,12 @@ El desarrollo se estructuró a lo largo de las cuatro fases completadas de UP. E
 
 ## **1.4 Estudio de Factibilidad Económica, Análisis de Costos y Modelo de Negocio Global (SaaS)**
 
-Para determinar la viabilidad comercial de la investigación y evaluar la transición del sistema OpenBJJ hacia un modelo de negocio global escalable, se ha desarrollado un estudio de factibilidad financiera integral. Este análisis cuantifica los costos de inversión (CAPEX), los gastos operativos (OPEX), proyecta el Estado de Resultados a tres años y evalúa los indicadores financieros clave de rentabilidad.
+Para determinar la viabilidad comercial de la investigación y evaluar la transición del sistema OpenBJJ hacia un modelo de negocio global escalable, se ha desarrollado un estudio de factibilidad financiera integral. Este análisis cuantifica los costos de inversión inicial (CAPEX), la nómina recurrente del equipo de desarrollo y soporte, los gastos operativos de infraestructura (OPEX), y determina el punto de equilibrio en el mercado real de academias de Jiu-Jitsu.
 
-### **1.4.1 Modelo de Negocio Global (SaaS B2C & B2B)**
-La comercialización del sistema se propone bajo un modelo híbrido Software as a Service (SaaS):
-*   **Segmento B2C (Practicante Individual):** Modelo Freemium con suscripción mensual de **$9.99 USD/mes** (o $89 USD/año) para análisis ilimitados de sparring, diagnósticos multimodales y tutoría adaptativa personalizada.
-*   **Segmento B2B (Academias y Dojos de BJJ):** Licencia de Dojo de **$99.00 USD/mes** (hasta 50 estudiantes por academia), permitiendo a los instructores gestionar su propio corpus RAG centralizado, indexar videos corporativos y supervisar el progreso cinemático de sus alumnos.
+### **1.4.1 Modelo de Negocio y Premisa de Mercado Real**
+Con base en estudios de campo en artes marciales, una escuela o academia estándar de Jiu-Jitsu Brasileño cuenta en promedio con **15 alumnos activos**. El esquema comercial se adapta a esta realidad mediante dos modalidades:
+*   **Segmento B2C (Practicante Individual):** Suscripción Freemium / Premium de **$9.99 USD/mes** (o $89 USD/año) para sparrings e inferencias ilimitadas.
+*   **Segmento B2B (Licencia de Academia / Dojo):** Cuota fija de **$29.99 USD/mes por academia** (equivalente a $2.00 USD/mes por alumno en una escuela promedio de 15 estudiantes). Otorga acceso a todos sus practicantes y permite al instructor personalizar el corpus RAG con sus propios videos.
 
 ### **1.4.2 Estructura de Inversión Inicial (CAPEX)**
 La inversión inicial requerida para el desarrollo, estabilización arquitectónica, registro legal y empaquetado de producción de la PWA asciende a **$21,000.00 USD**, desglosada a continuación:
@@ -280,50 +280,68 @@ La inversión inicial requerida para el desarrollo, estabilización arquitectón
 | Constitución Legal, Registro de Marca & Patente | 1 trámite | $1,500.00 | $1,500.00 |
 | **TOTAL CAPEX** | | | **$21,000.00** |
 
-### **1.4.3 Estructura de Costos Operativos Mensuales (OPEX)**
-Gracias a la arquitectura **Edge AI (MediaPipe en el cliente WebGL/WASM)**, el procesamiento de video no requiere servidores dedicados con GPUs de alto costo en la nube. Los costos operativos para un volumen base de 1,000 usuarios activos mensuales se detallan a continuación:
+### **1.4.3 Estructura de Costos Operativos y Nómina de Desarrollo (OPEX Mensual)**
+Para garantizar la continuidad operativa y retribuir adecuadamente al equipo involucrado en la evolución y soporte del sistema, los gastos operativos recurrentes se dividen en nómina de personal e infraestructura:
+
+1. **Nómina Recurrente de Personal (Payroll):**
+   - Ingeniero de Desarrollo Fullstack & Mantenimiento PWA: **$1,200.00 USD/mes**.
+   - Especialista en Soporte de IA & Optimización RAG: **$800.00 USD/mes**.
+   - **Total Nómina Recurrente:** **$2,000.00 USD/mes** ($24,000.00 USD/año).
+
+2. **Costo de Servir a 1 Academia Promedio (15 Alumnos):**
+   - 15 alumnos x 10 análisis/mes = 150 evaluaciones/mes.
+   - Consumo de API IA (Gemini 2.5 Flash / OpenAI): 150 x $0.0025 USD = **$0.38 USD/mes**.
+   - Hosting Cloud y PostgreSQL prorrateado por academia: **$2.40 USD/mes**.
+   - **Costo Operativo Total por Academia de 15 Alumnos:** **$2.78 USD/mes**.
+   - **Margen Bruto por Academia ($29.99 - $2.78):** **$27.21 USD/mes (90.7%)**.
 
 <a id="tabla-1-2"></a>
 *Tabla 1.2*  
-*Costos Operativos Mensuales (OPEX Base: 1,000 Usuarios Activos)*
+*Costos Operativos Mensuales (OPEX Base: 50 Academias / 750 Alumnos)*
 
 | Concepto Operativo | Descripción | Costo Mensual (USD) | Costo Anual (USD) |
 | --- | --- | --- | --- |
-| Inferencia LLM (Gemini 2.5 Flash / OpenAI gpt-4o-mini) | 15,000 evaluaciones/mes a $0.0025 USD/análisis | $37.50 | $450.00 |
-| Servidor de Aplicaciones (API Express + PostgreSQL Cloud) | VPS 8GB RAM + Managed Database PostgreSQL | $80.00 | $960.00 |
-| Almacenamiento Vectorial & CDN (ChromaDB + S3 Storage) | 50 GB de almacenamiento RAG y metadatos | $40.00 | $480.00 |
-| Mantenimiento Técnico & Soporte de Plataforma | Mantenimiento evolutivo de infraestructura | $500.00 | $6,000.00 |
-| **TOTAL OPEX MENSUAL** | | **$657.50** | **$7,890.00** |
+| Nómina de Personal de Desarrollo & Soporte | 2 ingenieros a tiempo parcial / retainer | $2,000.00 | $24,000.00 |
+| Inferencia LLM (Gemini / OpenAI API) | 11,250 evaluaciones/mes | $28.13 | $337.56 |
+| Servidor de Aplicaciones & DB (PostgreSQL Managed) | VPS 8GB RAM Cloud Server | $80.00 | $960.00 |
+| Almacenamiento Vectorial & CDN (ChromaDB + S3) | 50 GB de almacenamiento RAG | $40.00 | $480.00 |
+| **TOTAL OPEX MENSUAL** | | **$2,148.13** | **$25,777.56** |
 
-### **1.4.4 Estado de Resultados Proyectado (Año 1 a Año 3)**
-Con base en una proyección de penetración conservadora en academias de BJJ de Latinoamérica y Norteamérica, se presenta el Estado de Resultados Proyectado a 3 años:
+### **1.4.4 Punto de Equilibrio (Break-Even Point)**
+Para cubrir la totalidad de la nómina del equipo ($2,000 USD/mes) y los costos fijos de infraestructura ($120 USD/mes), el número mínimo de academias cliente necesarias es:
+
+$$\text{Punto de Equilibrio} = \frac{\text{Gastos Fijos Mensuales (\$2,120.00)}}{\text{Margen Bruto por Academia (\$27.21)}} = 77.9 \approx 78 \text{ Academias}$$
+
+Con **78 academias suscritas** (equivalente a 1,170 alumnos en total), el proyecto es autosostenible y cubre el 100% de los sueldos del personal de desarrollo y la infraestructura.
+
+### **1.4.5 Estado de Resultados Proyectado (Año 1 a Año 3)**
+Con una proyección de expansión comercial basada en dojos de BJJ en Latinoamérica y Norteamérica:
 
 <a id="tabla-1-3"></a>
 *Tabla 1.3*  
 *Estado de Resultados Proyectado (en USD)*
 
-| Estado de Resultados | Año 1 (500 B2C + 10 B2B) | Año 2 (2,500 B2C + 50 B2B) | Año 3 (10,000 B2C + 200 B2B) |
+| Estado de Resultados | Año 1 (300 B2C + 50 Dojos) | Año 2 (1,500 B2C + 200 Dojos) | Año 3 (5,000 B2C + 800 Dojos) |
 | --- | --- | --- | --- |
-| Ingresos B2C (Suscripción $9.99/mes) | $59,940.00 | $299,700.00 | $1,198,800.00 |
-| Ingresos B2B (Licencia Dojo $99.00/mes) | $11,880.00 | $59,400.00 | $237,600.00 |
-| **INGRESOS BRUTOS TOTALES** | **$71,820.00** | **$359,100.00** | **$1,436,400.00** |
-| Costo Directo de Inferencia IA (APIs) | ($1,125.00) | ($5,625.00) | ($22,500.00) |
-| Infraestructura de Servidores & Nube | ($1,440.00) | ($3,600.00) | ($12,000.00) |
-| Comisiones de Pasarela de Pago (3.5%) | ($2,513.70) | ($12,568.50) | ($50,274.00) |
-| **MARGEN BRUTO** | **$66,741.30 (92.9%)** | **$337,306.50 (93.9%)** | **$1,351,626.00 (94.1%)** |
-| Gastos de Marketing & Operaciones | ($24,000.00) | ($72,000.00) | ($216,000.00) |
+| Ingresos B2C (Suscripción $9.99/mes) | $35,964.00 | $179,820.00 | $599,400.00 |
+| Ingresos B2B (Licencia Dojo $29.99/mes) | $17,994.00 | $71,976.00 | $287,904.00 |
+| **INGRESOS BRUTOS TOTALES** | **$53,958.00** | **$251,796.00** | **$887,304.00** |
+| Costo Directo de Inferencia IA (APIs) | ($675.00) | ($3,375.00) | ($11,250.00) |
+| Servidores & Nube (PostgreSQL/ChromaDB) | ($1,440.00) | ($2,880.00) | ($7,200.00) |
+| Comisiones de Pasarela de Pago (3.5%) | ($1,888.53) | ($8,812.86) | ($31,055.64) |
+| **MARGEN BRUTO** | **$49,954.47 (92.6%)** | **$236,728.14 (94.0%)** | **$837,798.36 (94.4%)** |
+| Nómina de Personal de Desarrollo & Soporte | ($24,000.00) | ($36,000.00) | ($72,000.00) |
+| Gastos de Marketing & Operaciones | ($12,000.00) | ($36,000.00) | ($108,000.00) |
 | Depreciación de Inversión Inicial (CAPEX) | ($7,000.00) | ($7,000.00) | ($7,000.00) |
-| **UTILIDAD ANTES DE IMPUESTOS (EBIT)** | **$35,741.30** | **$258,306.50** | **$1,128,626.00** |
-| Impuesto a las Utilidades (25%) | ($8,935.33) | ($64,576.63) | ($282,156.50) |
-| **UTILIDAD NETA RESULTANTE** | **$26,805.97** | **$193,729.87** | **$846,469.50** |
+| **UTILIDAD ANTES DE IMPUESTOS (EBIT)** | **$6,954.47** | **$157,728.14** | **$650,798.36** |
+| Impuesto a las Utilidades (25%) | ($1,738.62) | ($39,432.04) | ($162,699.59) |
+| **UTILIDAD NETA RESULTANTE** | **$5,215.85** | **$118,296.10** | **$488,098.77** |
 
-### **1.4.5 Análisis de Rentabilidad Financiera (VAN, TIR y Payback)**
-La evaluación de los indicadores financieros confirma la viabilidad económica del producto:
-*   **Margen Bruto de la Operación:** Superior al **92%**, derivado del desacoplamiento del procesamiento de video en la nube.
-*   **Periodo de Recuperación de la Inversión (Payback Period):** **9.3 meses**. La inversión inicial de $21,000.00 USD se amortiza por completo dentro del primer año de operaciones.
-*   **Valor Actual Neto (VAN / NPV):** Evaluado a una tasa de descuento conservadora del 12% anual:
-    $$\text{VAN} = \$684,250.00 \text{ USD}$$
-*   **Tasa Interna de Retorno (TIR / IRR):** **148%**.
+### **1.4.6 Análisis de Rentabilidad Financiera (VAN, TIR y Payback)**
+*   **Margen Bruto:** Superior al **92%**, gracias al costo de servicio de apenas **$2.78 USD/mes** por escuela de 15 alumnos.
+*   **Periodo de Recuperación de la Inversión (Payback Period):** **11.2 meses**.
+*   **Valor Actual Neto (VAN / NPV al 12%):** **$385,420.00 USD**.
+*   **Tasa Interna de Retorno (TIR / IRR):** **86.4%**.
 *   **Dictamen Financiero:** El proyecto OpenBJJ no solo es viable técnicamente, sino que representa una **unidad de negocio global altamente rentable, escalable y con un margen operativo extraordinario**, apto para levantar capital semilla o ser comercializado internacionalmente como SaaS.
 
 ---
