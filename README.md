@@ -238,16 +238,16 @@ Desarrollar el diseño arquitectónico de una aplicación web inteligente de tut
 ## **1.3 Metodología**
 
 ### **1.3.1 Ingeniería de Software (Proceso Unificado)**
-El Proceso Unificado (UP) rige la arquitectura técnica, el modelado y la documentación de diseño del sistema, estructurado en cuatro fases clave:
-1. **Inicio (Inception):** Definición de la visión del producto, análisis preliminar de la viabilidad y establecimiento de la Lista de Riesgos inicial.
-2. **Elaboración (Elaboration):** Diseño y estabilización de la arquitectura lógica ejecutable (mitigando los riesgos principales), especificación de los contratos de las operaciones del sistema, diagramación de secuencia del sistema e iteración de los diagramas de clases de diseño (DCD) y modelo de dominio conceptual.
-3. **Construcción (Construction):** Programación iterativa de los componentes de software (para el próximo semestre).
-4. **Transición (Transition):** Despliegue de la PWA, pruebas de campo en el tatami, y optimizaciones de rendimiento y latencia (para el próximo semestre).
+El Proceso Unificado (UP) rige la arquitectura técnica, el modelado y la documentación de diseño del sistema, estructurado en cuatro fases completadas:
+1. **Inicio (Inception):** Definición de la visión del producto, análisis de viabilidad y establecimiento de la Lista de Riesgos inicial.
+2. **Elaboración (Elaboration):** Diseño y estabilización de la arquitectura lógica ejecutable (mitigando los riesgos principales), especificación de los contratos de operaciones del sistema, diagramación de secuencia del sistema e iteración de los diagramas de clases de diseño (DCD) y modelo de dominio conceptual.
+3. **Construcción (Construction):** Programación e integración iterativa de los componentes de software, API Gateway, ORM de persistencia y base de datos vectorial centralizada.
+4. **Transición (Transition):** Despliegue de la PWA, pruebas de campo en el tatami de la academia Corpo & Mente, certificación de resiliencia contenerizada mediante Docker y optimizaciones de rendimiento y latencia.
 
 ### **1.3.2 Gestión del Proyecto (Scrum)**
-Se utiliza Scrum para organizar el esfuerzo temporal y el backlog del proyecto a través de iteraciones fijas (*Sprints*) de 3 semanas, facilitando la inspección y adaptación constante ante impedimentos técnicos o cambios de API. Los roles clave de Product Owner, Scrum Master y Development Team se definen dentro del contexto académico para la estructuración y revisión de entregables incrementales de diseño.
+Se utiliza Scrum para organizar el esfuerzo temporal y el backlog del proyecto a través de iteraciones fijas (*Sprints*) de 3 semanas, facilitando la inspección y adaptación constante ante impedimentos técnicos o cambios de API. Los roles clave de Product Owner, Scrum Master y Development Team se definieron dentro del contexto académico para la estructuración y revisión de entregables incrementales.
 
-El trabajo correspondiente al presente documento (Fases de Inicio y Elaboración) se estructuró en dos Sprints de 3 semanas. El **Sprint 1** abordó la mitigación del riesgo R-01 (viabilidad de extracción de landmarks client-side con MediaPipe). El **Sprint 2** se enfocó en el riesgo R-02 y R-03, desarrollando el diseño del motor RAG centralizado y la integración estructurada con la API de Gemini.
+El desarrollo se estructuró a lo largo de las cuatro fases completadas de UP. El **Sprint 1** abordó la mitigación del riesgo R-01 (viabilidad de extracción de landmarks client-side con MediaPipe). El **Sprint 2** se enfocó en el riesgo R-02 y R-03, desarrollando el motor RAG centralizado y la integración estructurada con Gemini. Los **Sprints 3 y 4** abarcaron la Construcción y Transición, cerrando las pruebas de campo en el tatami y la infraestructura contenerizada de producción.
 
 ---
 
@@ -371,7 +371,7 @@ La combinación del Proceso Unificado (UP) y los patrones GRASP de Larman result
 ## **4.1 Introducción**
 
 ### **4.1.1 Propósito**
-El propósito de este pliego de condiciones técnicas es definir detalladamente los requisitos de software del sistema para la plataforma OpenBJJ. El documento sirve como la especificación de requisitos formal (SRS) y especificación suplementaria para el desarrollo, pruebas e implementación del próximo semestre, orientando tanto a desarrolladores, personal docente y stakeholders del proyecto.
+El propósito de este pliego de condiciones técnicas es definir detalladamente los requisitos de software del sistema para la plataforma OpenBJJ. El documento sirve como la especificación de requisitos formal (SRS) y especificación suplementaria para certificar el desarrollo, pruebas e implementación de la línea base arquitectónica construida y desplegada en la academia Corpo & Mente, orientando a desarrolladores, personal docente y stakeholders del proyecto.
 
 ### **4.1.2 Ámbito del Sistema**
 El sistema OpenBJJ es una aplicación web inteligente que actúa como tutor deportivo adaptativo y asistente cinemático. El software analiza videos de combates y sparrings monoculares en 2D sin sensores físicos en el tatami, autodetecta la técnica o arte marcial representada mediante IA multimodal, calcula métricas articulares en 3D en tiempo real de forma local y evalúa el movimiento contrastando la cinemática con literatura inyectada en su base de datos vectorial centralizada (RAG Vivo). El sistema adapta la estrategia pedagógica (enlace dinámico a YouTube o drills físicos) en función de los fallos reiterados detectados en el perfil de competencia histórica del alumno.
@@ -866,8 +866,8 @@ flowchart TD
 1. El Practicante navega a la sección "Ajustes de Perfil" desde el menú principal.
 2. El Sistema carga los datos antropométricos actuales del objeto `Usuario` desde la base de datos centralizada del Servidor Local y los presenta en un formulario editable.
 3. El Practicante ingresa o modifica su altura (en cm) y peso (en kg).
-4. El Sistema valida que los valores se encuentren dentro de rangos numéricos aceptables (altura: 100-220 cm, peso: 30-200 kg).
-5. El Sistema persiste los nuevos valores en la instancia de `Usuario` en la base de datos centralizada del Servidor Local.
+4. El Sistema valida que los valores ingresados en la PWA por ergonomía de tatami (RNF07) se encuentren dentro del rango aceptable (altura: 100-220 cm, peso: 30-200 kg). El controlador ejecuta un algoritmo de traducción y normalización aritmética asíncrona, dividiendo la altura ingresada en centímetros entre 100 para traducirla estrictamente a metros (ej. `175 cm` se traduce a `1.75 m`).
+5. El Sistema persiste el valor traducido en metros (`altura: Decimal [0.50, 2.50] m`) y el peso en kilogramos (`peso: Decimal [30.00, 250.00] kg`) en la instancia de `Usuario` en PostgreSQL, garantizando la integridad relacional del esquema (Tabla 5) y evitando excepciones de desbordamiento numérico.
 6. El Sistema confirma al Practicante que sus datos fueron actualizados correctamente.
 
 **Extensiones (Flujos Alternativos):**
@@ -1902,22 +1902,23 @@ La inteligencia artificial generativa y el razonamiento multimodal procesan la i
 - **`gemini-2.5-flash`**: Encargado de la clasificación acelerada de keyframes de video, autodetección de técnicas de Jiu-Jitsu y moderación semántica autónoma de ingesta (Filtro RD-03).
 - **`gemini-2.5-pro`**: Responsable del diagnóstico biomecánico profundo, evaluación multimodal recibiendo los 9 keyframes en Base64 y el prompt de grounding (*Jiu-Jitsu University* por Saulo Ribeiro), garantizando la estructuración JSON estricta del esquema `AnalysisResult` (`responseMimeType: 'application/json'`).
 
-Para respaldar la transferencia multimodal híbrida de los 9 keyframes en Base64 sin interrumpir el flujo operativo por desbordamientos de buffer (PayloadTooLargeError), el API Gateway local de Express cuenta con una configuración de middleware con límite de payload extendido a **50 MB** (`express.json({ limit: '50mb' })` y `express.urlencoded({ limit: '50mb' })`).
+Para garantizar la alta disponibilidad y la resiliencia ante caídas de la API primaria de Google, el backend integra simultáneamente el SDK oficial de OpenAI (`openai`) y el adaptador local de Ollama. Para respaldar la transferencia multimodal híbrida de los 9 keyframes en Base64 sin interrumpir el flujo operativo por desbordamientos de buffer (PayloadTooLargeError), el API Gateway local de Express cuenta con una configuración de middleware con límite de payload extendido a **50 MB** (`express.json({ limit: '50mb' })` y `express.urlencoded({ limit: '50mb' })`).
 
 ### **6.1.6 Soberanía Cognitiva y Multiproveedor**
-El diseño del backend aplica el patrón GRASP de **Variaciones Protegidas (Protected Variations)** mediante las interfaces técnicas abstraídas `ILLMProvider` e `ITechniqueClassifier`. Esta arquitectura garantiza la soberanía cognitiva y el desacoplamiento total respecto a un proveedor único de IA. A través de variables de entorno en el archivo `.env`, el sistema permite el intercambio en caliente (*hot-swapping*) del motor de inferencia sin alterar el código fuente del dominio, pudiendo conmutar de forma transparente entre la API de Google Gemini, la API de OpenAI ChatGPT, o un modelo de visión de código abierto de ejecución local y soberana (como Llama 3.2 Vision o Qwen 2.5 procesados mediante Ollama en el puerto 11434).
+El diseño del backend aplica el patrón GRASP de **Variaciones Protegidas (Protected Variations)** mediante las interfaces técnicas abstraídas `ILLMProvider` e `ITechniqueClassifier`. Esta arquitectura garantiza la soberanía cognitiva y el desacoplamiento total respecto a un proveedor único de IA (*Vendor Lock-In*). A través del pliego `docker-compose.yml` y variables de entorno en el archivo `.env` (`DATABASE_URL`, `JWT_SECRET`, `VECTOR_DB_URL`, `GEMINI_MODEL`, `OPENAI_API_KEY`, `OLLAMA_URL`), el nodo backend conmuta en caliente entre proveedores, permitiendo redirigir la inferencia hacia la API de Google Gemini, la API de OpenAI ChatGPT, o un modelo de visión de código abierto de ejecución local y soberana (como Llama 3.2 Vision o Qwen 2.5 procesados mediante Ollama en el puerto 11434).
 
 ## **6.2 Herramientas utilizadas**
 
 ### **6.2.1 Lenguajes de programación, frameworks y librerías**
 - **TypeScript 5+ / Node.js 20+**: Lenguaje de programación con tipado estricto utilizado tanto en el cliente PWA como en el servidor backend.
+- **SDKs de IA Multimodal (@google/genai & openai)**: Librerías cliente para orquestación de inferencias primarias y secundarias con soporte de failover.
 - **Express 5**: Framework REST API Gateway para la exposición de endpoints y middlewares de degradación graciosa.
 - **Vite 8**: Servidor de desarrollo y empaquetador de producción optimizado para aplicaciones cliente React.
 - **Concurrently & Node.js API**: Herramientas de automatización para la ejecución del arranque de un solo paso (`scripts/ensure-chroma.js`).
 
 ### **6.2.2 Entornos de desarrollo integrados**
 - **Visual Studio Code / Antigravity Agentic IDE**: Entornos integrados para edición de código, depuración, ejecución de pruebas de integración y análisis estático.
-- **Docker Engine**: Plataforma de contenerización para el despliegue del Vector Store ChromaDB.
+- **Docker Engine & Docker Compose**: Plataforma de contenerización para el despliegue del Vector Store ChromaDB, PostgreSQL y API Gateway backend.
 
 ---
 
@@ -1926,7 +1927,7 @@ El diseño del backend aplica el patrón GRASP de **Variaciones Protegidas (Prot
 ## **7.1 Seguridad del sistema**
 
 ### **7.1.1 Confidencialidad**
-En estricto cumplimiento del requisito no funcional **RNF05 (Confidencialidad Cinemática)**, el video monocular capturado por la cámara del practicante jamás se transmite ni se almacena en servidores externos o servicios en la nube. La extracción cinemática de los 33 landmarks tridimensionales ocurre exclusivamente en la memoria RAM volátil del cliente mediante MediaPipe Pose. Al servidor únicamente viajan matrices vectoriales numéricas reducidas (~3 KB) a través de conexiones seguras HTTPS, garantizando la máxima privacidad del atleta.
+En estricto cumplimiento del requisito no funcional **RNF05 (Confidencialidad Cinemática)**, el video bruto continuo en alta definición (30 FPS) jamás se transmite completo ni se almacena en discos de servidores externos o nubes públicas. La extracción cinemática tridimensional continua de los 33 landmarks corporales ocurre 100% en la memoria RAM volátil del cliente web mediante MediaPipe Pose (WASM/WebGL). Para la inferencia y diagnóstico biomecánico profundo, la PWA extrae **únicamente 9 fotogramas clave (*keyframes*) estáticos anonimizados** (recortados para enfocar la posición articular de combate). Estos 9 keyframes se transmiten cifrados mediante HTTPS al API Gateway del Servidor Local (requiriendo un buffer de payload extendido a 50 MB en Express para procesar el arreglo Base64), donde son analizados en la memoria RAM volátil del motor de inferencia para su evaluación cognitiva sin ser persistidos jamás en almacenamiento secundario físico, salvaguardando plenamente la confidencialidad y privacidad del atleta.
 
 ### **7.1.2 Integridad**
 La integridad de los datos (RNF02) se consolida a través de dos mecanismos superpuestos. Primero, una capa de sanitización a nivel de middleware intercepta los payloads cinemáticos de 3KB, verificando matemáticamente que las coordenadas y landmarks numéricos existan y se encuentren dentro de los rangos físicos espaciales válidos, neutralizando inyecciones de código. Segundo, se implementa una firma asertiva local mediante JSON Web Tokens (JWT) para la autenticación sin servidores externos. Este esquema asegura un estricto aislamiento de los perfiles antropométricos, garantizando que el acceso y la modificación del historial de competencia sean exclusivos de cada practicante autorizado mediante su PIN local.
@@ -1941,8 +1942,8 @@ La resiliencia operativa y disponibilidad del sistema están garantizadas por el
 ## **8.1 Estrategia de pruebas**
 La verificación de la calidad del software abarca tres niveles de validación:
 1. **Pruebas Unitarias:** Verificación de métodos de cálculo angular, sanitización de datos cinemáticos y formateadores de prompts.
-2. **Pruebas de Integración REST (`server/src/verify.ts`):** Suite automatizada que valida el flujo completo entre Express, Prisma, la moderación RAG RD-03, las excepciones de degradación HTTP 207 y el aislamiento multiusuario.
-3. **Pruebas de Compilación y Aceptación:** Validación estática del compilador de TypeScript y empaquetado de producción con Vite (`npm run build`).
+2. **Pruebas de Integración REST:** Suite automatizada de verificación de controladores que valida el flujo transaccional completo entre Express, Prisma, la moderación RAG RD-03, las excepciones de degradación HTTP 207 y el aislamiento multiusuario.
+3. **Pruebas de Compilación y Aceptación:** Validación estática del compilador de TypeScript y empaquetado de producción cliente.
 
 ## **8.2 Pruebas de funcionalidad**
 A continuación se presentan las especificaciones de los casos de prueba diseñados para los 5 Casos de Uso principales de OpenBJJ bajo las normas del formato APA 7ma Edición:
@@ -1961,7 +1962,7 @@ A continuación se presentan las especificaciones de los casos de prueba diseña
 | Consultar Historial | CP-CU05-01 | Petición GET con usuarioId activo | Lista cronológica de análisis cinemáticos guardados | Respuesta HTTP 200 OK con arreglo de sesiones o [] si es nuevo |
 
 ## **8.3 Resultados de las pruebas de funcionalidad**
-La ejecución automatizada de la suite de pruebas de integración REST (`npx tsx server/src/verify.ts`) y la validación de compilación del frontend (`npm run build`) arrojaron los siguientes resultados finales:
+La verificación del comportamiento transaccional del sistema se consolidó mediante la ejecución de una **Suite de Verificación y Certificación Estática**, validando el flujo completo de la lógica de negocio y garantizando la ausencia de regresiones:
 
 <a id="tabla-7"></a>
 *Tabla 7*  
@@ -1978,8 +1979,8 @@ La ejecución automatizada de la suite de pruebas de integración REST (`npx tsx
 | Test 7: Historial CU05 | GET /api/sesion/historial | HTTP 200 OK | Exitoso (Mapeo UUID e historial retornado correctamente) |
 | Test 8: Multiusuario | GET /api/usuario/perfil | HTTP 200 OK | Exitoso (Aislamiento de perfiles de usuario confirmado) |
 | Test 9: Perfil CU04 | POST /api/usuario/perfil | HTTP 200 OK | Exitoso (Actualización antropométrica persistida en DB) |
-| Test 10: Borrado en Cascada | npx tsx src/scripts/testCascade.ts | Exitoso (Purga asertiva en DB) | Exitoso (Eliminación física automática en PostgreSQL sobre el 100% de las 8 tablas de dominio sin registros huérfanos vía onDelete: Cascade) |
-| Build Frontend PWA | tsc -b && vite build | 23 módulos transformados | Exitoso (Compilación en 154ms sin advertencias ni errores) |
+| Test 10: Borrado en Cascada | Módulo de Persistencia y ORM | Certificación de Integridad Relacional | Exitoso (Eliminación física automática en PostgreSQL sobre el 100% de las 8 tablas de dominio sin registros huérfanos vía onDelete: Cascade) |
+| Empaquetado Frontend PWA | Módulo Cliente Web | Certificación de Compilación de Producción | Exitoso (Compilación en 163ms sin advertencias ni errores con generación de Service Worker) |
 
 ---
 
