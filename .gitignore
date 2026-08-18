@@ -1,1 +1,54 @@
-Nothing needs to be added to .gitignore since only a README.md file was modified and no build artifacts, dependencies, or temporary files were included in the changes.
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+dist-ssr/
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Local SQLite databases & Journal
+*.db
+*.db-journal
+dev.db
+dev.db-journal
+
+# Scratch directory
+scratch/
+/workspace/scratch/
+
+# Raw videos and media recordings (R-06)
+*.mp4
+*.webm
+*.mov
+*.avi
+*.mkv
+uploads/
+
+# ChromaDB / Vector Store local data
+chroma-data/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor & OS files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

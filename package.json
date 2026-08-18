@@ -1,0 +1,27 @@
+{
+  "name": "openbjj-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install --prefix client && npm install --prefix server",
+    "ensure:chroma": "node scripts/ensure-chroma.js",
+    "dev:client": "npm run dev --prefix client",
+    "dev:server": "npm run dev --prefix server",
+    "dev": "node scripts/ensure-chroma.js && npx -y concurrently -n \"server,client\" -c \"blue,green\" \"npm run dev:server\" \"npx -y wait-on tcp:3001 && npm run dev:client\"",
+    "dojo": "npm run dev",
+    "db:clean": "npm run db:clean --prefix server",
+    "build": "npm run build --prefix client"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.1.2",
+    "prisma": "^6.19.3",
+    "typescript": "^7.0.2"
+  }
+}

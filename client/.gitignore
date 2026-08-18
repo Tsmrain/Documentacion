@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+dist-ssr/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Raw videos and recordings
+*.mp4
+*.webm
+*.mov
+*.avi
+*.mkv
+
+# Logs
+logs/
+*.log

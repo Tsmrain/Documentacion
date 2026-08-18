@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: openbjj-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: openbjj
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: openbjj-chroma
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - chromadata:/chroma/chroma
+
+  backend:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: openbjj-backend
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/openbjj?schema=public
+      - JWT_SECRET=super_secret_local_key_corpo_mente
+      - VECTOR_DB_URL=http://chromadb:8000
+    ports:
+      - "3001:3001"
+    depends_on:
+      - db
+      - chromadb
+
+volumes:
+  pgdata:
+  chromadata:
