@@ -3,12 +3,11 @@ import { useEffect, useState } from "react";
 interface HistoryViewProps {
   usuarioId: string;
   onSelectReport: (report: any) => void;
-  // refreshVersion se incrementa en App.tsx cuando termina un analisis en segundo plano,
-  // forzando un re-fetch automatico del historial para cumplir CU05.
   refreshVersion?: number;
+  onHistorialDeleted?: () => void;
 }
 
-export function HistoryView({ usuarioId, onSelectReport, refreshVersion }: HistoryViewProps) {
+export function HistoryView({ usuarioId, onSelectReport, refreshVersion, onHistorialDeleted }: HistoryViewProps) {
   const [historial, setHistorial] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +46,7 @@ export function HistoryView({ usuarioId, onSelectReport, refreshVersion }: Histo
       });
       if (res.ok) {
         setHistorial(prev => prev.filter(item => item.id !== analisisId));
+        if (onHistorialDeleted) onHistorialDeleted();
       } else {
         alert("Error al eliminar el historial");
       }

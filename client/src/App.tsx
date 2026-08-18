@@ -343,12 +343,13 @@ function App() {
           {activeTab === "rag" ? (
             <RagIngestionPanel onClose={() => setActiveTab("analizador")} usuarioId={usuarioId} />
           ) : activeTab === "progreso" ? (
-            <ProgresoView usuarioId={usuarioId} />
+            <ProgresoView usuarioId={usuarioId} key={historialVersion} />
           ) : activeTab === "historial" ? (
             <HistoryView
               usuarioId={usuarioId}
               onSelectReport={handleSelectReportFromHistory}
               refreshVersion={historialVersion}
+              onHistorialDeleted={() => setHistorialVersion(v => v + 1)}
             />
           ) : activeTab === "perfil" ? (
             <PerfilView
