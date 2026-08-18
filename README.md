@@ -179,14 +179,14 @@ En este trabajo se expone el diseño y modelado orientado a objetos de una plata
 - [**Figura 3** *DSS-CU01: Flujo Completo de Análisis Biomecánico y Autodetección*](#figura-3)
 - [**Figura 4** *DSS-CU02: Flujo de Ingesta y Vectorización RAG*](#figura-4)
 - [**Figura 5** *DSS-CU03: Flujo de Consulta de Progreso y Tutoría Adaptativa*](#figura-5)
-- [**Figura 6** *DSS-CU09: Flujo de Recomendación de Videos de YouTube*](#figura-6)
+- [**Figura 6** *DSS-CU08: Flujo de Recomendación de Videos de YouTube*](#figura-6)
 - [**Figura 7** *Diagrama de Secuencia de Diseño (Realización de CU01)*](#figura-7)
 - [**Figura 8** *Máquina de Estados de SesionEntrenamientoController*](#figura-8)
 - [**Figura 9** *Diagrama de Clases de Diseño (DCD)*](#figura-9)
 - [**Figura 10** *Diagrama de Despliegue Físico de OpenBJJ*](#figura-10)
 - [**Figura 11** *Diagrama de Secuencia de Diseño (Realización de CU02)*](#figura-11)
 - [**Figura 12** *Diagrama de Secuencia de Diseño (Realización de CU03)*](#figura-12)
-- [**Figura 13** *DSS-CU10: Flujo de Registro de Visualización de YouTube*](#figura-13)
+- [**Figura 13** *DSS-CU09: Flujo de Registro de Visualización de YouTube*](#figura-13)
 
 ---
 
@@ -443,8 +443,8 @@ El cliente requiere conectividad por red local con el Servidor Local. Toda petic
 - **RF01: Autodetección Multimodal de Sparring o Lucha:** El sistema debe procesar el archivo de video (duración máxima de 45 segundos) correspondiente a luchas, sparrings reales contra oponentes o drills individuales, y mediante la API de Gemini, autodetectar la técnica y disciplina ejecutada sin selección manual.
 - **RF02: Extracción de Landmarks 3D y cálculo cinemático local:** El sistema debe procesar localmente el video en el navegador mediante MediaPipe, extrayendo los 33 landmarks corporales y derivando ángulos, velocidad y aceleración de articulaciones en WebGL.
 - **RF03: Agregar Fuente Opcional y RAG Personalizado:** El sistema debe permitir al Practicante agregar de manera opcional archivos PDF y lecciones de YouTube (mediante los endpoints `POST /api/rag/ingestar`, `GET /api/rag/fuentes` y `DELETE /api/rag/fuentes/:id` - CU02 / RD-03) para enriquecer el Vector DB de forma personalizada. Para las fuentes de YouTube, el Servidor Local recupera los metadatos instruccionales estructurados (título, canal y plataforma) mediante el protocolo oEmbed para construir chunks semánticos de 384 dimensiones en ChromaDB. Si el Practicante no provee ninguna fuente, el sistema no presentará fallos y entrará en "Modo Fallback Baseline".
-- **RF04: Motor de Tutoría Adaptativa:** El sistema debe contrastar la cinemática del video analizado con la verdad de grounding vectorial. Si detecta desviaciones reiteradas de forma sistemática en el historial (más de 3 fallos consecutivos), debe conmutar la estrategia pedagógica hacia drills de aislamiento o perspectivas anatómicas alternativas a través de la vista `ProgresoView` (CU03, CU09).
-- **RF05: Perfil de Competencia del Usuario Centralizado:** El sistema debe mantener un perfil aislado en la base de datos del Servidor Local (consultable vía `GET /api/sesion/perfil` y `GET /api/usuario/perfil`) que consolide históricamente las técnicas practicadas por cada estudiante, su cinturón y nivel de maestría, la frecuencia de sus errores cinemáticos, el historial de intentos (consultable vía `GET /api/sesion/historial` en `HistoryView` - CU05), los videos vistos y su registro de visualización vía `POST /api/sesion/visualizacion` (CU10) para personalizar dinámicamente su ruta de aprendizaje activa sin colisión entre practicantes.
+- **RF04: Motor de Tutoría Adaptativa:** El sistema debe contrastar la cinemática del video analizado con la verdad de grounding vectorial. Si detecta desviaciones reiteradas de forma sistemática en el historial (más de 3 fallos consecutivos), debe conmutar la estrategia pedagógica hacia drills de aislamiento o perspectivas anatómicas alternativas a través de la vista `ProgresoView` (CU03, CU08).
+- **RF05: Perfil de Competencia del Usuario Centralizado:** El sistema debe mantener un perfil aislado en la base de datos del Servidor Local (consultable vía `GET /api/sesion/perfil` y `GET /api/usuario/perfil`) que consolide históricamente las técnicas practicadas por cada estudiante, su cinturón y nivel de maestría, la frecuencia de sus errores cinemáticos, el historial de intentos (consultable vía `GET /api/sesion/historial` en `HistoryView` - CU05), los videos vistos y su registro de visualización vía `POST /api/sesion/visualizacion` (CU09) para personalizar dinámicamente su ruta de aprendizaje activa sin colisión entre practicantes.
 - **RF06: Dynamic Prompt Builder Condicional:** El sistema debe compilar en tiempo real el prompt inyectando métricas cinemáticas locales de 3KB y el contexto RAG. Si la consulta vectorial en ChromaDB retorna 0 chunks, debe conmutar a la plantilla Baseline Fallback para realizar la inferencia mediante el conocimiento nativo de Gemini sobre Jiu-Jitsu.
 - **RF07: Sistema de Recomendación de Unico Video de YouTube por Reporte:** Cada reporte de evaluación biomecánica debe retornar EXACTAMENTE 1 ÚNICO VIDEO de YouTube recomendado (deep link), seleccionado inteligentemente por el motor adaptativo según la articulación afectada de mayor severidad y la técnica autodetectada. Ante fallas recurrentes en combates posteriores (más de 3 intentos en el mismo error), el motor conmuta automáticamente la recomendación hacia un video tutorial de YouTube alternativo (otro ángulo, enfoque defensivo) o un drill de aislamiento.
 
@@ -634,7 +634,7 @@ classDiagram
 
 ### **Paso 1: Diagrama de Casos de Uso del Sistema**
 
-El siguiente diagrama define los límites del sistema, relacionando los actores clave con los 11 casos de uso (CU) propuestos:
+El siguiente diagrama define los límites del sistema, relacionando los actores clave con los 10 casos de uso (CU) propuestos:
 
 <a id="figura-2"></a>
 **Figura 2**  
@@ -650,10 +650,10 @@ flowchart TD
         CU03(CU03: Consultar Progreso y Recibir Tutoría Adaptativa)
         CU04(CU04: Gestionar Datos Antropométricos del Usuario)
         CU05(CU05: Gestionar Sesiones de Entrenamiento)
-        CU07(CU07: Configurar Preferencias del Sistema)
-        CU08(CU08: Calibrar Entorno de Captura)
-        CU09(CU09: Recibir Recomendación de Video de YouTube)
-        CU10(CU10: Registrar Visualización de Video de YouTube)
+        CU06(CU06: Configurar Preferencias del Sistema)
+        CU07(CU07: Calibrar Entorno de Captura)
+        CU08(CU08: Recibir Recomendación de Video de YouTube)
+        CU09(CU09: Registrar Visualización de Video de YouTube)
     end
     
     Practicante --> CU01
@@ -661,10 +661,10 @@ flowchart TD
     Practicante --> CU03
     Practicante --> CU04
     Practicante --> CU05
+    Practicante --> CU06
     Practicante --> CU07
     Practicante --> CU08
     Practicante --> CU09
-    Practicante --> CU10
 ```
 
 ---
@@ -944,8 +944,7 @@ flowchart TD
 * Optimizar la velocidad de carga de miniaturas de esqueleto 3D para dispositivos de baja gama.
 
 
-
-### Caso de Uso CU07: Configurar Preferencias del Sistema
+### Caso de Uso CU06: Configurar Preferencias del Sistema
 
 **Actor Principal:** Practicante
 
@@ -955,190 +954,133 @@ flowchart TD
 * **Instructor:** Desea que los reportes de sus alumnos utilicen métricas alineadas con las unidades oficiales de la federación.
 
 **Precondiciones:**
-* El Practicante tiene un perfil activo en la aplicación con una instancia de `Usuario` persistida en la base de datos centralizada del Servidor Local.
+* El usuario se encuentra navegando en la PWA y accede a la sección de configuración.
 
 **Garantía de Éxito / Postcondiciones:**
-* Se modificaron las preferencias de configuración del Practicante en su perfil centralizado y se aplicaron de forma inmediata a la interfaz y comportamiento del Sistema.
+* Las preferencias del sistema fueron actualizadas y persistidas localmente en `localStorage`.
 
 **Escenario Principal de Éxito (Flujo Básico):**
-1. El Practicante navega a la sección "Configuración" desde el menú principal.
-2. El Sistema carga las preferencias actuales del Practicante desde la base de datos centralizada del Servidor Local y las presenta en un formulario con las opciones disponibles.
-3. El Practicante modifica una o más preferencias: idioma de retroalimentación de la IA (ej. español, inglés, portugués), nivel de zoom predeterminado del esqueleto 3D, sistema métrico (métrico/imperial).
-4. El Sistema valida que las selecciones sean opciones soportadas.
-5. El Sistema persiste las nuevas preferencias en el perfil del Practicante en la base de datos centralizada del Servidor Local.
-6. El Sistema aplica los cambios inmediatamente a la interfaz activa y confirma al Practicante que la configuración fue actualizada.
+1. El Practicante accede a la vista de Preferencias del Sistema.
+2. El Sistema muestra las opciones configurables (Idioma de retroalimentación, escala métrica, nivel de renderizado 3D).
+3. El Practicante modifica los parámetros deseados.
+4. El Practicante guarda los cambios.
+5. El Sistema persiste las nuevas preferencias en el cliente y actualiza dinámicamente los componentes visuales.
 
 **Extensiones (Flujos Alternativos):**
-* **4.a. El Practicante selecciona una opción no soportada:**
-  1. El Sistema detecta una preferencia inválida (posible manipulación del DOM).
-  2. El Sistema rechaza el cambio y restaura el valor anterior, mostrando un mensaje de error.
-* **5.a. Error de escritura en la base de datos centralizada:**
-  1. El Sistema no puede persistir las preferencias por un fallo de comunicación con el Servidor Local.
-  2. El Sistema notifica al Practicante y mantiene las preferencias anteriores activas hasta que la operación se complete.
+* **4.a. Restablecer valores predeterminados:**
+  1. El Practicante selecciona la opción "Restablecer Ajustes de Fábrica".
+  2. El Sistema restaura la configuración por defecto y actualiza la vista.
 
 **Requisitos Especiales:**
-* Las preferencias de idioma deben afectar tanto la interfaz de usuario como el idioma del prompt enviado a la API de Gemini para la generación de retroalimentación en lenguaje natural.
-* El cambio de sistema métrico debe recalcular y redimensionar las visualizaciones numéricas existentes sin alterar los datos cinemáticos crudos almacenados.
+* Las preferencias deben cargarse instantáneamente al iniciar la aplicación sin latencia perceptible.
 
 **Lista de Variaciones de Tecnología y Datos:**
-* Idiomas soportados: Español, Inglés y Portugués.
-* Persistencia local en localStorage del navegador y sincronización en la base de datos.
+* Idioma (Español / Inglés), Sistema Métrico (Internacional / Imperial).
 
 **Frecuencia de Ocurrencia:**
-* Muy Baja - Generalmente configurado una sola vez durante el primer inicio o registro en la aplicación.
+* Baja - Generalmente configurado durante la primera instalación o cambios esporádicos.
 
 **Problemas Abiertos:**
-* Sincronizar preferencias del usuario entre múltiples dispositivos utilizando almacenamiento local temporal (localStorage) y base de datos centralizada de manera consistente.
+* Ninguno.
 
 
-### Caso de Uso CU08: Calibrar Entorno de Captura
+### Caso de Uso CU07: Calibrar Entorno de Captura
 
 **Actor Principal:** Practicante
 
 **Interesados y sus Intereses:**
-* **Practicante:** Desea asegurarse de que las condiciones de iluminación, encuadre y distancia de la cámara sean óptimas antes de iniciar un análisis biomecánico, maximizando la precisión de la estimación de landmarks 3D.
-* **Sistema/IA:** Requiere que el video de entrada cumpla con condiciones mínimas de calidad visual para que MediaPipe pueda extraer landmarks con un nivel de confianza suficiente (media > 0.5).
-* **Instructor:** Desea asegurar que las métricas cinemáticas recogidas en casa o el tatami secundario tengan la misma fidelidad que las grabadas en el dojo central.
+* **Practicante:** Desea asegurar que la cámara de su dispositivo esté posicionada a la distancia y ángulo óptimos para garantizar una estimación cinemática tridimensional precisa de sus 33 landmarks corporales.
+* **Sistema/IA:** Requiere una iluminación adecuada y un encuadre completo del cuerpo del atleta para mantener una confianza cinemática superior al 50%.
 
 **Precondiciones:**
-* El dispositivo del Practicante cuenta con una cámara funcional accesible desde el navegador (permiso de cámara concedido).
-* El soporte WebGL está activo para la ejecución de MediaPipe.
+* El dispositivo cuenta con una cámara funcional con permisos de acceso concedidos.
 
 **Garantía de Éxito / Postcondiciones:**
-* El Sistema evalúa las condiciones (iluminación, encuadre, distancia) en memoria volátil sin guardar video, confirmando su idoneidad para un análisis biomecánico preciso.
+* El entorno de captura fue calibrado con éxito y el sistema confirma que la visibilidad y confianza de landmarks es óptima.
 
 **Escenario Principal de Éxito (Flujo Básico):**
-1. El Practicante selecciona la opción "Calibrar Entorno de Captura" desde el panel principal.
-2. El Sistema activa la cámara del dispositivo y muestra una vista en tiempo real con superposiciones de guía visual (zonas de encuadre, indicador de iluminación).
-3. El Sistema ejecuta un análisis preliminar con MediaPipe para detectar la presencia del cuerpo completo del Practicante en el encuadre.
-4. El Sistema evalúa el nivel de iluminación del fondo y la nitidez de la imagen capturada.
-5. El Sistema verifica que todas las articulaciones clave (hombros, codos, caderas, rodillas, tobillos) sean detectables con un nivel de confianza aceptable.
-6. El Sistema muestra un indicador de estado (verde/amarillo/rojo) para cada condición evaluada: encuadre, iluminación, detección corporal.
-7. Si todas las condiciones son adecuadas, el Sistema confirma al Practicante que el entorno está calibrado y listo para grabar.
+1. El Practicante activa la vista de Calibración de Captura.
+2. El Sistema inicializa el pipeline de MediaPipe Pose en tiempo real sobre el stream de la cámara.
+3. El Sistema superpone guías visuales en pantalla indicando la posición corporal deseada.
+4. El Practicante se posiciona según las guías en el tatami.
+5. El Sistema evalúa la visibilidad media de los 33 landmarks.
+6. El Sistema confirma visualmente mediante un indicador verde que la calibración es óptima (Confianza > 0.5).
 
 **Extensiones (Flujos Alternativos):**
-* **3.a. MediaPipe no detecta un cuerpo completo en el encuadre:**
-  1. El Sistema identifica que partes del cuerpo (ej. pies o cabeza) están fuera del campo visual.
-  2. El Sistema muestra una superposición visual indicando la zona donde el Practicante debe posicionarse.
-  3. El Practicante ajusta su posición y el Sistema reintenta la detección.
-* **4.a. La iluminación es insuficiente:**
-  1. El Sistema detecta que el nivel de luz de fondo está por debajo del umbral mínimo para una estimación precisa.
-  2. El Sistema muestra una alerta: "Iluminación insuficiente. Acérquese a una fuente de luz o encienda una lámpara frontal."
-  3. El Practicante ajusta la iluminación y el Sistema reintenta la evaluación.
-* **4.b. La iluminación es excesiva (sobreexposición):**
-  1. El Sistema detecta que la imagen está sobreexpuesta, lo que reduce el contraste de las articulaciones.
-  2. El Sistema sugiere reducir la intensidad de la luz o cambiar el ángulo de la cámara.
-* **5.a. Confianza de detección inferior al umbral mínimo:**
-  1. El Sistema detecta que las articulaciones clave tienen un nivel de confianza medio inferior a 0.5.
-  2. El Sistema sugiere alejar la cámara, usar ropa de contraste con el fondo o eliminar obstáculos visuales.
+* **5.a. Oclusión o baja iluminación (Confianza < 0.5):**
+  1. El Sistema detecta que la visibilidad media es insuficiente.
+  2. El Sistema muestra una alerta sugiriendo mejorar la iluminación o ajustar la distancia de la cámara.
 
 **Requisitos Especiales:**
-* La calibración debe completarse en menos de 15 segundos para no interrumpir significativamente la rutina de entrenamiento del Practicante.
-* Las guías visuales de superposición deben ser claras y visibles incluso en pantallas móviles pequeñas (mínimo 320px de ancho).
-* La cámara NO debe grabar ni almacenar video durante la calibración; solo se procesan frames en memoria volátil para la evaluación de condiciones.
+* La evaluación de visibilidad debe ejecutarse en tiempo real a 30 FPS en el cliente web.
 
 **Lista de Variaciones de Tecnología y Datos:**
-* Cámara delantera o trasera en dispositivos móviles, webcam en ordenadores de escritorio.
-* Inferencia MediaPipe Pose sobre WebAssembly (WASM).
+* Cámara frontal o trasera de dispositivos móviles o webcams de escritorio.
 
 **Frecuencia de Ocurrencia:**
-* Alta - Se ejecuta antes de iniciar una sesión en nuevos tatamis o con iluminación variable.
+* Media - Al iniciar una sesión de sparring en un nuevo espacio físico.
 
 **Problemas Abiertos:**
-* Implementar alertas hápticas o de voz ante cambios de estado de calibración para que el practicante no tenga que ver la pantalla mientras se posiciona.
+* Ninguno.
 
 
-### Caso de Uso CU09: Recibir Recomendación de Video de YouTube
+### Caso de Uso CU08: Recibir Recomendación de Video de YouTube
 
 **Actor Principal:** Practicante
 
 **Interesados y sus Intereses:**
-* **Practicante:** Desea un enlace preciso a un video de YouTube que lo guíe a corregir el error biomecánico detectado en su sparring.
-* **Servidor Local (IA):** Desea realizar un seguimiento de los videos consumidos por el usuario y evaluar su efectividad biomecánica en los siguientes intentos.
-* **Instructor:** Desea que las recomendaciones didácticas de video sean coherentes con la escuela de Brazilian Jiu-Jitsu para no confundir a los practicantes con metodologías de otras academias.
+* **Practicante:** Desea recibir una recomendación de video altamente específica (único deep link) para corregir el error biomecánico detectado en su sparring.
+* **Sistema/IA:** Requiere seleccionar el video más relevante desde la base de datos de fuentes de conocimiento (RAG) o generar una búsqueda precisa.
 
 **Precondiciones:**
-* Se ha finalizado un análisis biomecánico con detección de desviaciones técnicas.
+* Se ha completado un diagnóstico biomecánico (CU01).
 
 **Garantía de Éxito / Postcondiciones:**
-* El usuario recibe una recomendación de video de YouTube (deep link) adaptada y el intento de tutoría se registra en `HistorialVisualizacion` de su `PerfilCompetencia` para su posterior evaluación cinemática.
+* Se presentó al Practicante un único video de YouTube recomendado para la corrección pedagógica de su articulación afectada.
 
 **Escenario Principal de Éxito (Flujo Básico):**
-1. El Practicante finaliza un análisis de video donde se identificó un `ErrorBiomecanico`.
-2. El `AdaptationController` busca en la base de datos centralizada del Servidor Local videos instructivos para la técnica y el error específico.
-3. El controlador contrasta los videos disponibles contra el `HistorialVisualizacion` del usuario y su recurrencia de fallos.
-4. Si el usuario ya vio el video técnico estándar pero ha fallado más de 3 veces consecutivas en la misma articulación, el sistema marca el video como "Visto sin mejora".
-5. El sistema detecta mediante el PerfilCompetencia que no hubo mejora cinemática tras ver el video anterior; conmuta de estrategia pedagógica y recomienda un video de YouTube alternativo (por ejemplo, con otro ángulo de cámara, de una academia diferente, o reproducido a cámara lenta) o bien un drill físico de aislamiento diseñado para corregir la biomecánica de la articulación afectada.
-6. El sistema muestra la tarjeta de YouTube con redirección directa (deep link).
-7. El Practicante hace clic en el enlace, abriendo YouTube externamente.
-8. El Practicante confirma su visualización y la app registra el consumo en su historial en el Servidor Local.
+1. El Sistema identifica la articulación con mayor desviación biomecánica en la evaluación.
+2. El Sistema consulta las fuentes de YouTube registradas en PostgreSQL/ChromaDB o aplica el fallback de búsqueda dirigida.
+3. El Sistema asigna el enlace del video recomendado en el reporte de evaluación.
+4. El Practicante selecciona la tarjeta del video y es redirigido a YouTube para visualizar el drill correctivo.
 
 **Extensiones (Flujos Alternativos):**
-* **2.a. No existen videos tutoriales en el Servidor Local para esa técnica:**
-  1. El sistema emite un aviso para realizar una búsqueda semántica de fallback en el corpus o indica que se requiere drill físico.
-* **8.a. El Practicante no confirma la visualización:**
-  1. El Sistema guarda la recomendación como pendiente y se validará en la próxima sesión cinemática.
+* **2.a. Fallo recurrente en la misma articulación (> 3 intentos):**
+  1. El Sistema detecta que el Practicante insiste en el mismo error cinemático.
+  2. El Sistema conmuta la estrategia pedagógica y selecciona un video alternativo enfocado en drills de aislamiento.
 
 **Requisitos Especiales:**
-* El enlace debe estar en formato universal de YouTube compatible con la app móvil.
-
-**Lista de Variaciones de Tecnología y Datos:**
-* Shorts de YouTube y videos estándar de YouTube de alta resolución.
-* Protocolo HTTPS y deep linking nativo.
+* Retornar exactamente un único video por sesión.
 
 **Frecuencia de Ocurrencia:**
-* Muy Alta - En cada reporte con desviaciones biomecánicas de los practicantes.
-
-**Problemas Abiertos:**
-* Establecer la efectividad relativa de videos explicativos en cámara lenta frente a videos con diferente perspectiva.
+* Alta - Tras cada evaluación biomecánica.
 
 
-### Caso de Uso CU10: Registrar Visualización de Video de YouTube
+### Caso de Uso CU09: Registrar Visualización de Video de YouTube
 
 **Actor Principal:** Practicante
 
 **Interesados y sus Intereses:**
-* **Practicante:** Desea que el sistema registre que ha visualizado el video sugerido para actualizar su estado de aprendizaje y recibir recomendaciones futuras adaptadas.
-* **Sistema/IA:** Requiere almacenar de forma precisa la confirmación de visualización en el `HistorialVisualizacion` del `PerfilCompetencia` para evaluar la efectividad pedagógica de las tutorías.
-* **Instructor:** Se beneficia de que la plataforma registre las interacciones de estudio autónomo de sus alumnos para supervisar su nivel de compromiso.
+* **Practicante:** Desea que el sistema lleve el registro de las lecciones recomendadas que ha visto para actualizar su ruta de aprendizaje.
+* **Sistema/IA:** Requiere registrar la visualización para evaluar si la retroalimentación fue consumida antes del siguiente sparring.
 
 **Precondiciones:**
-* El usuario ha recibido una recomendación de video de YouTube asociada a un error biomecánico detectado (CU09).
-* La sesión del usuario está activa y tiene acceso al Servidor Local.
+* El usuario ha recibido una recomendación de video de YouTube asociada a un error biomecánico detectado (CU08).
 
 **Garantía de Éxito / Postcondiciones:**
-* Se crea un registro en la entidad `HistorialVisualizacion` asociado al `PerfilCompetencia` del Practicante, marcando el video como consumido y registrando la fecha actual de visualización en el Servidor Local.
+* Se guardó la interacción de visualización mediante `POST /api/sesion/visualizacion` en PostgreSQL.
 
 **Escenario Principal de Éxito (Flujo Básico):**
-1. El Practicante hace clic en el enlace o botón de reproducción del video de YouTube en la interfaz de la PWA.
-2. El Sistema redirige al Practicante a la plataforma externa de YouTube (deep link) y registra localmente el evento de clic.
-3. El Practicante retorna a la PWA tras visualizar el material y confirma la reproducción.
-4. El Sistema envía una solicitud HTTP POST al API Gateway del Servidor Local delegando en el controlador la persistencia de la visualización.
-5. El `AdaptationController` recibe la confirmación y solicita a `CentralDBPersistenceAdapter` guardar el registro en el historial.
-6. El Servidor Local crea la instancia de `HistorialVisualizacion` vinculada al `PerfilCompetencia` del usuario con el atributo `fechaVisualizacion` correspondiente.
-7. El Sistema actualiza el estado visual del panel pedagógico confirmando al usuario el registro de su progreso.
+1. El Practicante hace clic en el enlace del video tutorial recomendado.
+2. El Sistema registra de forma asíncrona la visualización asociada a su `usuarioId`.
+3. El Sistema actualiza el estado de la lección en la base de datos relacional.
 
 **Extensiones (Flujos Alternativos):**
-* **4.a. El navegador no retorna el control correctamente o el usuario cancela:**
-  1. El Sistema detecta la inactividad de confirmación en la sesión.
-  2. El Sistema mantiene el estado del video como "Sugerido (Pendiente de confirmación)" en la ruta de aprendizaje activa.
-* **5.a. Error de conexión con el Servidor Local al registrar:**
-  1. El `CentralDBPersistenceAdapter` reporta un fallo de red o tiempo de espera agotado.
-  2. El Sistema almacena temporalmente el evento de visualización en el `localStorage` del cliente.
-  3. El Sistema programa una sincronización diferida para cuando se restablezca la conectividad con el API Gateway.
-
-**Requisitos Especiales:**
-* La confirmación de visualización debe registrarse de manera asíncrona sin interrumpir la navegación en la PWA.
-
-**Lista de Variaciones de Tecnología y Datos:**
-* Redirección a través del protocolo HTTPS a la app nativa de YouTube o en un iframe controlado.
-* Almacenamiento local temporal en `localStorage` para resiliencia offline.
+* **2.a. Error de red al registrar visualización:**
+  1. El Sistema registra el evento localmente para reintentar la sincronización de forma asíncrona.
 
 **Frecuencia de Ocurrencia:**
-* Alta - Ocurre cada vez que el practicante sigue una recomendación pedagógica para corregir un fallo biomecánico.
-
-**Problemas Abiertos:**
-* Implementar una validación del tiempo de reproducción real mediante la API de YouTube Iframe Player para evitar confirmaciones fraudulentas de videos no vistos.
+* Alta - Cada vez que el practicante abre un tutorial recomendado.
 
 
 ---
@@ -1203,7 +1145,7 @@ sequenceDiagram
 
 <a id="figura-6"></a>
 **Figura 6**  
-*DSS-CU09: Flujo de Recomendación de Videos de YouTube*
+*DSS-CU08: Flujo de Recomendación de Videos de YouTube*
 
 ```mermaid
 sequenceDiagram
@@ -1217,11 +1159,11 @@ sequenceDiagram
     Sistema-->>Practicante: recomendarVideoURL(youtubeUrl, enfoquePedagogico)
 ```
 
-### **DSS-CU10: Registrar Visualización de Video de YouTube**
+### **DSS-CU09: Registrar Visualización de Video de YouTube**
 
 <a id="figura-13"></a>
 **Figura 13**  
-*DSS-CU10: Flujo de Registro de Visualización de YouTube*
+*DSS-CU09: Flujo de Registro de Visualización de YouTube*
 
 ```mermaid
 sequenceDiagram
@@ -1273,7 +1215,7 @@ sequenceDiagram
 
 ### **Contrato CO03: `consultarProgresoAdaptativo`**
 *   **Operación:** `consultarProgresoAdaptativo(usuarioId: UUID): RutaAprendizaje`
-*   **Referencias Cruzadas:** Caso de Uso CU03, CU09 y CU10.
+*   **Referencias Cruzadas:** Caso de Uso CU03, CU08 y CU09.
 *   **Precondiciones:**
     *   Existe un `PerfilCompetencia` inicializado para el `usuarioId`.
 *   **Postcondiciones:**
@@ -1779,7 +1721,7 @@ El diseño de la interfaz de usuario de OpenBJJ se rige bajo un flujo ergonómic
    - **Amarillo (Moderada):** Desviación entre `16` y `30` grados.
    - **Rojo (Crítica):** Desviación superior a `30` grados.
 4. **Tarjeta de YouTube Correctiva:** Se presenta como el elemento principal de acción post-entrenamiento, guiando al practicante al video tutorial del drill correctivo sin distracciones de texto extensas.
-5. **Panel de Progreso y Tutoría Adaptativa (ProgresoView):** Permite al practicante inspeccionar su nivel de maestría porcentual por posición (Verde >= 80%, Amarillo 50-79%, Rojo < 50%), alertas ante fallos recurrentes (> 3 intentos) con enlace a tutoriales alternativos de YouTube y registro de visualizaciones (CU10).
+5. **Panel de Progreso y Tutoría Adaptativa (ProgresoView):** Permite al practicante inspeccionar su nivel de maestría porcentual por posición (Verde >= 80%, Amarillo 50-79%, Rojo < 50%), alertas ante fallos recurrentes (> 3 intentos) con enlace a tutoriales alternativos de YouTube y registro de visualizaciones (CU09).
 6. **Historial de Análisis Realizados (HistoryView):** Ofrece un registro cronológico interactivo (CU05) expuesto a través de tarjetas compactas con fecha, técnica autodetectada, puntuación porcentual e indicador de severidad por color, permitiendo recargar reportes guardados en `AnalysisReportView` en un solo clic.
 7. **Agregar Fuente (RagIngestionPanel):** Panel limpio para subir documentos PDF/TXT o links de YouTube (`POST /api/rag/ingestar`), actualizando reactivamente la lista de fuentes activas asociadas al `usuarioId` (`GET /api/rag/fuentes?usuarioId=...`) tras cada ingesta exitosa, con opción de eliminación en un solo clic (`DELETE /api/rag/fuentes/:id`).
 8. **Sección Mi Perfil (PerfilView):** Permite al practicante consultar y actualizar libremente su Nombre, Cinturón (Blanco, Azul, Morado, Marrón, Negro), Altura (cm) y Peso (kg) (CU04 / CO04). La PWA guarda estos datos en `localStorage` y en la API REST (`GET/POST /api/usuario/perfil`) manteniendo el `usuarioId` activo sin logins restrictivos (RNF01, RNF07).
