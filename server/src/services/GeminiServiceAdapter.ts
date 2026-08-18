@@ -137,29 +137,10 @@ ${promptJSON}`
         }
       }
     } else {
-      console.log("[Gemini Service Warning] GEMINI_API_KEY no configurada. Ejecutando inferencia cinematica adaptativa local dinamica.");
+      console.log("[Gemini Service Warning] GEMINI_API_KEY no configurada.");
     }
 
-    // Fallback local dinamico (sin mock estatico)
-    const tecnicaId = parsedPrompt.tecnicaId || "guardia-cerrada";
-    const metricas = parsedPrompt.metricas || [];
-    const primeraMetrica = metricas[0] || { articulacion: "codo_derecho", desviacionGrados: 20 };
-    const desviacionGrados = primeraMetrica.desviacionGrados || 20;
-
-    let severidad = "Leve";
-    if (desviacionGrados > 30) severidad = "Critico";
-    else if (desviacionGrados >= 16) severidad = "Moderado";
-
-    const dynamicResponse = {
-      tecnicaId,
-      evaluacion: `Análisis para ${tecnicaId}. Tienes un ángulo incorrecto de ${desviacionGrados} grados en ${primeraMetrica.articulacion.replace("_", " ")}.`,
-      desviacionArticular: primeraMetrica.articulacion || "codo_derecho",
-      desviacionGrados,
-      severidad,
-      sugerenciaPedagogica: `Corrige el ángulo de tu ${primeraMetrica.articulacion.replace("_", " ")} para tener buena base y no regalar la posición desde ${tecnicaId}.`
-    };
-
-    return JSON.stringify(dynamicResponse);
+    throw new Error("La inferencia con Gemini falló o no hay API Key configurada.");
   }
 
   // ============================================================

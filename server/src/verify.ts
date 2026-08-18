@@ -3,6 +3,8 @@ import { IVectorStore, ChunkText } from "./services/CentralVectorDBAdapter";
 import { DynamicPromptBuilder, MetricaCinematica } from "./services/DynamicPromptBuilder";
 import { RetrievalAugmentedController } from "./controllers/RetrievalAugmentedController";
 import { GeminiServiceAdapter } from "./services/GeminiServiceAdapter";
+import { ChatGPTServiceAdapter } from "./services/ChatGPTServiceAdapter";
+import { LLMRedirectionProxy } from "./services/LLMRedirectionProxy";
 import { AdaptationController, PerfilCompetencia } from "./controllers/AdaptationController";
 import { SesionEntrenamientoController, IPoseEstimator } from "./controllers/SesionEntrenamientoController";
 import { PersistenceFacade } from "./persistence/PersistenceFacade";
@@ -67,6 +69,8 @@ async function runIntegrationTests() {
   const vectorStore = new MockVectorStore();
   const promptBuilder = new DynamicPromptBuilder();
   const geminiAdapter = new GeminiServiceAdapter();
+  const chatGptAdapter = new ChatGPTServiceAdapter();
+  const llmProxy = new LLMRedirectionProxy(geminiAdapter, chatGptAdapter);
   
   const ragController = new RetrievalAugmentedController(vectorStore, promptBuilder, geminiAdapter);
   const persistenceFacade = new PersistenceFacade(); // Capa de acceso a datos GoF Facade
@@ -74,7 +78,7 @@ async function runIntegrationTests() {
   
   const sessionController = new SesionEntrenamientoController(
     poseEstimator,
-    geminiAdapter,
+    llmProxy,
     geminiAdapter,
     ragController,
     adaptationController,
