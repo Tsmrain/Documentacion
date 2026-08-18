@@ -444,7 +444,7 @@ El cliente requiere conectividad por red local con el Servidor Local. Toda petic
 - **RF02: Extracción de Landmarks 3D y cálculo cinemático local:** El sistema debe procesar localmente el video en el navegador mediante MediaPipe, extrayendo los 33 landmarks corporales y derivando ángulos, velocidad y aceleración de articulaciones en WebGL.
 - **RF03: Agregar Fuente Opcional y RAG Personalizado:** El sistema debe permitir al Practicante agregar de manera opcional archivos PDF y lecciones de YouTube (mediante los endpoints `POST /api/rag/ingestar`, `GET /api/rag/fuentes` y `DELETE /api/rag/fuentes/:id` - CU02 / RD-03) para enriquecer el Vector DB de forma personalizada. Para las fuentes de YouTube, el Servidor Local recupera los metadatos instruccionales estructurados (título, canal y plataforma) mediante el protocolo oEmbed para construir chunks semánticos de 384 dimensiones en ChromaDB. Si el Practicante no provee ninguna fuente, el sistema no presentará fallos y entrará en "Modo Fallback Baseline".
 - **RF04: Motor de Tutoría Adaptativa:** El sistema debe contrastar la cinemática del video analizado con la verdad de grounding vectorial. Si detecta desviaciones reiteradas de forma sistemática en el historial (más de 3 fallos consecutivos), debe conmutar la estrategia pedagógica hacia drills de aislamiento o perspectivas anatómicas alternativas a través de la vista `ProgresoView` (CU03, CU09).
-- **RF05: Perfil de Competencia del Usuario Centralizado:** El sistema debe mantener un perfil aislado en la base de datos del Servidor Local (consultable vía `GET /api/sesion/perfil` y `GET /api/usuario/perfil`) que consolide históricamente las técnicas practicadas por cada estudiante, su cinturón y nivel de maestría, la frecuencia de sus errores cinemáticos, el historial de intentos (consultable vía `GET /api/sesion/historial` en `HistoryView` - CU05/CU06), los videos vistos y su registro de visualización vía `POST /api/sesion/visualizacion` (CU10) para personalizar dinámicamente su ruta de aprendizaje activa sin colisión entre practicantes.
+- **RF05: Perfil de Competencia del Usuario Centralizado:** El sistema debe mantener un perfil aislado en la base de datos del Servidor Local (consultable vía `GET /api/sesion/perfil` y `GET /api/usuario/perfil`) que consolide históricamente las técnicas practicadas por cada estudiante, su cinturón y nivel de maestría, la frecuencia de sus errores cinemáticos, el historial de intentos (consultable vía `GET /api/sesion/historial` en `HistoryView` - CU05), los videos vistos y su registro de visualización vía `POST /api/sesion/visualizacion` (CU10) para personalizar dinámicamente su ruta de aprendizaje activa sin colisión entre practicantes.
 - **RF06: Dynamic Prompt Builder Condicional:** El sistema debe compilar en tiempo real el prompt inyectando métricas cinemáticas locales de 3KB y el contexto RAG. Si la consulta vectorial en ChromaDB retorna 0 chunks, debe conmutar a la plantilla Baseline Fallback para realizar la inferencia mediante el conocimiento nativo de Gemini sobre Jiu-Jitsu.
 - **RF07: Sistema de Recomendación de Unico Video de YouTube por Reporte:** Cada reporte de evaluación biomecánica debe retornar EXACTAMENTE 1 ÚNICO VIDEO de YouTube recomendado (deep link), seleccionado inteligentemente por el motor adaptativo según la articulación afectada de mayor severidad y la técnica autodetectada. Ante fallas recurrentes en combates posteriores (más de 3 intentos en el mismo error), el motor conmuta automáticamente la recomendación hacia un video tutorial de YouTube alternativo (otro ángulo, enfoque defensivo) o un drill de aislamiento.
 
@@ -650,7 +650,6 @@ flowchart TD
         CU03(CU03: Consultar Progreso y Recibir Tutoría Adaptativa)
         CU04(CU04: Gestionar Datos Antropométricos del Usuario)
         CU05(CU05: Gestionar Sesiones de Entrenamiento)
-        CU06(CU06: Exportar/Compartir Reportes)
         CU07(CU07: Configurar Preferencias del Sistema)
         CU08(CU08: Calibrar Entorno de Captura)
         CU09(CU09: Recibir Recomendación de Video de YouTube)
@@ -662,7 +661,6 @@ flowchart TD
     Practicante --> CU03
     Practicante --> CU04
     Practicante --> CU05
-    Practicante --> CU06
     Practicante --> CU07
     Practicante --> CU08
     Practicante --> CU09
@@ -945,57 +943,6 @@ flowchart TD
 **Problemas Abiertos:**
 * Optimizar la velocidad de carga de miniaturas de esqueleto 3D para dispositivos de baja gama.
 
-
-### Caso de Uso CU06: Exportar/Compartir Reportes
-
-**Actor Principal:** Practicante
-
-**Interesados y sus Intereses:**
-* **Practicante:** Desea generar un archivo portable (PDF o imagen) del reporte de análisis biomecánico para compartirlo con su instructor, documentar su progreso o archivarlo externamente a la aplicación.
-* **Instructor:** Se beneficia al recibir reportes estructurados de sus alumnos que facilitan la preparación de sesiones de corrección personalizada.
-* **Sistema/IA:** Requiere componer una representación visual del esqueleto 3D superpuesto al video frame clave junto con la puntuación táctica y las desviaciones detectadas en un formato exportable.
-
-**Precondiciones:**
-* Existe al menos una instancia de `AnalisisBiomecanico` completada con resultados de Gemini persistidos en la base de datos centralizada del Servidor Local para la sesión seleccionada.
-
-**Garantía de Éxito / Postcondiciones:**
-* Se generó un archivo exportable (PDF o imagen) que contiene el esqueleto 3D superpuesto, las métricas cinemáticas, la puntuación táctica y las recomendaciones de corrección, el cual fue descargado al dispositivo o compartido.
-
-**Escenario Principal de Éxito (Flujo Básico):**
-1. El Practicante selecciona una sesión de análisis completada desde su historial de entrenamientos.
-2. El Sistema despliega el detalle del análisis con las métricas cinemáticas y la evaluación de Gemini.
-3. El Practicante selecciona la opción "Exportar Reporte".
-4. El Sistema presenta las opciones de formato: PDF o imagen PNG.
-5. El Practicante selecciona el formato deseado.
-6. El Sistema compone el reporte renderizando el esqueleto 3D superpuesto al frame clave del video, las métricas cinemáticas calculadas, la puntuación táctica y las desviaciones angulares detectadas.
-7. El Sistema genera el archivo en el formato seleccionado y lo descarga al dispositivo del Practicante.
-8. El Sistema ofrece la opción de compartir el archivo directamente mediante la Web Share API.
-
-**Extensiones (Flujos Alternativos):**
-* **4.a. El navegador no soporta Web Share API:**
-  1. El Sistema detecta que el dispositivo no soporta compartir nativamente.
-  2. El Sistema omite la opción de compartir y solo ofrece la descarga del archivo.
-* **6.a. Error al renderizar el esqueleto 3D para exportación:**
-  1. El Sistema falla al capturar el frame del WebGL Renderer.
-  2. El Sistema genera el reporte sin la imagen del esqueleto 3D, incluyendo únicamente las métricas numéricas y el texto de evaluación.
-  3. El Sistema notifica al Practicante que la visualización 3D no pudo incluirse.
-* **7.a. Error de descarga por almacenamiento insuficiente:**
-  1. El dispositivo no tiene espacio suficiente para guardar el archivo generado.
-  2. El Sistema notifica al Practicante y sugiere liberar espacio antes de reintentar.
-
-**Requisitos Especiales:**
-* El reporte PDF debe incluir la fecha, hora y duración del análisis, así como el nivel de graduación del Practicante para contextualizar la evaluación.
-* La generación del archivo debe completarse en menos de 10 segundos en un dispositivo móvil de gama media.
-
-**Lista de Variaciones de Tecnología y Datos:**
-* Exportación en formato PDF o imagen PNG.
-* Compartir por mensajería a través de Web Share API nativa o enlaces temporales.
-
-**Frecuencia de Ocurrencia:**
-* Media - Cada vez que un alumno quiere mostrar avances relevantes o consultar al profesor de forma remota.
-
-**Problemas Abiertos:**
-* Permitir a los profesores agregar comentarios de texto anotados directamente sobre el PDF exportado antes de su almacenamiento definitivo.
 
 
 ### Caso de Uso CU07: Configurar Preferencias del Sistema
@@ -1833,7 +1780,7 @@ El diseño de la interfaz de usuario de OpenBJJ se rige bajo un flujo ergonómic
    - **Rojo (Crítica):** Desviación superior a `30` grados.
 4. **Tarjeta de YouTube Correctiva:** Se presenta como el elemento principal de acción post-entrenamiento, guiando al practicante al video tutorial del drill correctivo sin distracciones de texto extensas.
 5. **Panel de Progreso y Tutoría Adaptativa (ProgresoView):** Permite al practicante inspeccionar su nivel de maestría porcentual por posición (Verde >= 80%, Amarillo 50-79%, Rojo < 50%), alertas ante fallos recurrentes (> 3 intentos) con enlace a tutoriales alternativos de YouTube y registro de visualizaciones (CU10).
-6. **Historial de Análisis Realizados (HistoryView):** Ofrece un registro cronológico interactivo (CU05 y CU06) expuesto a través de tarjetas compactas con fecha, técnica autodetectada, puntuación porcentual e indicador de severidad por color, permitiendo recargar reportes guardados en `AnalysisReportView` en un solo clic.
+6. **Historial de Análisis Realizados (HistoryView):** Ofrece un registro cronológico interactivo (CU05) expuesto a través de tarjetas compactas con fecha, técnica autodetectada, puntuación porcentual e indicador de severidad por color, permitiendo recargar reportes guardados en `AnalysisReportView` en un solo clic.
 7. **Agregar Fuente (RagIngestionPanel):** Panel limpio para subir documentos PDF/TXT o links de YouTube (`POST /api/rag/ingestar`), actualizando reactivamente la lista de fuentes activas asociadas al `usuarioId` (`GET /api/rag/fuentes?usuarioId=...`) tras cada ingesta exitosa, con opción de eliminación en un solo clic (`DELETE /api/rag/fuentes/:id`).
 8. **Sección Mi Perfil (PerfilView):** Permite al practicante consultar y actualizar libremente su Nombre, Cinturón (Blanco, Azul, Morado, Marrón, Negro), Altura (cm) y Peso (kg) (CU04 / CO04). La PWA guarda estos datos en `localStorage` y en la API REST (`GET/POST /api/usuario/perfil`) manteniendo el `usuarioId` activo sin logins restrictivos (RNF01, RNF07).
 9. **Encabezado Minimalista Limpio:** La barra superior mantiene un diseño depurado y esencial con el título de OpenBJJ, navegación directa ('Analizar Video', 'Ver Mi Progreso', 'Historial', 'Mi Perfil') y el botón 'Agregar Fuente', libre de menús desplegables de usuario para eliminar el ruido visual (RNF01, RNF07).
