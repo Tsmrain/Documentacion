@@ -56,8 +56,8 @@ export class AdaptationController {
 
     if (Array.isArray(historial)) {
       historial.forEach(h => {
-        const tecnica = (h.tecnicaId || "").toLowerCase();
-        const desviacion = h.desviacionGrados ?? h.desviacion ?? 0;
+        const tecnica = (h.tecnicaId || h.reporte?.tecnicaId || "").toLowerCase();
+        const desviacion = h.desviacionGrados ?? h.reporte?.desviacionGrados ?? h.desviacion ?? 0;
         const score = Math.max(0, Math.min(100, 100 - Math.round(desviacion * 1.8)));
 
         if (tecnica.includes("montada") || tecnica.includes("mount")) {
@@ -72,9 +72,9 @@ export class AdaptationController {
           scores["Media Guardia"].push(score);
         } else if (tecnica.includes("abierta") || tecnica.includes("open")) {
           scores["Guardia Abierta"].push(score);
-        } else if (tecnica.includes("cerrada") || tecnica.includes("closed")) {
+        } else if (tecnica.includes("cerrada") || tecnica.includes("closed") || tecnica.includes("guardia")) {
           scores["Guardia Cerrada"].push(score);
-        } else {
+        } else if (tecnica) {
           scores["Guardia Cerrada"].push(score);
         }
       });

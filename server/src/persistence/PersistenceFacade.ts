@@ -347,6 +347,8 @@ export class PersistenceFacade implements IPersistenceService {
         return {
           id: s.id,
           fecha: s.fecha,
+          tecnicaId: a?.tecnicaId || "guardia-cerrada",
+          desviacionGrados: err ? Number(err.desviacionGrados) : 0,
           reporte: {
             tecnicaId: a?.tecnicaId || "guardia-cerrada",
             severidad: a?.severidad || "Moderado",
