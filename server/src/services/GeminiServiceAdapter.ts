@@ -65,7 +65,7 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
   // ============================================================
   async evaluarMovimiento(promptJSON: string, frames: string[] = [], modelName?: string): Promise<string> {
     const activeKey = this.getApiKey();
-    const primaryModel = modelName || this.proModel;
+    const primaryModel = modelName || this.defaultModel;
 
     let parsedPrompt: any = {};
     try {
