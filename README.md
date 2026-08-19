@@ -103,7 +103,7 @@ En este trabajo se expone el diseño y modelado orientado a objetos de una plata
   - [2.3 Descripción de los productos y servicios](#23-descripción-de-los-productos-y-servicios)
   - [2.4 Manual de funciones](#24-manual-de-funciones)
   - [2.5 Flujo del negocio](#25-flujo-del-negocio)
-- [**Capítulo III: Marco Teórico y Estado del Arte**](#capítulo-iii-marco-teórico-y-estado-del-arte)
+- [**Capítulo III: Marco Teórico**](#capítulo-iii-marco-teórico)
   - [3.1 Conceptos y definiciones](#31-conceptos-y-definiciones)
   - [3.2 Estado del arte](#32-estado-del-arte)
   - [3.3 Modelos y teorías relevantes](#33-modelos-y-teorías-relevantes)
@@ -358,9 +358,10 @@ El flujo actual de la academia se basa en un ciclo de retroalimentación puramen
 
 ---
 
-# **CAPÍTULO III: MARCO TEÓRICO Y ESTADO DEL ARTE**
+# **CAPÍTULO III: MARCO TEÓRICO**
 
 ## **3.1 Conceptos y definiciones**
+- **Tatami:** Superficie acolchada de alta densidad, tradicionalmente utilizada en las artes marciales japonesas y en el Brazilian Jiu-Jitsu, diseñada para amortiguar impactos y caídas directas. En el contexto de OpenBJJ, el tatami constituye el entorno operativo y de hardware primario que impone severas restricciones de usabilidad y seguridad física al diseño del software.
 - **Inteligencia Artificial Generativa Multimodal:** Modelos fundacionales entrenados con múltiples modalidades de datos (texto, audio, imagen, video) capaces de razonar contextualmente sobre la semántica de una secuencia visual, detectando acciones y posturas en lenguaje natural.
 - **Arquitectura Cliente-Ligero (Client-Side Light Architecture):** Patrón de despliegue donde la carga computacional biomecánica se delega al cliente web mediante WebAssembly y WebGL, mientras que el almacenamiento vectorial, indexación semántica y la persistencia de datos maestros se centralizan en el Nodo Servidor Local accesible vía API.
 - **RAG Centralizado y Grounding:** Arquitectura que optimiza la generación de respuestas de un LLM al recuperar fragmentos de texto relevantes de documentos externos validados por similitud semántica en tiempo de ejecución desde el servidor principal.
@@ -430,7 +431,7 @@ La combinación del Proceso Unificado (UP) y los patrones GRASP de Larman result
 El propósito de esta especificación formal de requisitos de software (SRS, por sus siglas en inglés) es definir minuciosamente las especificaciones funcionales, cinemáticas, no funcionales y de arquitectura de la plataforma OpenBJJ. El documento sigue las recomendaciones internacionales de la norma IEEE Std 830-1998 y sirve como línea base contractual y técnica verificada para desarrolladores, personal docente de la academia Corpo & Mente y evaluadores académicos.
 
 ### **4.1.2 Ámbito del sistema**
-El sistema OpenBJJ es una aplicación web inteligente (PWA) de tutoría adaptativa y asistencia cinemática para artes marciales (Jiu-Jitsu Brasileño). El ámbito de la versión actual comprende la captura monocular en video de sparrings o ejecuciones individuales de hasta 45 segundos, la extracción local de 33 landmarks corporales en 3D mediante WebGL/WASM (MediaPipe Pose), la autodetección multimodal de técnicas, la evaluación biomecánica contextual mediante modelos de lenguaje (Google Gemini 2.5 Flash / OpenAI ChatGPT proxy) y la tutoría adaptativa RAG Vivo mediante una base de datos vectorial centralizada en ChromaDB y PostgreSQL.
+El sistema OpenBJJ es una aplicación web inteligente (PWA) de tutoría adaptativa y asistencia cinemática para artes marciales (Jiu-Jitsu Brasileño). El ámbito de la versión actual comprende la captura monocular en video de sparrings o ejecuciones individuales de hasta 45 segundos ejecutados directamente sobre el tatami de la academia. Debido a las condiciones físicas del tatami, donde el calzado y los dispositivos invasivos están contraindicados por seguridad, el análisis cinemático se ejecuta de forma no invasiva mediante la extracción local de 33 landmarks corporales en 3D mediante WebGL/WASM (MediaPipe Pose), la autodetección multimodal de técnicas, la evaluación biomecánica contextual mediante modelos de lenguaje (Google Gemini 2.5 Flash / OpenAI ChatGPT proxy) y la tutoría adaptativa RAG Vivo mediante una base de datos vectorial centralizada en ChromaDB y PostgreSQL.
 
 ### **4.1.3 Definiciones, acrónimos y abreviaturas**
 - **SRS:** Especificación de Requisitos de Software (Software Requirements Specification, IEEE 830).
@@ -468,6 +469,7 @@ El sistema está diseñado bajo el principio de **Actor Único (Practicante BJJ)
 ### **4.2.4 Restricciones**
 - Exigencia de navegadores con soporte activo de WebGL/WASM para MediaPipe Pose 3D.
 - Videos monoculares limitados a una duración máxima de 45 segundos con encuadre de cuerpo entero.
+- **Restricción de Entorno Físico (Tatami):** Para evitar lesiones articulares o accidentes durante el sparring, no se admite el uso de sensores inerciales físicos (IMUs) o marcadores rígidos sobre el cuerpo del practicante. Toda estimación biomecánica debe ejecutarse de forma monocular libre de hardware invasivo.
 - **Restricción de Ancho de Banda y Red:** Queda prohibida la transmisión de coordenadas 3D crudas por frame; el cliente pre-procesa y resume la cinemática en un payload JSON de 3KB antes de invocar la API del Servidor Local.
 
 **Tabla de Mitigación de Riesgos Técnicos (Risk List - UP):**
@@ -508,6 +510,7 @@ El sistema está diseñado bajo el principio de **Actor Único (Practicante BJJ)
 - **RF05: Perfil de Competencia del Usuario Centralizado:** Persistir de forma aislada el perfil antropométrico, cinturón, historial de sesiones (`GET /api/sesion/historial`) y ruta de aprendizaje.
 - **RF06: Dynamic Prompt Builder Condicional:** Compilar prompts con el resumen cinemático de 3KB y el contexto RAG de ChromaDB. Si el conteo de chunks es 0, activar el modo Baseline Fallback nativo.
 - **RF07: Sistema de Recomendación de Único Video de YouTube por Reporte:** Retornar exactamente 1 único deep link de YouTube seleccionado por el motor adaptativo según la severidad biomecánica.
+- **RF08: Telemetría Analítica y Alertas de Compromiso:** El sistema debe registrar de forma persistente la telemetría de interacciones del usuario en el Servidor Local. Debe calcular de manera no procedural las métricas de usuarios activos (DAU, WAU, MAU) y la frecuencia de análisis por periodo de tiempo. Ante una tasa de análisis nula o decreciente superior al 50% en un dojo durante 7 días, el sistema debe activar de forma autónoma una alerta de Bajo Compromiso (`BAJO_COMPROMISO`) para alertar al instructor.
 
 ### **4.3.3 Requisitos de Rendimiento**
 - **RNF04 - Latencia de Retroalimentación:** El tiempo total de procesamiento desde la captura del video hasta la renderización del reporte biomecánico no debe superar los 3 segundos.
@@ -529,7 +532,7 @@ El sistema está diseñado bajo el principio de **Actor Único (Practicante BJJ)
 - **RNF05:** El video original nunca abandona la memoria volátil del cliente. Solo se transmiten fotogramas clave anonimizados y métricas angulares cifradas por HTTPS.
 
 #### **4.3.5.3 Usabilidad (RNF01, RNF07)**
-- **RNF01:** Interfaz PWA adaptativa a pantallas móviles táctiles en el tatami.
+- **RNF01 (Usabilidad en Tatami):** La interfaz gráfica de la PWA debe permitir una interacción rápida mediante botones táctiles sobredimensionados de fácil acceso, considerando que el practicante se encuentra sobre el tatami, descalzo, sudoroso y en constante actividad física.
 - **RNF07:** Visualización predeterminada directa al analizador con tarjetas de puntuación visuales y barras de color.
 
 #### **4.3.5.4 Reglas de Dominio / Negocio**
@@ -559,6 +562,7 @@ El sistema está diseñado bajo el principio de **Actor Único (Practicante BJJ)
 | **CheckpointTecnico** | `toleranciaGrados` | Decimal | `[0.00, 45.00]` grados | Margen de desviación permitido antes de registrar un error biomecánico. |
 | **RutaAprendizaje** | `progresoGeneral` | Decimal | `[0.00, 100.00]` % | Porcentaje acumulado de maestría del nivel actual. |
 | **RutaAprendizaje** | `nivelCompetenciaActual` | Enumerado | `{Principiante, Intermedio, Avanzado}` | Rige la dificultad de los drills y videos recomendados. |
+| **RegistroActividad** | `tipoEvento` | Enumerado | `{INICIO_SESION, ANALISIS_EJECUTADO, LECCION_VISUALIZADA}` | Obligatorio para telemetría analítica del dojo. |
 
 ## **4.4 Identificación de los casos de uso**
 
@@ -574,6 +578,7 @@ A continuación se lista el catálogo formal de los casos de uso identificados p
 8. **CU08: Recibir Recomendación de Video de YouTube:** El motor adaptativo selecciona y retorna 1 único video tutorial específico de YouTube acorde al error crítico detectado.
 9. **CU09: Registrar Visualización de Video de YouTube:** El Practicante confirma haber visto la recomendación pedagógica, registrando el evento en su perfil para evaluar la mejora posterior.
 10. **CU10: Calibrar Inferencia Local y Failover Proxy:** El sistema evalúa la salud de las APIs externas (Gemini/OpenAI) y ChromaDB, conmutando automáticamente entre RAG Vivo, Baseline Fallback o Local Emergency JSON.
+11. **CU11: Generar Telemetría y Alertas de Deserción:** El Servidor Local calcula periódicamente el índice de compromiso (EVI) y registra eventos de actividad. Si la tasa de análisis cae más de un 50% en 7 días, genera la alerta `BAJO_COMPROMISO` para el instructor.
 
 ## **4.5 Diagrama de dominio**
 
@@ -587,6 +592,7 @@ El modelo de dominio conceptual representa las entidades significativas del nego
 classDiagram
     Usuario "1" -- "1" PerfilCompetencia : posee
     Usuario "1" -- "*" SesionEntrenamiento : ejecuta
+    Usuario "1" -- "*" RegistroActividad : genera
     
     PerfilCompetencia "1" -- "*" HistorialVisualizacion : registra
     PerfilCompetencia "1" -- "*" ErrorBiomecanico : rastrea
@@ -615,6 +621,11 @@ classDiagram
         altura
         peso
         modoInstructorEnabled
+    }
+    class RegistroActividad {
+        tipoEvento
+        fechaEvento
+        detalles
     }
     class PerfilCompetencia {
         tecnicasPracticadas
@@ -724,6 +735,7 @@ flowchart TD
         CU07(CU07: Calibrar Entorno de Captura)
         CU08(CU08: Recibir Recomendación de Video de YouTube)
         CU09(CU09: Registrar Visualización de Video de YouTube)
+        CU11(CU11: Generar Telemetría y Alertas de Deserción)
     end
     
     Practicante --> CU01
@@ -1151,6 +1163,37 @@ flowchart TD
 
 **Frecuencia de Ocurrencia:**
 * Alta - Cada vez que el practicante abre un tutorial recomendado.
+
+
+### Caso de Uso CU11: Generar Telemetría y Alertas de Deserción
+
+**Actor Principal:** Servidor Local / Instructor
+
+**Interesados y sus Intereses:**
+* **Instructor / Dojo:** Desea monitorear de forma objetiva la tasa de adopción y uso continuado del sistema en el tatami para intervenir tempranamente si la actividad de entrenamiento decrece.
+* **Sistema/IA:** Requiere registrar eventos de telemetría analítica (`INICIO_SESION`, `ANALISIS_EJECUTADO`, `LECCION_VISUALIZADA`) y calcular de manera no procedural las métricas de usuarios activos (DAU, WAU, MAU) y el indicador de velocidad de compromiso (*Engagement Velocity Indicator - EVI*).
+
+**Precondiciones:**
+* El Servidor Local se encuentra en ejecución con la base de datos relacional PostgreSQL activa.
+
+**Garantía de Éxito / Postcondiciones:**
+* Se persistió el registro en la tabla `RegistroActividad`. Si se detecta una caída de análisis superior al 50% en un intervalo de 7 días ($EVI < 0.50$), se genera la alerta autónoma `BAJO_COMPROMISO` para el dojo.
+
+**Escenario Principal de Éxito (Flujo Básico):**
+1. El usuario realiza una acción en la PWA (inicio de sesión, análisis de combate o visualización de lección).
+2. El cliente PWA o el API Gateway invoca a `TelemetryController.registrarEvento()` para insertar un nuevo registro en `RegistroActividad` con fecha, usuario y tipo de evento.
+3. El proceso cron o tarea en segundo plano invoca a `TelemetryController.calcularEVI(dojoId, 7)` ejecutando una consulta SQL no procedural de agregación temporal (`GROUP BY`) sobre los últimos 7 días.
+4. El Sistema compara el volumen de análisis del periodo actual contra el periodo anterior.
+5. Si el uso se mantiene o incrementa ($EVI \ge 0.50$), el estado del dojo permanece en `NORMAL`.
+
+**Extensiones (Flujos Alternativos):**
+* **5.a. Caída de análisis superior al 50% ($EVI < 0.50$):**
+  1. El Sistema detecta una tasa decreciente o nula de análisis en los últimos 7 días.
+  2. El `TelemetryController` conmuta el estado de telemetría del dojo a `BAJO_COMPROMISO`.
+  3. El Sistema genera una notificación o alerta visible en el panel del instructor indicando riesgo de deserción en la academia.
+
+**Frecuencia de Ocurrencia:**
+* Alta (Registro de eventos) / Diaria (Cálculo no procedural de métricas EVI).
 
 
 ---
@@ -1637,6 +1680,7 @@ classDiagram
     SesionEntrenamientoController --> ITechniqueClassifier
     SesionEntrenamientoController --> RetrievalAugmentedController
     SesionEntrenamientoController --> AdaptationController
+    TelemetryController --> IPersistenceService
     
     RetrievalAugmentedController --> IVectorStore
     RetrievalAugmentedController --> DynamicPromptBuilder
@@ -1851,7 +1895,7 @@ function recomendarVideoYouTube(
 El cliente web se encuentra desarrollado como una Aplicación Web Progresiva (PWA) utilizando **React 19**, **TypeScript** y **Vite**. La renderización del avatar biomecánico tridimensional y el lienzo interactivo se implementa mediante **`@react-three/fiber`** y **Three.js**, permitiendo visualizar en tiempo real la topología de 33 landmarks cinemáticos extraída directamente en el navegador por **MediaPipe Pose** sobre la API WebGL del dispositivo. La extracción cinemática es híbrida: el cliente realiza la estimación corporal 3D con MediaPipe y el submuestreo de 9 keyframes en formato Base64 para mitigar el tráfico de red, transmitiendo un payload cinemático estructurado de metadatos angulares al servidor.
 
 ### **6.1.2 Base de datos relacional y ORM**
-La capa de persistencia relacional utiliza **PostgreSQL** administrado a través de **Prisma ORM** (v6+). El esquema relacional define 8 entidades (`Usuario`, `PerfilCompetencia`, `SesionEntrenamiento`, `AnalisisBiomecanico`, `ErrorBiomecanico`, `HistorialVisualizacion`, `RutaAprendizaje`, `FuenteConocimiento`). Para prevenir ciclos referenciales y múltiples caminos redundantes de eliminación en cascada (`onDelete: Cascade`) en PostgreSQL, el esquema de 8 tablas se normalizó bajo una precedencia estrictamente lineal (`Usuario` $\rightarrow$ `SesionEntrenamiento` $\rightarrow$ `AnalisisBiomecanico` $\rightarrow$ `ErrorBiomecanico`) de acuerdo con las Reglas de Conversión de Esquemas de Mannino (2019). De este modo, la entidad `ErrorBiomecanico` depende existencialmente de forma lineal y exclusiva de `AnalisisBiomecanico`, eliminando el ciclo conflictivo en PostgreSQL y Prisma. Por su parte, `PerfilCompetencia` interactúa con los errores biomecánicos de forma desacoplada mediante agregación lógica e índices indexados (JOINs), protegiendo la integridad referencial física del motor relacional.
+La capa de persistencia relacional utiliza **PostgreSQL** administrado a través de **Prisma ORM** (v6+). El esquema relacional define 9 entidades (`Usuario`, `PerfilCompetencia`, `SesionEntrenamiento`, `AnalisisBiomecanico`, `ErrorBiomecanico`, `HistorialVisualizacion`, `RutaAprendizaje`, `FuenteConocimiento` y `RegistroActividad`). Para prevenir ciclos referenciales y múltiples caminos redundantes de eliminación en cascada (`onDelete: Cascade`) en PostgreSQL, el esquema relacional se normalizó bajo una precedencia estrictamente lineal (`Usuario` $\rightarrow$ `SesionEntrenamiento` $\rightarrow$ `AnalisisBiomecanico` $\rightarrow$ `ErrorBiomecanico`) de acuerdo con las Reglas de Conversión de Esquemas de Mannino (2019). De este modo, la entidad `ErrorBiomecanico` depende existencialmente de forma lineal y exclusiva de `AnalisisBiomecanico`, eliminando el ciclo conflictivo en PostgreSQL y Prisma. Por su parte, la nueva entidad de telemetría `RegistroActividad` se vincula directamente a `Usuario` de forma 1-a-muchos, permitiendo la ejecución de consultas no procedurales de agregación temporal (`GROUP BY` por intervalo de días) para calcular dinámicamente las métricas de usuarios activos (DAU, WAU, MAU) y determinar caídas de compromiso (`BAJO_COMPROMISO`) sin penalizar el rendimiento del motor transaccional. Por su parte, `PerfilCompetencia` interactúa con los errores biomecánicos de forma desacoplada mediante agregación lógica e índices indexados (JOINs), protegiendo la integridad referencial física del motor relacional.
 
 ### **6.1.3 Base de datos vectorial**
 El almacenamiento vectorial y la recuperación semántica RAG se ejecutan sobre **ChromaDB API v2** operando en un contenedor Docker en el puerto 8000 (`/api/v2/tenants/default_tenant/databases/default_database/collections`). La generación de embeddings para los fragmentos de conocimiento se realiza de forma autónoma con el adaptador **`LocalEmbeddingAdapter`** respaldado por la librería **`@xenova/transformers`** e inferencia local del modelo **`Xenova/all-MiniLM-L6-v2`** en 384 dimensiones.
