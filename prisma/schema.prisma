@@ -40,6 +40,12 @@ enum EstadoValidacion {
   RECHAZADO
 }
 
+enum TipoEvento {
+  INICIO_SESION
+  ANALISIS_EJECUTADO
+  LECCION_VISUALIZADA
+}
+
 model Usuario {
   id                String             @id @default(uuid())
   nombre            String
@@ -51,6 +57,7 @@ model Usuario {
   perfilCompetencia PerfilCompetencia?
   sesiones          SesionEntrenamiento[]
   fuentes           FuenteConocimiento[]
+  registroActividades RegistroActividad[]
   createdAt         DateTime           @default(now())
 }
 
@@ -118,4 +125,14 @@ model FuenteConocimiento {
   tipo             TipoFuente
   estadoValidacion EstadoValidacion @default(ACEPTADO)
   createdAt        DateTime         @default(now())
+}
+
+model RegistroActividad {
+  id                      String     @id @default(uuid())
+  usuarioId               String
+  usuario                 Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  tipoEvento              TipoEvento
+  fechaEvento             DateTime   @default(now())
+  duracionSesionSegundos  Decimal?   @db.Decimal(10, 2)
+  detalles                Json?
 }
