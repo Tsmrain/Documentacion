@@ -393,12 +393,19 @@ Con una proyección de expansión comercial basada en dojos de BJJ en Latinoamé
 
 Para certificar el comportamiento del sistema ante un escenario de alta demanda masiva real, se analiza el caso de la **Academia Knockout**, institución que acoge a la franquicia Corpo & Mente y cuenta con una comunidad de **500 alumnos de Jiu-Jitsu activos**.
 
-#### **A. Comportamiento Técnico del Sistema ante 500 Alumnos**
+#### **A. Comportamiento Técnico y Despliegue Nube en Internet (Disponibilidad 24/7)**
 1. **Desacoplamiento Edge AI Client-Side (MediaPipe Pose 3D):**
    Los 500 alumnos procesan la cinemática de sus videos localmente en sus propios navegadores o dispositivos móviles. El servidor central no recibe video en bruto, reduciendo el consumo de ancho de banda a payloads de 3KB por evaluación.
 2. **Carga en el API Gateway y Base de Datos:**
-   A una tasa promedio de 10 sparrings al mes por alumno (5,000 análisis mensuales en total), el servidor Express y la base de datos PostgreSQL procesan aproximadamente **166 evaluaciones diarias**. Durante las horas pico de entrenamiento (19:00 a 21:00 hrs), el tráfico alcanza entre 30 y 50 peticiones por hora (< 1 petición por segundo), consumiendo menos del 5% de CPU en un servidor VPS básico.
-3. **Consumo Combinado de IAs (Gemini 2.5 Flash + Failover OpenAI ChatGPT):**
+   Con 500 alumnos realizando en promedio 1 análisis a la semana (2,000 a 5,000 evaluaciones al mes), el servidor Express y la base de datos PostgreSQL procesan aproximadamente **166 evaluaciones diarias**. Durante las horas pico de entrenamiento (19:00 a 21:00 hrs), el tráfico alcanza entre 30 y 50 peticiones por hora (< 1 petición por segundo), consumiendo menos del 5% de CPU.
+3. **Infraestructura Nube Enterprise 24/7 (Alta Disponibilidad en Internet):**
+   Para garantizar la disponibilidad en internet con certificado SSL/TLS, balanceo de carga y backups diarios, la arquitectura nube de producción se compone de:
+   - **Servidor de Aplicación API Node.js (AWS EC2 / DigitalOcean 4 vCPU, 8GB RAM):** $48.00 USD/mes.
+   - **Base de Datos Gestionada Cloud (Managed PostgreSQL 4GB RAM + SSL + Backups):** $60.00 USD/mes.
+   - **Almacenamiento Vectorial & Assets (ChromaDB Server + AWS S3 / CDN):** $35.00 USD/mes.
+   - **Seguridad WAF, SSL & Dominio Enterprise (Cloudflare Pro + DNS 24/7):** $25.00 USD/mes.
+   - **Total Infraestructura Nube Enterprise 24/7:** **$168.00 USD / mes**.
+4. **Consumo Combinado de IAs (Gemini 2.5 Flash + Failover OpenAI ChatGPT):**
    - **Google Gemini 2.5 Flash (95% de las inferencias):** 4,750 análisis x $0.00052 USD = **$2.47 USD/mes**.
    - **OpenAI ChatGPT `gpt-4o-mini` (5% de las inferencias por failover):** 250 análisis x $0.00104 USD = **$0.26 USD/mes**.
    - **Costo Total Consolidado de IAs para 500 Alumnos:** **$2.73 USD / mes**.
@@ -411,23 +418,23 @@ De acuerdo con la legislación tributaria boliviana aplicable a empresas de tecn
 *   **IUE Beneficiarios del Exterior (Retención por Servicios Digitales):** **12.5%** de retención sobre las remesas enviadas a Google (Gemini) y OpenAI (ChatGPT) por concepto de consumo de APIs desde el exterior (Art. 51 de la Ley 843).
 
 #### **C. Estado Financiero Específico para la Academia Knockout (500 Alumnos)**
-Si se comercializa una suscripción de macro-academia a Knockout por **$149.00 USD/mes** (equivalente a $0.30 USD o ~2.10 Bs por alumno al mes):
+Si se comercializa una suscripción de macro-academia a Knockout por **$299.00 USD/mes** (equivalente a tan sólo **$0.60 USD/mes o ~4.10 Bs por alumno al mes** por acceso ilimitado 24/7 en internet):
 
 <a id="tabla-1-4"></a>
 *Tabla 1.4*  
-*Estado Financiero Mensual - Caso Academia Knockout (500 Alumnos)*
+*Estado Financiero Mensual - Caso Academia Knockout (500 Alumnos en Nube Enterprise 24/7)*
 
-| Concepto Financiero | Valor Mensual (USD) | Porcentaje (%) |
+| Concepto Financiero | Valor Mensual (USD) | Explicación Técnica / Fiscal |
 | --- | --- | --- |
-| **Ingreso Bruto Mensual (Suscripción Knockout)** | **$149.00** | **100.0%** |
-| Costo API Gemini 2.5 Flash (4,750 inferencias) | ($2.47) | 1.7% |
-| Costo API OpenAI `gpt-4o-mini` Failover (250 inferencias) | ($0.26) | 0.2% |
-| Retención Tributaria IUE Beneficiarios Exterior (12.5%) | ($0.34) | 0.2% |
-| Infraestructura Nube Prorrateada (PostgreSQL/ChromaDB) | ($8.00) | 5.4% |
-| Impuesto a las Transacciones (IT 3%) | ($4.47) | 3.0% |
-| **MARGEN BRUTO OPERATIVO NETO** | **$133.46** | **89.5%** |
+| **Ingreso Bruto Mensual (Suscripción Knockout B2B)** | **$299.00** | Licencia institucional para 500 alumnos con acceso 24/7 |
+| Costo API Gemini 2.5 Flash (4,750 inferencias) | ($2.47) | Inferencia multimodal primaria ($0.075/1M tokens) |
+| Costo API OpenAI `gpt-4o-mini` Failover (250 inferencias) | ($0.26) | Proxy de contingencia en caliente ($0.15/1M tokens) |
+| Retención Tributaria IUE Beneficiarios Exterior (12.5%) | ($0.34) | Retención fiscal boliviana sobre remesas a Google/OpenAI |
+| Infraestructura Nube Enterprise 24/7 (AWS/Cloudflare) | ($168.00) | Servidor API, PostgreSQL Managed, ChromaDB Cloud y WAF |
+| Impuesto a las Transacciones (IT 3%) | ($8.97) | Impuesto nacional boliviano sobre ingresos brutos |
+| **MARGEN BRUTO OPERATIVO NETO** | **$118.96** | **Utilidad neta mensual (39.8% de margen operativo)** |
 
-**Dictamen del Caso de Estudio:** Servir a una macro-academia de 500 alumnos como Knockout requiere un costo operativo e impositivo directo de apenas **$15.54 USD/mes**, generando un margen de utilidad operativa de **$133.46 USD/mes (89.5%)**. Esto demuestra la capacidad del sistema para escalar masivamente en el mercado boliviano e internacional manteniendo una alta rentabilidad bajo el marco legal de la Ley 843.
+**Dictamen del Caso de Estudio:** Incluso al desplegar el sistema en una infraestructura nube de producción 24/7 de alta disponibilidad en internet (con AWS EC2, PostgreSQL Managed, ChromaDB Cloud y WAF DDoS de Cloudflare por $168 USD/mes), atender a los 500 alumnos de Knockout genera un ingreso de $299 USD/mes y deja un beneficio neto operativo de **$118.96 USD/mes (39.8% de margen)**, demostrando la solidez técnica e ingenieril del proyecto.
 
 ---
 
