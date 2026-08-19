@@ -96,8 +96,9 @@ En este trabajo se expone el diseño y modelado orientado a objetos de una plata
     - [1.4.1 Modelo de Negocio Global (SaaS B2C & B2B)](#141-modelo-de-negocio-global-saas-b2c--b2b)
     - [1.4.2 Estructura de Inversión Inicial (CAPEX)](#142-estructura-de-inversión-inicial-capex)
     - [1.4.3 Estructura de Costos Operativos Mensuales (OPEX)](#143-estructura-de-costos-operativos-mensuales-opex)
-    - [1.4.4 Estado de Resultados Proyectado (Año 1 a Año 3)](#144-estado-de-resultados-proyectado-año-1-a-año-3)
-    - [1.4.5 Análisis de Rentabilidad Financiera (VAN, TIR y Payback)](#145-análisis-de-rentabilidad-financiera-van-tir-y-payback)
+    - [1.4.5 Estado de Resultados Proyectado (Año 1 a Año 3)](#145-estado-de-resultados-proyectado-año-1-a-año-3)
+    - [1.4.6 Análisis de Rentabilidad Financiera (VAN, TIR y Payback)](#146-análisis-de-rentabilidad-financiera-van-tir-y-payback)
+    - [1.4.7 Caso de Estudio de Escala: Academia Knockout (500 Alumnos) y Régimen Tributario Boliviano (Ley 843)](#147-caso-de-estudio-de-escala-academia-knockout-500-alumnos-y-régimen-tributario-boliviano-ley-843)
 - [**Capítulo II: Descripción de la Entidad (Corpo \& Mente)**](#capítulo-ii-descripción-de-la-entidad-corpo--mente)
   - [2.1 Descripción de la organización](#21-descripción-de-la-organización)
   - [2.2 Descripción organizacional](#22-descripción-organizacional)
@@ -343,6 +344,46 @@ Con una proyección de expansión comercial basada en dojos de BJJ en Latinoamé
 *   **Valor Actual Neto (VAN / NPV al 12%):** **$385,420.00 USD**.
 *   **Tasa Interna de Retorno (TIR / IRR):** **86.4%**.
 *   **Dictamen Financiero:** El proyecto OpenBJJ no solo es viable técnicamente, sino que representa una **unidad de negocio global altamente rentable, escalable y con un margen operativo extraordinario**, apto para levantar capital semilla o ser comercializado internacionalmente como SaaS.
+
+### **1.4.7 Caso de Estudio de Escala: Academia Knockout (500 Alumnos) y Régimen Tributario Boliviano (Ley 843)**
+
+Para certificar el comportamiento del sistema ante un escenario de alta demanda masiva real, se analiza el caso de la **Academia Knockout**, institución que acoge a la franquicia Corpo & Mente y cuenta con una comunidad de **500 alumnos de Jiu-Jitsu activos**.
+
+#### **A. Comportamiento Técnico del Sistema ante 500 Alumnos**
+1. **Desacoplamiento Edge AI Client-Side (MediaPipe Pose 3D):**
+   Los 500 alumnos procesan la cinemática de sus videos localmente en sus propios navegadores o dispositivos móviles. El servidor central no recibe video en bruto, reduciendo el consumo de ancho de banda a payloads de 3KB por evaluación.
+2. **Carga en el API Gateway y Base de Datos:**
+   A una tasa promedio de 10 sparrings al mes por alumno (5,000 análisis mensuales en total), el servidor Express y la base de datos PostgreSQL procesan aproximadamente **166 evaluaciones diarias**. Durante las horas pico de entrenamiento (19:00 a 21:00 hrs), el tráfico alcanza entre 30 y 50 peticiones por hora (< 1 petición por segundo), consumiendo menos del 5% de CPU en un servidor VPS básico.
+3. **Consumo Combinado de IAs (Gemini 2.5 Flash + Failover OpenAI ChatGPT):**
+   - **Google Gemini 2.5 Flash (95% de las inferencias):** 4,750 análisis x $0.00052 USD = **$2.47 USD/mes**.
+   - **OpenAI ChatGPT `gpt-4o-mini` (5% de las inferencias por failover):** 250 análisis x $0.00104 USD = **$0.26 USD/mes**.
+   - **Costo Total Consolidado de IAs para 500 Alumnos:** **$2.73 USD / mes**.
+
+#### **B. Régimen Tributario Boliviano Aplicado a la Empresa de Software**
+De acuerdo con la legislación tributaria boliviana aplicable a empresas de tecnología y servicios digitales (Ley 843 y Decreto Supremo 24051):
+*   **Impuesto a las Transacciones (IT):** **3%** sobre los ingresos brutos facturados.
+*   **Impuesto al Valor Agregado (IVA):** **13%** sobre la facturación de licencias de software (débito fiscal).
+*   **Impuesto a las Utilidades de las Empresas (IUE):** **25%** sobre la utilidad neta anual.
+*   **IUE Beneficiarios del Exterior (Retención por Servicios Digitales):** **12.5%** de retención sobre las remesas enviadas a Google (Gemini) y OpenAI (ChatGPT) por concepto de consumo de APIs desde el exterior (Art. 51 de la Ley 843).
+
+#### **C. Estado Financiero Específico para la Academia Knockout (500 Alumnos)**
+Si se comercializa una suscripción de macro-academia a Knockout por **$149.00 USD/mes** (equivalente a $0.30 USD o ~2.10 Bs por alumno al mes):
+
+<a id="tabla-1-4"></a>
+*Tabla 1.4*  
+*Estado Financiero Mensual - Caso Academia Knockout (500 Alumnos)*
+
+| Concepto Financiero | Valor Mensual (USD) | Porcentaje (%) |
+| --- | --- | --- |
+| **Ingreso Bruto Mensual (Suscripción Knockout)** | **$149.00** | **100.0%** |
+| Costo API Gemini 2.5 Flash (4,750 inferencias) | ($2.47) | 1.7% |
+| Costo API OpenAI `gpt-4o-mini` Failover (250 inferencias) | ($0.26) | 0.2% |
+| Retención Tributaria IUE Beneficiarios Exterior (12.5%) | ($0.34) | 0.2% |
+| Infraestructura Nube Prorrateada (PostgreSQL/ChromaDB) | ($8.00) | 5.4% |
+| Impuesto a las Transacciones (IT 3%) | ($4.47) | 3.0% |
+| **MARGEN BRUTO OPERATIVO NETO** | **$133.46** | **89.5%** |
+
+**Dictamen del Caso de Estudio:** Servir a una macro-academia de 500 alumnos como Knockout requiere un costo operativo e impositivo directo de apenas **$15.54 USD/mes**, generando un margen de utilidad operativa de **$133.46 USD/mes (89.5%)**. Esto demuestra la capacidad del sistema para escalar masivamente en el mercado boliviano e internacional manteniendo una alta rentabilidad bajo el marco legal de la Ley 843.
 
 ---
 
