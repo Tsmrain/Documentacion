@@ -266,7 +266,7 @@ function App() {
             OpenBJJ
           </h1>
           <p style={{ margin: "4px 0 0 0", color: "#64748b", fontSize: "0.85rem" }}>
-            Tutor Biomecanico Adaptativo y Grounding RAG para Jiu-Jitsu
+            Tutor Inteligente de Jiu-Jitsu para Corrección Técnica
           </p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -279,7 +279,7 @@ function App() {
             }}
             onClick={() => setActiveTab(activeTab === "rag" ? "analizador" : "rag")}
           >
-            {activeTab === "rag" ? "Volver al Analizador" : "Agregar Fuente"}
+            {activeTab === "rag" ? "Volver al Analizador" : "Agregar Libro / Video"}
           </button>
         </div>
       </header>

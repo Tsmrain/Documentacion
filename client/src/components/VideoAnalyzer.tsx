@@ -46,9 +46,9 @@ export function VideoAnalyzer({
 
   return (
     <div className="glass-panel p-6 animate-fade-in mb-6" style={{ padding: "24px" }}>
-      <h2 style={{ marginTop: 0, color: "#818cf8" }}>Analizador Cinematico de Combate / Sparring</h2>
+      <h2 style={{ marginTop: 0, color: "#818cf8" }}>Analizar Mi Video de Lucha o Técnica</h2>
       <p style={{ color: "#94a3b8", marginBottom: "20px" }}>
-        Sube un video de tu sparring o drill tecnico para obtener retroalimentacion cinematica basada en literatura RAG (Two-Phase Inference).
+        Sube o graba un video corto de tu lucha o práctica técnica. La inteligencia artificial analizará tu postura y te dará consejos sencillos para mejorar.
       </p>
 
       {analysisError && (
@@ -72,13 +72,13 @@ export function VideoAnalyzer({
           />
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           <p style={{ fontWeight: 500, color: "#e2e8f0", marginBottom: "8px" }}>
-            Ejecutando pipeline Two-Phase RAG...
+            Analizando tus movimientos de Jiu-Jitsu...
           </p>
           {analysisProgress && (
             <p style={{ fontSize: "0.8rem", color: "#64748b" }}>{analysisProgress}</p>
           )}
           <p style={{ fontSize: "0.78rem", color: "#475569", marginTop: "12px" }}>
-            Puedes navegar a otras pestanas mientras el analisis continua en segundo plano.
+            Puedes navegar a otras pestañas mientras el análisis termina en segundo plano.
           </p>
         </div>
       ) : (
@@ -107,7 +107,7 @@ export function VideoAnalyzer({
             {selectedFile ? (
               <span style={{ fontWeight: 600, color: "#38bdf8" }}>{selectedFile.name}</span>
             ) : (
-              <span style={{ color: "#64748b" }}>Haz click o arrastra tu video de sparring aqui</span>
+              <span style={{ color: "#64748b" }}>Toca aquí para seleccionar o subir tu video</span>
             )}
           </div>
 
@@ -123,7 +123,7 @@ export function VideoAnalyzer({
               />
               <div style={{ padding: "8px 12px", background: "rgba(255,255,255,0.02)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
                 <span style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  Vista previa del sparring cargado
+                  Vista previa de tu video
                 </span>
               </div>
             </div>
