@@ -141,9 +141,9 @@ export function RagIngestionPanel({ onClose, usuarioId = "user-default" }: RagIn
       <button style={{ position: 'absolute', top: '16px', right: '16px', background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '1rem', cursor: 'pointer', fontWeight: 'bold' }} onClick={onClose}>
         X
       </button>
-      <h2 style={{ marginTop: 0, color: '#38bdf8' }}>Agregar Fuente de Conocimiento RAG</h2>
+      <h2 style={{ marginTop: 0, color: '#38bdf8' }}>Agregar Libro o Video de Aprendizaje</h2>
       <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
-        Añade manuales de Jiu-Jitsu o enlaces para personalizar el diagnóstico de la IA. Si no agregas contenido, el sistema operará bajo el modo fallback nativo.
+        Añade manuales en PDF o enlaces de YouTube de Jiu-Jitsu para que la inteligencia artificial aprenda nuevas posiciones y consejos para ti.
       </p>
 
       <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '8px' }}>

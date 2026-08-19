@@ -81,9 +81,9 @@ export function ProgresoView({ usuarioId }: ProgresoViewProps) {
     <div className="animate-fade-in">
       {/* --- Seccion: Maestria y Tutoria Adaptativa --- */}
       <div className="glass-panel p-6 mb-6" style={{ padding: '24px', marginBottom: '28px' }}>
-        <h2 style={{ marginTop: 0, color: '#818cf8', fontSize: '1.4rem' }}>Progreso y Tutoria Adaptativa (CU03)</h2>
+        <h2 style={{ marginTop: 0, color: '#818cf8', fontSize: '1.4rem' }}>Mi Progreso y Recomendaciones</h2>
         <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
-          Evolucion tecnica del practicante y recomendaciones pedagogicas adaptativas personalizadas.
+          Revisa tu avance en cada posición de Jiu-Jitsu y los ejercicios recomendados para mejorar.
         </p>
 
         {esAlertaAdaptativa && (
