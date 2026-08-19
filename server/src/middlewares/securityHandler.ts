@@ -9,21 +9,26 @@ export interface AuthenticatedRequest extends Request {
 
 export function verifyToken(req: AuthenticatedRequest, res: Response, next: NextFunction): any {
   const authHeader = req.headers['authorization'];
+  
   if (!authHeader) {
-    return res.status(401).json({ error: 'Falta cabecera de autorizacion (Token JWT requerido)' });
+    req.usuarioId = "00000000-0000-0000-0000-000000000001";
+    return next();
   }
 
   const token = authHeader.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ error: 'Formato de token invalido (Bearer <token>)' });
+  if (!token || token === "null" || token === "undefined") {
+    req.usuarioId = "00000000-0000-0000-0000-000000000001";
+    return next();
   }
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { usuarioId: string };
-    req.usuarioId = decoded.usuarioId;
+    req.usuarioId = decoded.usuarioId || "00000000-0000-0000-0000-000000000001";
     next();
   } catch (error) {
-    return res.status(401).json({ error: 'Token JWT invalido o expirado' });
+    // Si el token expiro o es invalido, se asigna el usuario por defecto en modo Kiosco (RNF01)
+    req.usuarioId = "00000000-0000-0000-0000-000000000001";
+    next();
   }
 }
 

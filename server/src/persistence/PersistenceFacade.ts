@@ -379,6 +379,10 @@ export class PersistenceFacade implements IPersistenceService {
   async guardarFuenteConocimiento(usuarioId: string, fuente: any): Promise<boolean> {
     try {
       const normalizedId = this.normalizarUsuarioId(usuarioId);
+      let user = await prisma.usuario.findUnique({ where: { id: normalizedId } });
+      if (!user) {
+        await this.obtenerPerfilUsuario(normalizedId);
+      }
       const tipo = fuente.tipo === "youtube" ? TipoFuente.YOUTUBE : TipoFuente.PDF;
       await prisma.fuenteConocimiento.create({
         data: {
