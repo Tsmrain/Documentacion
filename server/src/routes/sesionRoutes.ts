@@ -88,5 +88,15 @@ export function createSesionRouter(sessionController: SesionEntrenamientoControl
     }
   });
 
+  router.get("/telemetria", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const usuarioId = (req.query.usuarioId as string) || "user-default";
+      const result = await sessionController.obtenerTelemetriaDojo(usuarioId);
+      return res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   return router;
 }

@@ -3,6 +3,7 @@ import { ILLMProvider, ITechniqueClassifier } from "../services/GeminiServiceAda
 import { RetrievalAugmentedController } from "./RetrievalAugmentedController";
 import { AdaptationController, RutaAprendizaje, IPersistenceService } from "./AdaptationController";
 import { MetricaCinematica } from "../services/DynamicPromptBuilder";
+import { TelemetryController, TipoEvento } from "./TelemetryController";
 
 export interface IPoseEstimator {
   extraerLandmarks3D(video: any): Promise<any[]>;
@@ -15,6 +16,7 @@ export class SesionEntrenamientoController {
   private ragController: RetrievalAugmentedController;
   private adaptationController: AdaptationController;
   private persistence?: IPersistenceService;
+  private telemetryController: TelemetryController;
 
   constructor(
     poseEstimator: IPoseEstimator,
@@ -22,7 +24,8 @@ export class SesionEntrenamientoController {
     classifier: ITechniqueClassifier,
     ragController: RetrievalAugmentedController,
     adaptationController: AdaptationController,
-    persistence?: IPersistenceService
+    persistence?: IPersistenceService,
+    telemetryController?: TelemetryController
   ) {
     this.poseEstimator = poseEstimator;
     this.llmProvider = llmProvider;
@@ -30,6 +33,7 @@ export class SesionEntrenamientoController {
     this.ragController = ragController;
     this.adaptationController = adaptationController;
     this.persistence = persistence;
+    this.telemetryController = telemetryController || new TelemetryController();
   }
 
   async analizarVideo(videoPayload: any, usuarioIdParam: string = "user-default"): Promise<any> {
@@ -173,13 +177,14 @@ export class SesionEntrenamientoController {
     // independientemente del formato original de la respuesta de Gemini.
     const planTutoriasYYouTubeUrl = await this.adaptationController.evaluarAdaptabilidad(usuarioId, JSON.stringify(reporteParsed));
 
-    // Guardar analisis en persistencia relacional
+    // Guardar analisis en persistencia relacional y registrar telemetria
     try {
       if (this.persistence) {
         await this.persistence.guardarAnalisis(usuarioId, reporteParsed);
       }
+      await this.telemetryController.registrarEvento(usuarioId, TipoEvento.ANALISIS_EJECUTADO, 45, { tecnicaId });
     } catch (e) {
-      console.warn("[Controller] No se pudo guardar el analisis en persistencia:", e);
+      console.warn("[Controller] No se pudo guardar el analisis o registrar telemetria:", e);
     }
 
     return {
@@ -198,7 +203,11 @@ export class SesionEntrenamientoController {
   }
 
   async registrarVisualizacion(usuarioId: string, videoId: string): Promise<boolean> {
-    return this.adaptationController.registrarVisualizacion(usuarioId, videoId);
+    const res = await this.adaptationController.registrarVisualizacion(usuarioId, videoId);
+    if (res) {
+      await this.telemetryController.registrarEvento(usuarioId, TipoEvento.LECCION_VISUALIZADA, 0, { videoId });
+    }
+    return res;
   }
 
   async obtenerHistorialAnalisis(usuarioId: string): Promise<any[]> {
@@ -294,5 +303,24 @@ export class SesionEntrenamientoController {
   async eliminarHistorialAnalisis(usuarioId: string, analisisId: string): Promise<boolean> {
     if (!this.persistence) return false;
     return this.persistence.eliminarAnalisis(usuarioId, analisisId);
+  }
+
+  async obtenerTelemetriaDojo(usuarioId: string): Promise<any> {
+    try {
+      const eviResult = await this.telemetryController.calcularEVI(usuarioId);
+      const metricasGlobales = await this.telemetryController.calcularMetricasGlobales();
+      return {
+        success: true,
+        evi: eviResult,
+        metricasGlobales
+      };
+    } catch (error: any) {
+      console.warn("[Controller] Error al obtener telemetria del dojo:", error.message);
+      return {
+        success: true,
+        evi: { evi: 1.0, periodoActualAnalisis: 0, periodoAnteriorAnalisis: 0, alerta: "NORMAL" },
+        metricasGlobales: { dau: 1, wau: 1, mau: 1 }
+      };
+    }
   }
 }

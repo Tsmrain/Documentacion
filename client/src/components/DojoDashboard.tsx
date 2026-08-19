@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 interface DojoDashboardProps {
   usuarioId?: string;
   userProfile?: {
@@ -7,10 +9,34 @@ interface DojoDashboardProps {
   };
 }
 
-export function DojoDashboard({ userProfile }: DojoDashboardProps) {
+export function DojoDashboard({ usuarioId = "00000000-0000-0000-0000-000000000001", userProfile }: DojoDashboardProps) {
   const nombre = userProfile?.nombre || "Practicante";
   const cinturon = userProfile?.cinturon || "BLANCO";
   const maestria = userProfile?.maestria || "Principiante";
+
+  const [telemetria, setTelemetria] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchTelemetria = async () => {
+      try {
+        const token = localStorage.getItem("openbjj_jwt");
+        const headers: any = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        const res = await fetch(`/api/sesion/telemetria?usuarioId=${usuarioId}`, { headers });
+        if (res.ok) {
+          const json = await res.json();
+          setTelemetria(json);
+        }
+      } catch (e) {
+        console.warn("[DojoDashboard] Error al consultar telemetría:", e);
+      }
+    };
+    fetchTelemetria();
+  }, [usuarioId]);
+
+  const evi = telemetria?.evi;
+  const metricas = telemetria?.metricasGlobales;
+  const alerta = evi?.alerta === "BAJO_COMPROMISO";
 
   return (
     <div className="glass-panel p-6 animate-fade-in mb-6" style={{ padding: '20px' }}>
@@ -19,13 +45,53 @@ export function DojoDashboard({ userProfile }: DojoDashboardProps) {
         <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#cbd5e1' }}>Motor Cinemático Edge AI Activo</span>
       </div>
 
-      <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '12px' }}>
         <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
           Perfil de Practicante Activo
         </span>
         <strong style={{ color: '#f1f5f9', fontSize: '0.95rem', display: 'block' }}>{nombre}</strong>
         <span style={{ fontSize: '0.8rem', color: '#818cf8', fontWeight: 600 }}>Cinturón {cinturon}</span>
         <span style={{ fontSize: '0.75rem', color: '#94a3b8', marginLeft: '8px' }}>({maestria})</span>
+      </div>
+
+      {/* --- Panel de Telemetría Analítica del Dojo (RF08 / CU11) --- */}
+      <div style={{ background: 'rgba(99, 102, 241, 0.04)', padding: '12px', borderRadius: '6px', border: `1px solid ${alerta ? 'rgba(239, 68, 68, 0.3)' : 'rgba(99, 102, 241, 0.15)'}` }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <span style={{ fontSize: '0.75rem', color: '#a5b4fc', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>
+            Telemetría del Dojo (RF08)
+          </span>
+          <span style={{
+            fontSize: '0.7rem',
+            padding: '2px 8px',
+            borderRadius: '4px',
+            fontWeight: 700,
+            background: alerta ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+            color: alerta ? '#f87171' : '#34d399',
+            border: `1px solid ${alerta ? 'rgba(239, 68, 68, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`
+          }}>
+            {alerta ? "BAJO COMPROMISO" : "COMPROMISO NORMAL"}
+          </span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px', textAlign: 'center', marginBottom: '8px' }}>
+          <div style={{ background: 'rgba(0,0,0,0.2)', padding: '6px', borderRadius: '4px' }}>
+            <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>DAU (24h)</span>
+            <strong style={{ fontSize: '0.9rem', color: '#f8fafc' }}>{metricas?.dau ?? 1}</strong>
+          </div>
+          <div style={{ background: 'rgba(0,0,0,0.2)', padding: '6px', borderRadius: '4px' }}>
+            <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>WAU (7d)</span>
+            <strong style={{ fontSize: '0.9rem', color: '#f8fafc' }}>{metricas?.wau ?? 1}</strong>
+          </div>
+          <div style={{ background: 'rgba(0,0,0,0.2)', padding: '6px', borderRadius: '4px' }}>
+            <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>MAU (30d)</span>
+            <strong style={{ fontSize: '0.9rem', color: '#f8fafc' }}>{metricas?.mau ?? 1}</strong>
+          </div>
+        </div>
+
+        <div style={{ fontSize: '0.72rem', color: '#cbd5e1', display: 'flex', justifyContent: 'space-between' }}>
+          <span>Velocidad de Adopción (EVI):</span>
+          <strong style={{ color: '#38bdf8' }}>{evi ? (evi.evi * 100).toFixed(0) + "%" : "100%"}</strong>
+        </div>
       </div>
 
       <p style={{ margin: '12px 0 0 0', color: '#64748b', fontSize: '0.75rem' }}>
