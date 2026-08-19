@@ -92,10 +92,7 @@ En este trabajo se expone el diseño y modelado orientado a objetos de una plata
   - [1.3 Metodología](#13-metodología)
     - [1.3.1 Ingeniería de Software (Proceso Unificado)](#131-ingeniería-de-software-proceso-unificado)
     - [1.3.2 Gestión del Proyecto (Scrum Framework)](#132-gestión-del-proyecto-scrum-framework)
-      - [1.3.2.1 Estructura de Roles de Scrum](#1321-estructura-de-roles-de-scrum)
-      - [1.3.2.2 Artefactos de Scrum y Definición de Hecho (DoD)](#1322-artefactos-de-scrum-y-definición-de-hecho-dod)
-      - [1.3.2.3 Eventos y Ceremonias del Ciclo de Vida de Scrum](#1323-eventos-y-ceremonias-del-ciclo-de-vida-de-scrum)
-      - [1.3.2.4 Cronograma de Ejecución Sprint por Sprint y Mapeo con las Fases de UP](#1324-cronograma-de-ejecución-sprint-por-sprint-y-mapeo-con-las-fases-de-up)
+      - [1.3.2.1 Cronograma de Ejecución Sprint por Sprint y Mapeo con las Fases de UP](#1321-cronograma-de-ejecución-sprint-por-sprint-y-mapeo-con-las-fases-de-up)
 
 - [**Capítulo II: Descripción de la Entidad (Corpo \& Mente)**](#capítulo-ii-descripción-de-la-entidad-corpo--mente)
   - [2.1 Descripción de la organización](#21-descripción-de-la-organización)
@@ -262,36 +259,13 @@ El Proceso Unificado (UP) rige la arquitectura técnica, el modelado y la docume
 
 ### **1.3.2 Gestión del Proyecto (Scrum Framework)**
 
-La gestión temporal y operativa del proyecto OpenBJJ se fundamenta en **Scrum**, el marco de trabajo ágil estándar de la industria (Schwaber & Sutherland, 2020; AWS, 2023) basado en el control de procesos empíricos. Scrum organiza el trabajo en ciclos iterativos de duración fija (*Sprints*), sustentado en tres pilares esenciales: **Transparencia, Inspección y Adaptación**.
+La gestión temporal y operativa del proyecto OpenBJJ integra **Scrum** (Schwaber & Sutherland, 2020; AWS, 2023) como marco de trabajo ágil acoplado formalmente al **Proceso Unificado (UP)**. Mientras UP proporciona el rigor de ingeniería de software, el diseño orientado a objetos y la estabilidad de los modelos arquitectónicos, Scrum administra la cadencia temporal a través de ciclos iterativos de tres semanas (*Sprints*), sustentados en los pilares empíricos de transparencia, inspección y adaptación para ajustar los requerimientos en el tatami de la academia Corpo & Mente y garantizar la entrega continua de incrementos funcionales.
 
-Para este proyecto de tesis de grado, se ha diseñado una **arquitectura metodológica híbrida**: el **Proceso Unificado (UP)** rige la ingeniería de software, la estabilidad arquitectónica orientada a objetos y la documentación del modelo de dominio; mientras que **Scrum** gestiona la cadencia temporal, la priorización dinámica de requerimientos (*Product Backlog*), la mitiga de riesgos por *time-boxing* y la entrega continua de incrementos de software potencialmente desplegables.
+La célula de trabajo adaptó la estructura de roles y artefactos de Scrum al ámbito universitario de desarrollo. El tesista asumió las responsabilidades técnicas integrales de ingeniería (desarrollo Fullstack, visión computacional 3D, arquitectura RAG y administración de PostgreSQL/ChromaDB), colaborando dinámicamente con el instructor principal en calidad de Product Owner para validar los criterios de aceptación biomecánicos. Los requerimientos se priorizaron en un *Product Backlog* estimado en Puntos de Historia, bajo una estricta Definición de Hecho (*Definition of Done*) que exigía código TypeScript libre de lints, cero emojis en la documentación, compilación de producción validada (`npm run build`) y sincronización de modelos UML.
 
-#### **1.3.2.1 Estructura de Roles de Scrum**
-Los roles definidos dentro de la célula de desarrollo del proyecto comprenden:
-*   **Product Owner (PO):** Representado por el instructor principal de Jiu-Jitsu Brasileño de la academia Corpo & Mente en colaboración con el tesista. Es responsable de maximizar el valor del producto, definir las Historias de Usuario (*User Stories*), establecer los criterios de aceptación biomecánicos y mantener priorizado el *Product Backlog*.
-*   **Scrum Master (SM):** Asumido por el tesista en su rol de gestor de proyecto. Encargado de garantizar el cumplimiento del marco Scrum, remover bloqueos técnicos (tales como la latencia en pipelines de MediaPipe, límites de frecuencia en APIs de Gemini y compatibilidad WebGL) y facilitar las ceremonias del equipo.
-*   **Development Team (Equipo de Desarrollo):** Equipo multidisciplinario a cargo del tesista que abarca los roles de Arquitecto de Software, Desarrollador Fullstack (React/TypeScript, Express, Node.js), Especialista en Visión Computacional (MediaPipe 3D), Ingeniero de IA/RAG (ChromaDB + LLM Proxy) y Administrador de Bases de Datos (PostgreSQL/Prisma ORM).
+La ejecución temporal se estructuró a lo largo de un ciclo total de 12 semanas dividido en 4 Sprints de 3 semanas. Como se detalla a continuación, esta cadencia iterativa se mapeó de manera transparente con las 4 Fases del Proceso Unificado (Inicio, Elaboración, Construcción y Transición), mitigando secuencialmente los riesgos técnicos principales del sistema:
 
-#### **1.3.2.2 Artefactos de Scrum y Definición de Hecho (Definition of Done - DoD)**
-El proyecto gestiona los tres artefactos principales de Scrum suplementados con criterios rigurosos de ingeniería de software:
-1.  **Product Backlog:** Listado dinámico y centralizado de todas las funcionalidades, requisitos no funcionales, optimizaciones de rendimiento y correcciones requeridas. Cada elemento se redacta bajo el formato de Historia de Usuario: *"Como [Actor], quiero [Funcionalidad] para [Beneficio Esperado]"*, evaluado en Puntos de Historia (*Story Points*) mediante la escala de Fibonacci.
-2.  **Sprint Backlog:** Subconjunto de Historias de Usuario seleccionadas durante la planificación del Sprint, junto con el plan técnico de tareas necesarias para alcanzar el Objetivo del Sprint (*Sprint Goal*).
-3.  **Incremento de Software (Potentially Shippable Increment):** La versión ejecutable, integrada y probada de la PWA al cierre de cada Sprint.
-4.  **Definición de Hecho (Definition of Done - DoD):** Para que una Historia de Usuario se considere finalizada y lista para su integración, debe cumplir obligatoriamente con la siguiente lista de verificación:
-    *   Código fuente escrito en TypeScript estricto, libre de errores de compilación y lints.
-    *   Cero emojis en código, comentarios, logs y documentación oficial.
-    *   Pruebas de integración ejecutadas exitosamente (incluyendo la certificación de failover con `testFailover.ts` y compilación de producción `npm run build`).
-    *   Modelado UML actualizado en la especificación del `README.md` (Diagramas de Casos de Uso, Secuencia, DCD y Estado).
-    *   Código comiteado y fusionado en las ramas `desarrollo` y `main` del repositorio oficial de GitHub.
-
-#### **1.3.2.3 Eventos y Ceremonias del Ciclo de Vida de Scrum**
-El proyecto se estructuró a lo largo de **4 Sprints de 3 semanas de duración cada uno** (12 semanas en total), ejecutando las siguientes ceremonias:
-*   **Sprint Planning:** Celebrado al inicio de cada Sprint para definir el *Sprint Goal* y seleccionar los elementos del *Product Backlog*.
-*   **Daily Scrum (Sincronización Diaria):** Sesión de inspección de 15 minutos donde se evalúa el progreso hacia el *Sprint Goal*, registrando en la bitácora del proyecto: 1) ¿Qué se logró ayer?, 2) ¿Qué se trabajará hoy?, y 3) ¿Existen impedimentos técnicos?
-*   **Sprint Review (Demostración del Incremento):** Inspección en vivo al cierre de cada Sprint, validando las funcionalidades desarrolladas mediante pruebas reales en el tatami con videos de combate.
-*   **Sprint Retrospective (Retrospectiva):** Análisis de mejora continua para optimizar el proceso de desarrollo, ajustando aspectos como la tasa de consumo de tokens en Gemini, el renderizado en WebGL y la gestión de ramas en Git.
-
-#### **1.3.2.4 Cronograma de Ejecución Sprint por Sprint y Mapeo con las Fases de UP**
+#### **1.3.2.1 Cronograma de Ejecución Sprint por Sprint y Mapeo con las Fases de UP**
 La ejecución temporal del proyecto integró de forma transparente las 4 Fases del Proceso Unificado (UP) con las iteraciones de Scrum, garantizando la resolución temprana de riesgos arquitectónicos:
 
 <a id="tabla-1-0"></a>
@@ -505,9 +479,9 @@ El sistema está diseñado bajo el principio de **Actor Único (Practicante BJJ)
 ### **4.3.2 Requisitos funcionales**
 - **RF01: Autodetección Multimodal de Sparring o Lucha:** Procesar archivos de video de hasta 45 segundos y clasificar autónomamente la técnica sin intervención manual.
 - **RF02: Extracción de Landmarks 3D y Cálculo Cinemático Local:** Ejecutar MediaPipe Pose en WebGL/WASM client-side derivando ángulos articulares vectoriales y velocidad.
-- **RF03: Ingesta de Fuentes Opcionales y RAG Personalizado:** Ingestar archivos PDF o URL de YouTube (`POST /api/rag/ingestar`) validando semánticamente su pertinencia mediante Gemini (Filtro RD-03).
+- **RF03: Ingesta de Fuentes Opcionales y RAG Personalizado:** El sistema debe permitir al Practicante agregar de manera opcional archivos PDF y enlaces de YouTube (CU02 / RD-03) para enriquecer la base de datos vectorial de grounding de forma personalizada.
 - **RF04: Motor de Tutoría Adaptativa:** Comparar la cinemática analizada con el grounding vectorial. Si persisten desviaciones angulares mayores a 3 intentos, conmutar la estrategia hacia drills de aislamiento.
-- **RF05: Perfil de Competencia del Usuario Centralizado:** Persistir de forma aislada el perfil antropométrico, cinturón, historial de sesiones (`GET /api/sesion/historial`) y ruta de aprendizaje.
+- **RF05: Perfil de Competencia del Usuario Centralizado:** El sistema debe mantener un perfil aislado en la base de datos del Servidor Local que consolide históricamente las técnicas practicadas por cada estudiante, su cinturón, nivel de maestría, frecuencia de errores cinemáticos, historial de intentos y registro de visualización de lecciones para personalizar dinámicamente su ruta de aprendizaje activa sin colisión entre practicantes.
 - **RF06: Dynamic Prompt Builder Condicional:** Compilar prompts con el resumen cinemático de 3KB y el contexto RAG de ChromaDB. Si el conteo de chunks es 0, activar el modo Baseline Fallback nativo.
 - **RF07: Sistema de Recomendación de Único Video de YouTube por Reporte:** Retornar exactamente 1 único deep link de YouTube seleccionado por el motor adaptativo según la severidad biomecánica.
 - **RF08: Telemetría Analítica y Alertas de Compromiso:** El sistema debe registrar de forma persistente la telemetría de interacciones del usuario en el Servidor Local. Debe calcular de manera no procedural las métricas de usuarios activos (DAU, WAU, MAU) y la frecuencia de análisis por periodo de tiempo. Ante una tasa de análisis nula o decreciente superior al 50% en un dojo durante 7 días, el sistema debe activar de forma autónoma una alerta de Bajo Compromiso (`BAJO_COMPROMISO`) para alertar al instructor.
@@ -715,7 +689,7 @@ classDiagram
 
 ### **Paso 1: Diagrama de Casos de Uso del Sistema**
 
-El siguiente diagrama define los límites del sistema, relacionando los actores clave con los 10 casos de uso (CU) propuestos:
+El siguiente diagrama define los límites del sistema, relacionando los actores clave con los 11 casos de uso (CU) propuestos:
 
 <a id="figura-2"></a>
 **Figura 2**  
@@ -724,6 +698,7 @@ El siguiente diagrama define los límites del sistema, relacionando los actores 
 ```mermaid
 flowchart TD
     Practicante((Practicante))
+    ServidorLocal((Servidor Local))
     
     subgraph "Sistema OpenBJJ"
         CU01(CU01: Analizar Video de Combate)
@@ -735,6 +710,7 @@ flowchart TD
         CU07(CU07: Calibrar Entorno de Captura)
         CU08(CU08: Recibir Recomendación de Video de YouTube)
         CU09(CU09: Registrar Visualización de Video de YouTube)
+        CU10(CU10: Calibrar Inferencia Local y Failover Proxy)
         CU11(CU11: Generar Telemetría y Alertas de Deserción)
     end
     
@@ -747,6 +723,8 @@ flowchart TD
     Practicante --> CU07
     Practicante --> CU08
     Practicante --> CU09
+    ServidorLocal --> CU10
+    ServidorLocal --> CU11
 ```
 
 ---
@@ -1836,8 +1814,8 @@ El diseño de la interfaz de usuario de OpenBJJ se rige bajo un flujo ergonómic
    - **Rojo (Crítica):** Desviación superior a `30` grados.
 4. **Tarjeta de YouTube Correctiva:** Se presenta como el elemento principal de acción post-entrenamiento, guiando al practicante al video tutorial del drill correctivo sin distracciones de texto extensas.
 5. **Panel de Progreso y Tutoría Adaptativa (ProgresoView):** Permite al practicante inspeccionar su nivel de maestría porcentual por posición (Verde >= 80%, Amarillo 50-79%, Rojo < 50%), alertas ante fallos recurrentes (> 3 intentos) con enlace a tutoriales alternativos de YouTube y registro de visualizaciones (CU09).
-6. **Historial de Análisis Realizados (HistoryView):** Ofrece un registro cronológico interactivo (CU05) expuesto a través de tarjetas compactas con fecha, técnica autodetectada, puntuación porcentual e indicador de severidad por color, permitiendo recargar reportes guardados en `AnalysisReportView` en un solo clic.
-7. **Agregar Fuente (RagIngestionPanel):** Panel limpio para subir documentos PDF/TXT o links de YouTube (`POST /api/rag/ingestar`), actualizando reactivamente la lista de fuentes activas asociadas al `usuarioId` (`GET /api/rag/fuentes?usuarioId=...`) tras cada ingesta exitosa, con opción de eliminación en un solo clic (`DELETE /api/rag/fuentes/:id`).
+6. **Historial de Análisis Realizados (HistoryView):** Ofrece un registro cronológico interactivo (CU05) expuesto a través de tarjetas compactas, interactuando con el backend mediante las peticiones `GET /api/sesion/historial` y `GET /api/sesion/perfil`, permitiendo recargar reportes guardados en `AnalysisReportView` en un solo clic.
+7. **Agregar Fuente (RagIngestionPanel):** Panel limpio para subir documentos PDF/TXT o links de YouTube, interactuando mediante las peticiones seguras `POST /api/rag/ingestar`, `GET /api/rag/fuentes` y `DELETE /api/rag/fuentes/:id` asociadas al `usuarioId` tras cada ingesta exitosa, con opción de eliminación en un solo clic.
 8. **Sección Mi Perfil (PerfilView):** Permite al practicante consultar y actualizar libremente su Nombre, Cinturón (Blanco, Azul, Morado, Marrón, Negro), Altura (cm) y Peso (kg) (CU04 / CO04). La PWA guarda estos datos en `localStorage` y en la API REST (`GET/POST /api/usuario/perfil`) manteniendo el `usuarioId` activo sin logins restrictivos (RNF01, RNF07).
 9. **Encabezado Minimalista Limpio:** La barra superior mantiene un diseño depurado y esencial con el título de OpenBJJ, navegación directa ('Analizar Video', 'Ver Mi Progreso', 'Historial', 'Mi Perfil') y el botón 'Agregar Fuente', libre de menús desplegables de usuario para eliminar el ruido visual (RNF01, RNF07).
 
