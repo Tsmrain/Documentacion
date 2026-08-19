@@ -28,9 +28,18 @@ async function main() {
   
   try {
     execSync('docker ps', { stdio: 'ignore' });
-    console.log('[Dojo Startup] Docker esta disponible. Iniciando contenedor ChromaDB...');
-    execSync('docker run -d -p 8000:8000 chromadb/chroma', { stdio: 'inherit' });
-    console.log('[Dojo Startup] Contenedor ChromaDB iniciado en puerto 8000.');
+    
+    // Verificar si ya existe un contenedor llamado openbjj-chroma
+    const existingContainer = execSync('docker ps -a --filter name=openbjj-chroma --format "{{.Names}}"', { encoding: 'utf8' }).trim();
+    
+    if (existingContainer === 'openbjj-chroma') {
+      console.log('[Dojo Startup] Reutilizando contenedor existente openbjj-chroma...');
+      execSync('docker start openbjj-chroma', { stdio: 'inherit' });
+    } else {
+      console.log('[Dojo Startup] Creando contenedor de ChromaDB (openbjj-chroma)...');
+      execSync('docker run -d --name openbjj-chroma -p 8000:8000 chromadb/chroma', { stdio: 'inherit' });
+    }
+    console.log('[Dojo Startup] Contenedor ChromaDB activo en puerto 8000.');
   } catch (error) {
     console.log('[Dojo Startup] Docker no esta disponible o el demonio esta inactivo.');
     console.log('[Dojo Startup] Iniciando sistema en modo Graceful Degradation (HTTP 207 Baseline Fallback activado).');
