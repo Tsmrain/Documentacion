@@ -96,13 +96,7 @@ En este trabajo se expone el diseño y modelado orientado a objetos de una plata
       - [1.3.2.2 Artefactos de Scrum y Definición de Hecho (DoD)](#1322-artefactos-de-scrum-y-definición-de-hecho-dod)
       - [1.3.2.3 Eventos y Ceremonias del Ciclo de Vida de Scrum](#1323-eventos-y-ceremonias-del-ciclo-de-vida-de-scrum)
       - [1.3.2.4 Cronograma de Ejecución Sprint por Sprint y Mapeo con las Fases de UP](#1324-cronograma-de-ejecución-sprint-por-sprint-y-mapeo-con-las-fases-de-up)
-  - [1.4 Estudio de Factibilidad Económica, Análisis de Costos y Modelo de Negocio Global (SaaS)](#14-estudio-de-factibilidad-económica-análisis-de-costos-y-modelo-de-negocio-global-saas)
-    - [1.4.1 Modelo de Negocio Global (SaaS B2C & B2B)](#141-modelo-de-negocio-global-saas-b2c--b2b)
-    - [1.4.2 Estructura de Inversión Inicial (CAPEX)](#142-estructura-de-inversión-inicial-capex)
-    - [1.4.3 Estructura de Costos Operativos Mensuales (OPEX)](#143-estructura-de-costos-operativos-mensuales-opex)
-    - [1.4.5 Estado de Resultados Proyectado (Año 1 a Año 3)](#145-estado-de-resultados-proyectado-año-1-a-año-3)
-    - [1.4.6 Análisis de Rentabilidad Financiera (VAN, TIR y Payback)](#146-análisis-de-rentabilidad-financiera-van-tir-y-payback)
-    - [1.4.7 Caso de Estudio de Escala: Academia Knockout (500 Alumnos) y Régimen Tributario Boliviano (Ley 843)](#147-caso-de-estudio-de-escala-academia-knockout-500-alumnos-y-régimen-tributario-boliviano-ley-843)
+
 - [**Capítulo II: Descripción de la Entidad (Corpo \& Mente)**](#capítulo-ii-descripción-de-la-entidad-corpo--mente)
   - [2.1 Descripción de la organización](#21-descripción-de-la-organización)
   - [2.2 Descripción organizacional](#22-descripción-organizacional)
@@ -165,9 +159,17 @@ En este trabajo se expone el diseño y modelado orientado a objetos de una plata
   - [8.1 Estrategia de pruebas](#81-estrategia-de-pruebas)
   - [8.2 Pruebas de funcionalidad](#82-pruebas-de-funcionalidad)
   - [8.3 Resultados de las pruebas de funcionalidad](#83-resultados-de-las-pruebas-de-funcionalidad)
-- [**Capítulo IX: Conclusiones y Recomendaciones**](#capítulo-ix-conclusiones-y-recomendaciones)
-  - [9.1 Conclusiones](#91-conclusiones)
-  - [9.2 Recomendaciones](#92-recomendaciones)
+- [**Capítulo IX: Estudio de Factibilidad Económica y Modelo de Negocio Global (SaaS)**](#capítulo-ix-estudio-de-factibilidad-económica-y-modelo-de-negocio-global-saas)
+  - [9.1 Modelo de Negocio Global (SaaS B2C & B2B)](#91-modelo-de-negocio-global-saas-b2c--b2b)
+  - [9.2 Estructura de Inversión Inicial (CAPEX)](#92-estructura-de-inversión-inicial-capex)
+  - [9.3 Estructura de Costos Operativos y Nómina de Desarrollo (OPEX Mensual)](#93-estructura-de-costos-operativos-y-nómina-de-desarrollo-opex-mensual)
+  - [9.4 Punto de Equilibrio (Break-Even Point)](#94-punto-de-equilibrio-break-even-point)
+  - [9.5 Estado de Resultados Proyectado (Año 1 a Año 3)](#95-estado-de-resultados-proyectado-año-1-a-año-3)
+  - [9.6 Análisis de Rentabilidad Financiera (VAN, TIR y Payback)](#96-análisis-de-rentabilidad-financiera-van-tir-y-payback)
+  - [9.7 Caso de Estudio de Escala: Academia Knockout (500 Alumnos) y Régimen Tributario Boliviano (Ley 843)](#97-caso-de-estudio-de-escala-academia-knockout-500-alumnos-y-régimen-tributario-boliviano-ley-843)
+- [**Capítulo X: Conclusiones y Recomendaciones**](#capítulo-x-conclusiones-y-recomendaciones)
+  - [10.1 Conclusiones](#101-conclusiones)
+  - [10.2 Recomendaciones de Despliegue Físico](#102-recomendaciones-de-despliegue-físico)
 
 # **Índice de Tablas**
 
@@ -299,142 +301,6 @@ La ejecución temporal del proyecto integró de forma transparente las 4 Fases d
 | **Sprint 2** | Semanas 4 - 6 | Elaboración | Mitigar Riesgos R-02 y R-03: Desarrollar el motor RAG Vivo centralizado y grounding dual. | Servidor Express, base de datos ChromaDB con embeddings `all-MiniLM-L6-v2` e inyección de fragmentos de *Jiu-Jitsu University*. |
 | **Sprint 3** | Semanas 7 - 9 | Construcción | Implementar Casos de Uso CU01-CU05, Failover Proxy y persistencia relacional. | Integración del controlador `AdaptationController`, proxy Gemini/OpenAI, 8 tablas relacionales en PostgreSQL y motor adaptativo. |
 | **Sprint 4** | Semanas 10 - 12 | Transición | Pruebas de campo en tatami, resiliencia offline PWA y contenerización Docker. | PWA offline lista (Service Workers), orquestación `docker-compose`, script de certificación `testFailover.ts` y pruebas en Corpo & Mente. |
-
-## **1.4 Estudio de Factibilidad Económica, Análisis de Costos y Modelo de Negocio Global (SaaS)**
-
-Para determinar la viabilidad comercial de la investigación y evaluar la transición del sistema OpenBJJ hacia un modelo de negocio global escalable, se ha desarrollado un estudio de factibilidad financiera integral. Este análisis cuantifica los costos de inversión inicial (CAPEX), la nómina recurrente del equipo de desarrollo y soporte, los gastos operativos de infraestructura (OPEX), y determina el punto de equilibrio en el mercado real de academias de Jiu-Jitsu.
-
-### **1.4.1 Modelo de Negocio y Premisa de Mercado Real**
-Con base en estudios de campo en artes marciales, una escuela o academia estándar de Jiu-Jitsu Brasileño cuenta en promedio con **15 alumnos activos**. El esquema comercial se adapta a esta realidad mediante dos modalidades:
-*   **Segmento B2C (Practicante Individual):** Suscripción Freemium / Premium de **$9.99 USD/mes** (o $89 USD/año) para sparrings e inferencias ilimitadas.
-*   **Segmento B2B (Licencia de Academia / Dojo):** Cuota fija de **$29.99 USD/mes por academia** (equivalente a $2.00 USD/mes por alumno en una escuela promedio de 15 estudiantes). Otorga acceso a todos sus practicantes y permite al instructor personalizar el corpus RAG con sus propios videos.
-
-### **1.4.2 Estructura de Inversión Inicial (CAPEX)**
-La inversión inicial requerida para el desarrollo, estabilización arquitectónica, registro legal y empaquetado de producción de la PWA asciende a **$21,000.00 USD**, desglosada a continuación:
-
-<a id="tabla-1-1"></a>
-*Tabla 1.1*  
-*Estructura de Inversión Inicial (CAPEX)*
-
-| Concepto de Inversión | Horas / Unidad | Costo Unitario (USD) | Subtotal (USD) |
-| --- | --- | --- | --- |
-| Arquitecto de Software / Senior Engineer | 400 horas | $25.00 / hr | $10,000.00 |
-| Ingeniero de IA & Visión Computacional | 200 horas | $30.00 / hr | $6,000.00 |
-| Diseñador UI/UX & Especialista PWA | 100 horas | $20.00 / hr | $2,000.00 |
-| Hardware de Pruebas en Tatami & Dispositivos Móviles | 2 unidades | $750.00 | $1,500.00 |
-| Constitución Legal, Registro de Marca & Patente | 1 trámite | $1,500.00 | $1,500.00 |
-| **TOTAL CAPEX** | | | **$21,000.00** |
-
-### **1.4.3 Estructura de Costos Operativos y Nómina de Desarrollo (OPEX Mensual)**
-Para garantizar la continuidad operativa y retribuir adecuadamente al equipo involucrado en la evolución y soporte del sistema, los gastos operativos recurrentes se dividen en nómina de personal e infraestructura:
-
-1. **Nómina Recurrente de Personal (Payroll):**
-   - Ingeniero de Desarrollo Fullstack & Mantenimiento PWA: **$1,200.00 USD/mes**.
-   - Especialista en Soporte de IA & Optimización RAG: **$800.00 USD/mes**.
-   - **Total Nómina Recurrente:** **$2,000.00 USD/mes** ($24,000.00 USD/año).
-
-2. **Costo de Servir a 1 Academia Promedio (15 Alumnos):**
-   - 15 alumnos x 10 análisis/mes = 150 evaluaciones/mes.
-   - **Tarifa Oficial de Inferencia IA:** Según las especificaciones de precios de Google Gemini API ($0.075 / 1M tokens de entrada, $0.30 / 1M tokens de salida) y OpenAI API (`gpt-4o-mini`: $0.15 / 1M tokens de entrada, $0.60 / 1M tokens de salida), un análisis completo de 9 fotogramas clave y 3KB de cinemática consume ~4,320 tokens de entrada y ~650 tokens de salida, representando un costo real de **$0.00052 USD por análisis** en Gemini Flash y **$0.00104 USD** en el proxy de failover de OpenAI. Asignando un umbral conservador de **$0.0025 USD por análisis**, 150 evaluaciones cuestan **$0.38 USD/mes**.
-   - Hosting Cloud y PostgreSQL prorrateado por academia: **$2.40 USD/mes**.
-   - **Costo Operativo Total por Academia de 15 Alumnos:** **$2.78 USD/mes**.
-   - **Margen Bruto por Academia ($29.99 - $2.78):** **$27.21 USD/mes (90.7%)**.
-
-<a id="tabla-1-2"></a>
-*Tabla 1.2*  
-*Costos Operativos Mensuales (OPEX Base: 50 Academias / 750 Alumnos)*
-
-| Concepto Operativo | Descripción | Costo Mensual (USD) | Costo Anual (USD) |
-| --- | --- | --- | --- |
-| Nómina de Personal de Desarrollo & Soporte | 2 ingenieros a tiempo parcial / retainer | $2,000.00 | $24,000.00 |
-| Inferencia LLM (Gemini / OpenAI API) | 11,250 evaluaciones/mes | $28.13 | $337.56 |
-| Servidor de Aplicaciones & DB (PostgreSQL Managed) | VPS 8GB RAM Cloud Server | $80.00 | $960.00 |
-| Almacenamiento Vectorial & CDN (ChromaDB + S3) | 50 GB de almacenamiento RAG | $40.00 | $480.00 |
-| **TOTAL OPEX MENSUAL** | | **$2,148.13** | **$25,777.56** |
-
-### **1.4.4 Punto de Equilibrio (Break-Even Point)**
-Para cubrir la totalidad de la nómina del equipo ($2,000 USD/mes) y los costos fijos de infraestructura ($120 USD/mes), el número mínimo de academias cliente necesarias es:
-
-$$\text{Punto de Equilibrio} = \frac{\text{Gastos Fijos Mensuales (USD 2,120.00)}}{\text{Margen Bruto por Academia (USD 27.21)}} = 77.9 \approx 78 \text{ Academias}$$
-
-Con **78 academias suscritas** (equivalente a 1,170 alumnos en total), el proyecto es autosostenible y cubre el 100% de los sueldos del personal de desarrollo y la infraestructura.
-
-### **1.4.5 Estado de Resultados Proyectado (Año 1 a Año 3)**
-Con una proyección de expansión comercial basada en dojos de BJJ en Latinoamérica y Norteamérica:
-
-<a id="tabla-1-3"></a>
-*Tabla 1.3*  
-*Estado de Resultados Proyectado (en USD)*
-
-| Estado de Resultados | Año 1 (300 B2C + 50 Dojos) | Año 2 (1,500 B2C + 200 Dojos) | Año 3 (5,000 B2C + 800 Dojos) |
-| --- | --- | --- | --- |
-| Ingresos B2C (Suscripción $9.99/mes) | $35,964.00 | $179,820.00 | $599,400.00 |
-| Ingresos B2B (Licencia Dojo $29.99/mes) | $17,994.00 | $71,976.00 | $287,904.00 |
-| **INGRESOS BRUTOS TOTALES** | **$53,958.00** | **$251,796.00** | **$887,304.00** |
-| Costo Directo de Inferencia IA (APIs) | ($675.00) | ($3,375.00) | ($11,250.00) |
-| Servidores & Nube (PostgreSQL/ChromaDB) | ($1,440.00) | ($2,880.00) | ($7,200.00) |
-| Comisiones de Pasarela de Pago (3.5%) | ($1,888.53) | ($8,812.86) | ($31,055.64) |
-| **MARGEN BRUTO** | **$49,954.47 (92.6%)** | **$236,728.14 (94.0%)** | **$837,798.36 (94.4%)** |
-| Nómina de Personal de Desarrollo & Soporte | ($24,000.00) | ($36,000.00) | ($72,000.00) |
-| Gastos de Marketing & Operaciones | ($12,000.00) | ($36,000.00) | ($108,000.00) |
-| Depreciación de Inversión Inicial (CAPEX) | ($7,000.00) | ($7,000.00) | ($7,000.00) |
-| **UTILIDAD ANTES DE IMPUESTOS (EBIT)** | **$6,954.47** | **$157,728.14** | **$650,798.36** |
-| Impuesto a las Utilidades (25%) | ($1,738.62) | ($39,432.04) | ($162,699.59) |
-| **UTILIDAD NETA RESULTANTE** | **$5,215.85** | **$118,296.10** | **$488,098.77** |
-
-### **1.4.6 Análisis de Rentabilidad Financiera (VAN, TIR y Payback)**
-*   **Margen Bruto:** Superior al **92%**, gracias al costo de servicio de apenas **$2.78 USD/mes** por escuela de 15 alumnos.
-*   **Periodo de Recuperación de la Inversión (Payback Period):** **11.2 meses**.
-*   **Valor Actual Neto (VAN / NPV al 12%):** **$385,420.00 USD**.
-*   **Tasa Interna de Retorno (TIR / IRR):** **86.4%**.
-*   **Dictamen Financiero:** El proyecto OpenBJJ no solo es viable técnicamente, sino que representa una **unidad de negocio global altamente rentable, escalable y con un margen operativo extraordinario**, apto para levantar capital semilla o ser comercializado internacionalmente como SaaS.
-
-### **1.4.7 Caso de Estudio de Escala: Academia Knockout (500 Alumnos) y Régimen Tributario Boliviano (Ley 843)**
-
-Para certificar el comportamiento del sistema ante un escenario de alta demanda masiva real, se analiza el caso de la **Academia Knockout**, institución que acoge a la franquicia Corpo & Mente y cuenta con una comunidad de **500 alumnos de Jiu-Jitsu activos**.
-
-#### **A. Comportamiento Técnico y Despliegue Nube en Internet (Disponibilidad 24/7)**
-1. **Desacoplamiento Edge AI Client-Side (MediaPipe Pose 3D):**
-   Los 500 alumnos procesan la cinemática de sus videos localmente en sus propios navegadores o dispositivos móviles. El servidor central no recibe video en bruto, reduciendo el consumo de ancho de banda a payloads de 3KB por evaluación.
-2. **Carga en el API Gateway y Base de Datos:**
-   Con 500 alumnos realizando en promedio 1 análisis a la semana (2,000 a 5,000 evaluaciones al mes), el servidor Express y la base de datos PostgreSQL procesan aproximadamente **166 evaluaciones diarias**. Durante las horas pico de entrenamiento (19:00 a 21:00 hrs), el tráfico alcanza entre 30 y 50 peticiones por hora (< 1 petición por segundo), consumiendo menos del 5% de CPU.
-3. **Infraestructura Nube Enterprise 24/7 (Alta Disponibilidad en Internet):**
-   Para garantizar la disponibilidad en internet con certificado SSL/TLS, balanceo de carga y backups diarios, la arquitectura nube de producción se compone de:
-   - **Servidor de Aplicación API Node.js (AWS EC2 / DigitalOcean 4 vCPU, 8GB RAM):** $48.00 USD/mes.
-   - **Base de Datos Gestionada Cloud (Managed PostgreSQL 4GB RAM + SSL + Backups):** $60.00 USD/mes.
-   - **Almacenamiento Vectorial & Assets (ChromaDB Server + AWS S3 / CDN):** $35.00 USD/mes.
-   - **Seguridad WAF, SSL & Dominio Enterprise (Cloudflare Pro + DNS 24/7):** $25.00 USD/mes.
-   - **Total Infraestructura Nube Enterprise 24/7:** **$168.00 USD / mes**.
-4. **Consumo Combinado de IAs (Gemini 2.5 Flash + Failover OpenAI ChatGPT):**
-   - **Google Gemini 2.5 Flash (95% de las inferencias):** 4,750 análisis x $0.00052 USD = **$2.47 USD/mes**.
-   - **OpenAI ChatGPT `gpt-4o-mini` (5% de las inferencias por failover):** 250 análisis x $0.00104 USD = **$0.26 USD/mes**.
-   - **Costo Total Consolidado de IAs para 500 Alumnos:** **$2.73 USD / mes**.
-
-#### **B. Régimen Tributario Boliviano Aplicado a la Empresa de Software**
-De acuerdo con la legislación tributaria boliviana aplicable a empresas de tecnología y servicios digitales (Ley 843 y Decreto Supremo 24051):
-*   **Impuesto a las Transacciones (IT):** **3%** sobre los ingresos brutos facturados.
-*   **Impuesto al Valor Agregado (IVA):** **13%** sobre la facturación de licencias de software (débito fiscal).
-*   **Impuesto a las Utilidades de las Empresas (IUE):** **25%** sobre la utilidad neta anual.
-*   **IUE Beneficiarios del Exterior (Retención por Servicios Digitales):** **12.5%** de retención sobre las remesas enviadas a Google (Gemini) y OpenAI (ChatGPT) por concepto de consumo de APIs desde el exterior (Art. 51 de la Ley 843).
-
-#### **C. Estado Financiero Específico para la Academia Knockout (500 Alumnos)**
-Si se comercializa una suscripción de macro-academia a Knockout por **$299.00 USD/mes** (equivalente a tan sólo **$0.60 USD/mes o ~4.10 Bs por alumno al mes** por acceso ilimitado 24/7 en internet):
-
-<a id="tabla-1-4"></a>
-*Tabla 1.4*  
-*Estado Financiero Mensual - Caso Academia Knockout (500 Alumnos en Nube Enterprise 24/7)*
-
-| Concepto Financiero | Valor Mensual (USD) | Explicación Técnica / Fiscal |
-| --- | --- | --- |
-| **Ingreso Bruto Mensual (Suscripción Knockout B2B)** | **$299.00** | Licencia institucional para 500 alumnos con acceso 24/7 |
-| Costo API Gemini 2.5 Flash (4,750 inferencias) | ($2.47) | Inferencia multimodal primaria ($0.075/1M tokens) |
-| Costo API OpenAI `gpt-4o-mini` Failover (250 inferencias) | ($0.26) | Proxy de contingencia en caliente ($0.15/1M tokens) |
-| Retención Tributaria IUE Beneficiarios Exterior (12.5%) | ($0.34) | Retención fiscal boliviana sobre remesas a Google/OpenAI |
-| Infraestructura Nube Enterprise 24/7 (AWS/Cloudflare) | ($168.00) | Servidor API, PostgreSQL Managed, ChromaDB Cloud y WAF |
-| Impuesto a las Transacciones (IT 3%) | ($8.97) | Impuesto nacional boliviano sobre ingresos brutos |
-| **MARGEN BRUTO OPERATIVO NETO** | **$118.96** | **Utilidad neta mensual (39.8% de margen operativo)** |
-
-**Dictamen del Caso de Estudio:** Incluso al desplegar el sistema en una infraestructura nube de producción 24/7 de alta disponibilidad en internet (con AWS EC2, PostgreSQL Managed, ChromaDB Cloud y WAF DDoS de Cloudflare por $168 USD/mes), atender a los 500 alumnos de Knockout genera un ingreso de $299 USD/mes y deja un beneficio neto operativo de **$118.96 USD/mes (39.8% de margen)**, demostrando la solidez técnica e ingenieril del proyecto.
 
 ---
 
@@ -2063,23 +1929,161 @@ La verificación del comportamiento transaccional del sistema se consolidó medi
 
 ---
 
-# **CAPÍTULO IX: CONCLUSIONES Y RECOMENDACIONES**
+# **CAPÍTULO IX: ESTUDIO DE FACTIBILIDAD ECONÓMICA Y MODELO DE NEGOCIO GLOBAL (SaaS)**
 
-## **9.1 Conclusiones**
+Para determinar la viabilidad comercial de la investigación y evaluar la transición del sistema OpenBJJ hacia un modelo de negocio global escalable, se ha desarrollado un estudio de factibilidad financiera integral. Este análisis cuantifica los costos de inversión inicial (CAPEX), la nómina recurrente del equipo de desarrollo y soporte, los gastos operativos de infraestructura (OPEX), y determina el punto de equilibrio en el mercado real de academias de Jiu-Jitsu.
 
-### **9.1.1 Conclusión sobre la Viabilidad de Arquitecturas Híbridas Edge AI**
+## **9.1 Modelo de Negocio Global (SaaS B2C & B2B)**
+Con base en estudios de campo en artes marciales, una escuela o academia estándar de Jiu-Jitsu Brasileño cuenta en promedio con **15 alumnos activos**. El esquema comercial se adapta a esta realidad mediante dos modalidades:
+*   **Segmento B2C (Practicante Individual):** Suscripción Freemium / Premium de **$9.99 USD/mes** (o $89 USD/año) para sparrings e inferencias ilimitadas.
+*   **Segmento B2B (Licencia de Academia / Dojo):** Cuota fija de **$29.99 USD/mes por academia** (equivalente a $2.00 USD/mes por alumno en una escuela promedio de 15 estudiantes). Otorga acceso a todos sus practicantes y permite al instructor personalizar el corpus RAG con sus propios videos.
+
+## **9.2 Estructura de Inversión Inicial (CAPEX)**
+La inversión inicial requerida para el desarrollo, estabilización arquitectónica, registro legal y empaquetado de producción de la PWA asciende a **$21,000.00 USD**, desglosada a continuación:
+
+<a id="tabla-9-1"></a>
+*Tabla 9.1*  
+*Estructura de Inversión Inicial (CAPEX)*
+
+| Concepto de Inversión | Horas / Unidad | Costo Unitario (USD) | Subtotal (USD) |
+| --- | --- | --- | --- |
+| Arquitecto de Software / Senior Engineer | 400 horas | $25.00 / hr | $10,000.00 |
+| Ingeniero de IA & Visión Computacional | 200 horas | $30.00 / hr | $6,000.00 |
+| Diseñador UI/UX & Especialista PWA | 100 horas | $20.00 / hr | $2,000.00 |
+| Hardware de Pruebas en Tatami & Dispositivos Móviles | 2 unidades | $750.00 | $1,500.00 |
+| Constitución Legal, Registro de Marca & Patente | 1 trámite | $1,500.00 | $1,500.00 |
+| **TOTAL CAPEX** | | | **$21,000.00** |
+
+## **9.3 Estructura de Costos Operativos y Nómina de Desarrollo (OPEX Mensual)**
+Para garantizar la continuidad operativa y retribuir adecuadamente al equipo involucrado en la evolución y soporte del sistema, los gastos operativos recurrentes se dividen en nómina de personal e infraestructura:
+
+1. **Nómina Recurrente de Personal (Payroll):**
+   - Ingeniero de Desarrollo Fullstack & Mantenimiento PWA: **$1,200.00 USD/mes**.
+   - Especialista en Soporte de IA & Optimización RAG: **$800.00 USD/mes**.
+   - **Total Nómina Recurrente:** **$2,000.00 USD/mes** ($24,000.00 USD/año).
+
+2. **Costo de Servir a 1 Academia Promedio (15 Alumnos):**
+   - 15 alumnos x 10 análisis/mes = 150 evaluaciones/mes.
+   - **Tarifa Oficial de Inferencia IA:** Según las especificaciones de precios de Google Gemini API ($0.075 / 1M tokens de entrada, $0.30 / 1M tokens de salida) y OpenAI API (`gpt-4o-mini`: $0.15 / 1M tokens de entrada, $0.60 / 1M tokens de salida), un análisis completo de 9 fotogramas clave y 3KB de cinemática consume ~4,320 tokens de entrada y ~650 tokens de salida, representando un costo real de **$0.00052 USD por análisis** en Gemini Flash y **$0.00104 USD** en el proxy de failover de OpenAI. Asignando un umbral conservador de **$0.0025 USD por análisis**, 150 evaluaciones cuestan **$0.38 USD/mes**.
+   - Hosting Cloud y PostgreSQL prorrateado por academia: **$2.40 USD/mes**.
+   - **Costo Operativo Total por Academia de 15 Alumnos:** **$2.78 USD/mes**.
+   - **Margen Bruto por Academia ($29.99 - $2.78):** **$27.21 USD/mes (90.7%)**.
+
+<a id="tabla-9-2"></a>
+*Tabla 9.2*  
+*Costos Operativos Mensuales (OPEX Base: 50 Academias / 750 Alumnos)*
+
+| Concepto Operativo | Descripción | Costo Mensual (USD) | Costo Anual (USD) |
+| --- | --- | --- | --- |
+| Nómina de Personal de Desarrollo & Soporte | 2 ingenieros a tiempo parcial / retainer | $2,000.00 | $24,000.00 |
+| Inferencia LLM (Gemini / OpenAI API) | 11,250 evaluaciones/mes | $28.13 | $337.56 |
+| Servidor de Aplicaciones & DB (PostgreSQL Managed) | VPS 8GB RAM Cloud Server | $80.00 | $960.00 |
+| Almacenamiento Vectorial & CDN (ChromaDB + S3) | 50 GB de almacenamiento RAG | $40.00 | $480.00 |
+| **TOTAL OPEX MENSUAL** | | **$2,148.13** | **$25,777.56** |
+
+## **9.4 Punto de Equilibrio (Break-Even Point)**
+Para cubrir la totalidad de la nómina del equipo ($2,000 USD/mes) y los costos fijos de infraestructura ($120 USD/mes), el número mínimo de academias cliente necesarias es:
+
+$$\text{Punto de Equilibrio} = \frac{\text{Gastos Fijos Mensuales (USD 2,120.00)}}{\text{Margen Bruto por Academia (USD 27.21)}} = 77.9 \approx 78 \text{ Academias}$$
+
+Con **78 academias suscritas** (equivalente a 1,170 alumnos en total), el proyecto es autosostenible y cubre el 100% de los sueldos del personal de desarrollo y la infraestructura.
+
+## **9.5 Estado de Resultados Proyectado (Año 1 a Año 3)**
+Con una proyección de expansión comercial basada en dojos de BJJ en Latinoamérica y Norteamérica:
+
+<a id="tabla-9-3"></a>
+*Tabla 9.3*  
+*Estado de Resultados Proyectado (en USD)*
+
+| Estado de Resultados | Año 1 (300 B2C + 50 Dojos) | Año 2 (1,500 B2C + 200 Dojos) | Año 3 (5,000 B2C + 800 Dojos) |
+| --- | --- | --- | --- |
+| Ingresos B2C (Suscripción $9.99/mes) | $35,964.00 | $179,820.00 | $599,400.00 |
+| Ingresos B2B (Licencia Dojo $29.99/mes) | $17,994.00 | $71,976.00 | $287,904.00 |
+| **INGRESOS BRUTOS TOTALES** | **$53,958.00** | **$251,796.00** | **$887,304.00** |
+| Costo Directo de Inferencia IA (APIs) | ($675.00) | ($3,375.00) | ($11,250.00) |
+| Servidores & Nube (PostgreSQL/ChromaDB) | ($1,440.00) | ($2,880.00) | ($7,200.00) |
+| Comisiones de Pasarela de Pago (3.5%) | ($1,888.53) | ($8,812.86) | ($31,055.64) |
+| **MARGEN BRUTO** | **$49,954.47 (92.6%)** | **$236,728.14 (94.0%)** | **$837,798.36 (94.4%)** |
+| Nómina de Personal de Desarrollo & Soporte | ($24,000.00) | ($36,000.00) | ($72,000.00) |
+| Gastos de Marketing & Operaciones | ($12,000.00) | ($36,000.00) | ($108,000.00) |
+| Depreciación de Inversión Inicial (CAPEX) | ($7,000.00) | ($7,000.00) | ($7,000.00) |
+| **UTILIDAD ANTES DE IMPUESTOS (EBIT)** | **$6,954.47** | **$157,728.14** | **$650,798.36** |
+| Impuesto a las Utilidades (25%) | ($1,738.62) | ($39,432.04) | ($162,699.59) |
+| **UTILIDAD NETA RESULTANTE** | **$5,215.85** | **$118,296.10** | **$488,098.77** |
+
+## **9.6 Análisis de Rentabilidad Financiera (VAN, TIR y Payback)**
+*   **Margen Bruto:** Superior al **92%**, gracias al costo de servicio de apenas **$2.78 USD/mes** por escuela de 15 alumnos.
+*   **Periodo de Recuperación de la Inversión (Payback Period):** **11.2 meses**.
+*   **Valor Actual Neto (VAN / NPV al 12%):** **$385,420.00 USD**.
+*   **Tasa Interna de Retorno (TIR / IRR):** **86.4%**.
+*   **Dictamen Financiero:** El proyecto OpenBJJ no solo es viable técnicamente, sino que representa una **unidad de negocio global altamente rentable, escalable y con un margen operativo extraordinario**, apto para levantar capital semilla o ser comercializado internacionalmente como SaaS.
+
+## **9.7 Caso de Estudio de Escala: Academia Knockout (500 Alumnos) y Régimen Tributario Boliviano (Ley 843)**
+
+Para certificar el comportamiento del sistema ante un escenario de alta demanda masiva real, se analiza el caso de la **Academia Knockout**, institución que acoge a la franquicia Corpo & Mente y cuenta con una comunidad de **500 alumnos de Jiu-Jitsu activos**.
+
+### **9.7.1 Comportamiento Técnico y Despliegue Nube en Internet (Disponibilidad 24/7)**
+1. **Desacoplamiento Edge AI Client-Side (MediaPipe Pose 3D):**
+   Los 500 alumnos procesan la cinemática de sus videos localmente en sus propios navegadores o dispositivos móviles. El servidor central no recibe video en bruto, reduciendo el consumo de ancho de banda a payloads de 3KB por evaluación.
+2. **Carga en el API Gateway y Base de Datos:**
+   Con 500 alumnos realizando en promedio 1 análisis a la semana (2,000 a 5,000 evaluaciones al mes), el servidor Express y la base de datos PostgreSQL procesan aproximadamente **166 evaluaciones diarias**. Durante las horas pico de entrenamiento (19:00 a 21:00 hrs), el tráfico alcanza entre 30 y 50 peticiones por hora (< 1 petición por segundo), consumiendo menos del 5% de CPU.
+3. **Infraestructura Nube Enterprise 24/7 (Alta Disponibilidad en Internet):**
+   Para garantizar la disponibilidad en internet con certificado SSL/TLS, balanceo de carga y backups diarios, la arquitectura nube de producción se compone de:
+   - **Servidor de Aplicación API Node.js (AWS EC2 / DigitalOcean 4 vCPU, 8GB RAM):** $48.00 USD/mes.
+   - **Base de Datos Gestionada Cloud (Managed PostgreSQL 4GB RAM + SSL + Backups):** $60.00 USD/mes.
+   - **Almacenamiento Vectorial & Assets (ChromaDB Server + AWS S3 / CDN):** $35.00 USD/mes.
+   - **Seguridad WAF, SSL & Dominio Enterprise (Cloudflare Pro + DNS 24/7):** $25.00 USD/mes.
+   - **Total Infraestructura Nube Enterprise 24/7:** **$168.00 USD / mes**.
+4. **Consumo Combinado de IAs (Gemini 2.5 Flash + Failover OpenAI ChatGPT):**
+   - **Google Gemini 2.5 Flash (95% de las inferencias):** 4,750 análisis x $0.00052 USD = **$2.47 USD/mes**.
+   - **OpenAI ChatGPT `gpt-4o-mini` (5% de las inferencias por failover):** 250 análisis x $0.00104 USD = **$0.26 USD/mes**.
+   - **Costo Total Consolidado de IAs para 500 Alumnos:** **$2.73 USD / mes**.
+
+### **9.7.2 Régimen Tributario Boliviano Aplicado a la Empresa de Software**
+De acuerdo con la legislación tributaria boliviana aplicable a empresas de tecnología y servicios digitales (Ley 843 y Decreto Supremo 24051):
+*   **Impuesto a las Transacciones (IT):** **3%** sobre los ingresos brutos facturados.
+*   **Impuesto al Valor Agregado (IVA):** **13%** sobre la facturación de licencias de software (débito fiscal).
+*   **Impuesto a las Utilidades de las Empresas (IUE):** **25%** sobre la utilidad neta anual.
+*   **IUE Beneficiarios del Exterior (Retención por Servicios Digitales):** **12.5%** de retención sobre las remesas enviadas a Google (Gemini) y OpenAI (ChatGPT) por concepto de consumo de APIs desde el exterior (Art. 51 de la Ley 843).
+
+### **9.7.3 Estado Financiero Específico para la Academia Knockout (500 Alumnos)**
+Si se comercializa una suscripción de macro-academia a Knockout por **$299.00 USD/mes** (equivalente a tan sólo **$0.60 USD/mes o ~4.10 Bs por alumno al mes** por acceso ilimitado 24/7 en internet):
+
+<a id="tabla-9-4"></a>
+*Tabla 9.4*  
+*Estado Financiero Mensual - Caso Academia Knockout (500 Alumnos en Nube Enterprise 24/7)*
+
+| Concepto Financiero | Valor Mensual (USD) | Explicación Técnica / Fiscal |
+| --- | --- | --- |
+| **Ingreso Bruto Mensual (Suscripción Knockout B2B)** | **$299.00** | Licencia institucional para 500 alumnos con acceso 24/7 |
+| Costo API Gemini 2.5 Flash (4,750 inferencias) | ($2.47) | Inferencia multimodal primaria ($0.075/1M tokens) |
+| Costo API OpenAI `gpt-4o-mini` Failover (250 inferencias) | ($0.26) | Proxy de contingencia en caliente ($0.15/1M tokens) |
+| Retención Tributaria IUE Beneficiarios Exterior (12.5%) | ($0.34) | Retención fiscal boliviana sobre remesas a Google/OpenAI |
+| Infraestructura Nube Enterprise 24/7 (AWS/Cloudflare) | ($168.00) | Servidor API, PostgreSQL Managed, ChromaDB Cloud y WAF |
+| Impuesto a las Transacciones (IT 3%) | ($8.97) | Impuesto nacional boliviano sobre ingresos brutos |
+| **MARGEN BRUTO OPERATIVO NETO** | **$118.96** | **Utilidad neta mensual (39.8% de margen operativo)** |
+
+**Dictamen del Caso de Estudio:** Incluso al desplegar el sistema en una infraestructura nube de producción 24/7 de alta disponibilidad en internet (con AWS EC2, PostgreSQL Managed, ChromaDB Cloud y WAF DDoS de Cloudflare por $168 USD/mes), atender a los 500 alumnos de Knockout genera un ingreso de $299 USD/mes y deja un beneficio neto operativo de **$118.96 USD/mes (39.8% de margen)**, demostrando la solidez técnica e ingenieril del proyecto.
+
+---
+
+# **CAPÍTULO X: CONCLUSIONES Y RECOMENDACIONES**
+
+## **10.1 Conclusiones**
+
+### **10.1.1 Conclusión sobre la Viabilidad de Arquitecturas Híbridas Edge AI**
 Se ha comprobado la factibilidad técnica y operativa de implementar arquitecturas híbridas (Edge AI) para el análisis deportivo. La estimación cinemática tridimensional de los 33 landmarks corporales ejecutada localmente en el cliente web mediante MediaPipe Pose (WASM/WebGL) ha demostrado un rendimiento excepcional, manteniendo latencias inferiores a 50 milisegundos por fotograma sin requerir hardware especializado. Asimismo, se logró una optimización drástica del ancho de banda y cumplimiento estricto del requisito de privacidad (RNF05) al descartar la transmisión del video bruto; en su lugar, se despachan únicamente resúmenes de metadatos angulares de aproximadamente 3KB hacia el servidor, lo que garantiza la viabilidad del sistema en conexiones inestables.
 
-### **9.1.2 Conclusión sobre el Grounding RAG y Soberanía Local**
+### **10.1.2 Conclusión sobre el Grounding RAG y Soberanía Local**
 La incorporación de la arquitectura de Recuperación Aumentada por Generación (RAG) centralizada demostró una efectividad rotunda en la reducción de alucinaciones del modelo de lenguaje. La indexación exitosa de manuales técnicos fundamentales, como la obra de Saulo Ribeiro, en el motor ChromaDB v2 mediante embeddings semánticos reales de 384 dimensiones generados localmente, garantizó un grounding biomecánico preciso y altamente contextualizado. Esta configuración asegura la soberanía total de la base de conocimiento pedagógico de la academia, eliminando la dependencia de servicios de indexación externos.
 
-### **9.1.3 Análisis Crítico: Limitación del Motor RAG por Metadatos oEmbed**
+### **10.1.3 Análisis Crítico: Limitación del Motor RAG por Metadatos oEmbed**
 Durante las pruebas exhaustivas del motor RAG en la asimilación de fuentes en video (YouTube), se identificó un cuello de botella arquitectónico severo. El sistema actual ingesta y vectoriza exclusivamente los metadatos superficiales del video (Título, Canal y Plataforma) mediante el protocolo `oEmbed`, omitiendo por completo el contenido acústico o visual. En consecuencia, la recuperación semántica en ChromaDB depende estrictamente de la coincidencia léxica en los títulos. Si múltiples usuarios ingresan tutoriales con títulos genéricos carentes de terminología técnica de BJJ, el motor será incapaz de vincularlos con el análisis biomecánico correspondiente. Se recomienda para trabajos futuros la integración de modelos *Speech-to-Text* (como Whisper) para transcribir y vectorizar el contenido verbal del instructor del video, enriqueciendo sustancialmente el espacio latente del tutor adaptativo.
 
-### **9.1.4 Conclusión sobre la Rentabilidad Financiera y Escalabilidad Global SaaS**
+### **10.1.4 Conclusión sobre la Rentabilidad Financiera y Escalabilidad Global SaaS**
 Se ha demostrado matemáticamente que el sistema OpenBJJ constituye un modelo de negocio global comercialmente rentable y escalable. La decisión arquitectónica de ejecutar la estimación cinemática 3D en el lado del cliente (Edge AI) elimina la necesidad de servidores de video con GPUs costosas en la nube, reduciendo el costo marginal por análisis a menos de $0.0025 USD. Esto permite obtener un margen bruto superior al 92%, recuperar la inversión inicial (CAPEX) en solo 9.3 meses y generar un Valor Actual Neto (VAN) de $684,250.00 USD al tercer año, convirtiendo la tesis en una plataforma lista para su internacionalización en el mercado global de tecnología deportiva (SportsTech).
 
-## **9.2 Recomendaciones de Despliegue Físico**
+## **10.2 Recomendaciones de Despliegue Físico**
 Para garantizar la continuidad operativa en la academia Corpo & Mente de forma altamente disponible y resiliente, la distribución física de la infraestructura se estructura mediante la orquestación contenerizada (Docker Compose) de los nodos de servicios. La arquitectura del ambiente de entrenamiento asegura que la base de datos relacional PostgreSQL, el almacén de vectores ChromaDB y el API Gateway de Express funcionen en red local aislada. De acuerdo con las directrices de administración de entornos de base de datos de Mannino (2019), esta orquestación contenerizada local, al aislar de forma independiente PostgreSQL y ChromaDB en una red local privada, implementa una arquitectura cliente-servidor distribuida soberana que garantiza la seguridad, la confidencialidad cinemática (RNF05) y el aislamiento de datos maestros de la academia Corpo & Mente. Los volúmenes persistentes (`pgdata` y `chromadata`) constituyen salvaguardas arquitectónicas fundamentales que previenen la pérdida del historial biomecánico y del corpus vectorial RAG frente a eventuales fallos de suministro eléctrico en el tatami, permitiendo la reanudación transparente de los servicios.
 
 ---
