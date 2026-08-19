@@ -91,7 +91,11 @@ En este trabajo se expone el diseño y modelado orientado a objetos de una plata
     - [1.2.2 Objetivos Específicos](#122-objetivos-específicos)
   - [1.3 Metodología](#13-metodología)
     - [1.3.1 Ingeniería de Software (Proceso Unificado)](#131-ingeniería-de-software-proceso-unificado)
-    - [1.3.2 Gestión del Proyecto (Scrum)](#132-gestión-del-proyecto-scrum)
+    - [1.3.2 Gestión del Proyecto (Scrum Framework)](#132-gestión-del-proyecto-scrum-framework)
+      - [1.3.2.1 Estructura de Roles de Scrum](#1321-estructura-de-roles-de-scrum)
+      - [1.3.2.2 Artefactos de Scrum y Definición de Hecho (DoD)](#1322-artefactos-de-scrum-y-definición-de-hecho-dod)
+      - [1.3.2.3 Eventos y Ceremonias del Ciclo de Vida de Scrum](#1323-eventos-y-ceremonias-del-ciclo-de-vida-de-scrum)
+      - [1.3.2.4 Cronograma de Ejecución Sprint por Sprint y Mapeo con las Fases de UP](#1324-cronograma-de-ejecución-sprint-por-sprint-y-mapeo-con-las-fases-de-up)
   - [1.4 Estudio de Factibilidad Económica, Análisis de Costos y Modelo de Negocio Global (SaaS)](#14-estudio-de-factibilidad-económica-análisis-de-costos-y-modelo-de-negocio-global-saas)
     - [1.4.1 Modelo de Negocio Global (SaaS B2C & B2B)](#141-modelo-de-negocio-global-saas-b2c--b2b)
     - [1.4.2 Estructura de Inversión Inicial (CAPEX)](#142-estructura-de-inversión-inicial-capex)
@@ -251,10 +255,50 @@ El Proceso Unificado (UP) rige la arquitectura técnica, el modelado y la docume
 3. **Construcción (Construction):** Programación e integración iterativa de los componentes de software, API Gateway, ORM de persistencia y base de datos vectorial centralizada.
 4. **Transición (Transition):** Despliegue de la PWA, pruebas de campo en el tatami de la academia Corpo & Mente, certificación de resiliencia contenerizada mediante Docker y optimizaciones de rendimiento y latencia.
 
-### **1.3.2 Gestión del Proyecto (Scrum)**
-Se utiliza Scrum para organizar el esfuerzo temporal y el backlog del proyecto a través de iteraciones fijas (*Sprints*) de 3 semanas, facilitando la inspección y adaptación constante ante impedimentos técnicos o cambios de API. Los roles clave de Product Owner, Scrum Master y Development Team se definieron dentro del contexto académico para la estructuración y revisión de entregables incrementales.
+### **1.3.2 Gestión del Proyecto (Scrum Framework)**
 
-El desarrollo se estructuró a lo largo de las cuatro fases completadas de UP. El **Sprint 1** abordó la mitigación del riesgo R-01 (viabilidad de extracción de landmarks client-side con MediaPipe). El **Sprint 2** se enfocó en el riesgo R-02 y R-03, desarrollando el motor RAG centralizado y la integración estructurada con Gemini. Los **Sprints 3 y 4** abarcaron la Construcción y Transición, cerrando las pruebas de campo en el tatami y la infraestructura contenerizada de producción.
+La gestión temporal y operativa del proyecto OpenBJJ se fundamenta en **Scrum**, el marco de trabajo ágil estándar de la industria (Schwaber & Sutherland, 2020; AWS, 2023) basado en el control de procesos empíricos. Scrum organiza el trabajo en ciclos iterativos de duración fija (*Sprints*), sustentado en tres pilares esenciales: **Transparencia, Inspección y Adaptación**.
+
+Para este proyecto de tesis de grado, se ha diseñado una **arquitectura metodológica híbrida**: el **Proceso Unificado (UP)** rige la ingeniería de software, la estabilidad arquitectónica orientada a objetos y la documentación del modelo de dominio; mientras que **Scrum** gestiona la cadencia temporal, la priorización dinámica de requerimientos (*Product Backlog*), la mitiga de riesgos por *time-boxing* y la entrega continua de incrementos de software potencialmente desplegables.
+
+#### **1.3.2.1 Estructura de Roles de Scrum**
+Los roles definidos dentro de la célula de desarrollo del proyecto comprenden:
+*   **Product Owner (PO):** Representado por el instructor principal de Jiu-Jitsu Brasileño de la academia Corpo & Mente en colaboración con el tesista. Es responsable de maximizar el valor del producto, definir las Historias de Usuario (*User Stories*), establecer los criterios de aceptación biomecánicos y mantener priorizado el *Product Backlog*.
+*   **Scrum Master (SM):** Asumido por el tesista en su rol de gestor de proyecto. Encargado de garantizar el cumplimiento del marco Scrum, remover bloqueos técnicos (tales como la latencia en pipelines de MediaPipe, límites de frecuencia en APIs de Gemini y compatibilidad WebGL) y facilitar las ceremonias del equipo.
+*   **Development Team (Equipo de Desarrollo):** Equipo multidisciplinario a cargo del tesista que abarca los roles de Arquitecto de Software, Desarrollador Fullstack (React/TypeScript, Express, Node.js), Especialista en Visión Computacional (MediaPipe 3D), Ingeniero de IA/RAG (ChromaDB + LLM Proxy) y Administrador de Bases de Datos (PostgreSQL/Prisma ORM).
+
+#### **1.3.2.2 Artefactos de Scrum y Definición de Hecho (Definition of Done - DoD)**
+El proyecto gestiona los tres artefactos principales de Scrum suplementados con criterios rigurosos de ingeniería de software:
+1.  **Product Backlog:** Listado dinámico y centralizado de todas las funcionalidades, requisitos no funcionales, optimizaciones de rendimiento y correcciones requeridas. Cada elemento se redacta bajo el formato de Historia de Usuario: *"Como [Actor], quiero [Funcionalidad] para [Beneficio Esperado]"*, evaluado en Puntos de Historia (*Story Points*) mediante la escala de Fibonacci.
+2.  **Sprint Backlog:** Subconjunto de Historias de Usuario seleccionadas durante la planificación del Sprint, junto con el plan técnico de tareas necesarias para alcanzar el Objetivo del Sprint (*Sprint Goal*).
+3.  **Incremento de Software (Potentially Shippable Increment):** La versión ejecutable, integrada y probada de la PWA al cierre de cada Sprint.
+4.  **Definición de Hecho (Definition of Done - DoD):** Para que una Historia de Usuario se considere finalizada y lista para su integración, debe cumplir obligatoriamente con la siguiente lista de verificación:
+    *   Código fuente escrito en TypeScript estricto, libre de errores de compilación y lints.
+    *   Cero emojis en código, comentarios, logs y documentación oficial.
+    *   Pruebas de integración ejecutadas exitosamente (incluyendo la certificación de failover con `testFailover.ts` y compilación de producción `npm run build`).
+    *   Modelado UML actualizado en la especificación del `README.md` (Diagramas de Casos de Uso, Secuencia, DCD y Estado).
+    *   Código comiteado y fusionado en las ramas `desarrollo` y `main` del repositorio oficial de GitHub.
+
+#### **1.3.2.3 Eventos y Ceremonias del Ciclo de Vida de Scrum**
+El proyecto se estructuró a lo largo de **4 Sprints de 3 semanas de duración cada uno** (12 semanas en total), ejecutando las siguientes ceremonias:
+*   **Sprint Planning:** Celebrado al inicio de cada Sprint para definir el *Sprint Goal* y seleccionar los elementos del *Product Backlog*.
+*   **Daily Scrum (Sincronización Diaria):** Sesión de inspección de 15 minutos donde se evalúa el progreso hacia el *Sprint Goal*, registrando en la bitácora del proyecto: 1) ¿Qué se logró ayer?, 2) ¿Qué se trabajará hoy?, y 3) ¿Existen impedimentos técnicos?
+*   **Sprint Review (Demostración del Incremento):** Inspección en vivo al cierre de cada Sprint, validando las funcionalidades desarrolladas mediante pruebas reales en el tatami con videos de combate.
+*   **Sprint Retrospective (Retrospectiva):** Análisis de mejora continua para optimizar el proceso de desarrollo, ajustando aspectos como la tasa de consumo de tokens en Gemini, el renderizado en WebGL y la gestión de ramas en Git.
+
+#### **1.3.2.4 Cronograma de Ejecución Sprint por Sprint y Mapeo con las Fases de UP**
+La ejecución temporal del proyecto integró de forma transparente las 4 Fases del Proceso Unificado (UP) con las iteraciones de Scrum, garantizando la resolución temprana de riesgos arquitectónicos:
+
+<a id="tabla-1-0"></a>
+*Tabla 1.0*  
+*Cronograma de Ejecución Scrum y Mapeo con las Fases del Proceso Unificado (UP)*
+
+| Sprint | Duración | Fase UP Asociada | Objetivo del Sprint (*Sprint Goal*) | Entregables Principales e Incremento de Software |
+| --- | --- | --- | --- | --- |
+| **Sprint 1** | Semanas 1 - 3 | Inicio / Elaboración | Mitigar Riesgo R-01: Validar factibilidad de extracción de pose 3D client-side sin sensores. | Pipeline ejecutable de MediaPipe Pose en WebGL/WASM extrayendo 33 landmarks corporales a 30 FPS en navegador local sin servidor. |
+| **Sprint 2** | Semanas 4 - 6 | Elaboración | Mitigar Riesgos R-02 y R-03: Desarrollar el motor RAG Vivo centralizado y grounding dual. | Servidor Express, base de datos ChromaDB con embeddings `all-MiniLM-L6-v2` e inyección de fragmentos de *Jiu-Jitsu University*. |
+| **Sprint 3** | Semanas 7 - 9 | Construcción | Implementar Casos de Uso CU01-CU05, Failover Proxy y persistencia relacional. | Integración del controlador `AdaptationController`, proxy Gemini/OpenAI, 8 tablas relacionales en PostgreSQL y motor adaptativo. |
+| **Sprint 4** | Semanas 10 - 12 | Transición | Pruebas de campo en tatami, resiliencia offline PWA y contenerización Docker. | PWA offline lista (Service Workers), orquestación `docker-compose`, script de certificación `testFailover.ts` y pruebas en Corpo & Mente. |
 
 ## **1.4 Estudio de Factibilidad Económica, Análisis de Costos y Modelo de Negocio Global (SaaS)**
 
