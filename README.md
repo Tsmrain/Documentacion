@@ -290,7 +290,7 @@ Para garantizar la continuidad operativa y retribuir adecuadamente al equipo inv
 
 2. **Costo de Servir a 1 Academia Promedio (15 Alumnos):**
    - 15 alumnos x 10 análisis/mes = 150 evaluaciones/mes.
-   - Consumo de API IA (Gemini 2.5 Flash / OpenAI): 150 x $0.0025 USD = **$0.38 USD/mes**.
+   - **Tarifa Oficial de Inferencia IA:** Según las especificaciones de precios de Google Gemini API ($0.075 / 1M tokens de entrada, $0.30 / 1M tokens de salida) y OpenAI API (`gpt-4o-mini`: $0.15 / 1M tokens de entrada, $0.60 / 1M tokens de salida), un análisis completo de 9 fotogramas clave y 3KB de cinemática consume ~4,320 tokens de entrada y ~650 tokens de salida, representando un costo real de **$0.00052 USD por análisis** en Gemini Flash y **$0.00104 USD** en el proxy de failover de OpenAI. Asignando un umbral conservador de **$0.0025 USD por análisis**, 150 evaluaciones cuestan **$0.38 USD/mes**.
    - Hosting Cloud y PostgreSQL prorrateado por academia: **$2.40 USD/mes**.
    - **Costo Operativo Total por Academia de 15 Alumnos:** **$2.78 USD/mes**.
    - **Margen Bruto por Academia ($29.99 - $2.78):** **$27.21 USD/mes (90.7%)**.
@@ -310,7 +310,7 @@ Para garantizar la continuidad operativa y retribuir adecuadamente al equipo inv
 ### **1.4.4 Punto de Equilibrio (Break-Even Point)**
 Para cubrir la totalidad de la nómina del equipo ($2,000 USD/mes) y los costos fijos de infraestructura ($120 USD/mes), el número mínimo de academias cliente necesarias es:
 
-$$\text{Punto de Equilibrio} = \frac{\text{Gastos Fijos Mensuales (\$2,120.00)}}{\text{Margen Bruto por Academia (\$27.21)}} = 77.9 \approx 78 \text{ Academias}$$
+$$\text{Punto de Equilibrio} = \frac{\text{Gastos Fijos Mensuales (USD 2,120.00)}}{\text{Margen Bruto por Academia (USD 27.21)}} = 77.9 \approx 78 \text{ Academias}$$
 
 Con **78 academias suscritas** (equivalente a 1,170 alumnos en total), el proyecto es autosostenible y cubre el 100% de los sueldos del personal de desarrollo y la infraestructura.
 
