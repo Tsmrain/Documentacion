@@ -6,6 +6,7 @@ import { RagIngestionPanel } from "./components/RagIngestionPanel";
 import { ProgresoView } from "./components/ProgresoView";
 import { HistoryView } from "./components/HistoryView";
 import { PerfilView } from "./components/PerfilView";
+import { WelcomeScreen } from "./components/WelcomeScreen";
 
 // Union de tabs validos. "reporte" es un tab dedicado para el resultado del analisis biomecanico.
 type TabId = "analizador" | "reporte" | "progreso" | "historial" | "perfil" | "rag";
@@ -74,7 +75,7 @@ function safeJsonParse(raw: string): any | null {
 function App() {
   const [report, setReport] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<TabId>("analizador");
-  const [usuarioId, setUsuarioId] = useState<string>("00000000-0000-0000-0000-000000000001");
+  const [usuarioId, setUsuarioId] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<{
     nombre: string;
     cinturon: string;
@@ -101,33 +102,24 @@ function App() {
   // Ref para evitar iniciar un nuevo analisis si uno ya esta en curso
   const analyzingRef = useRef(false);
 
+  const handlePracticanteSeleccionado = (practicante: any) => {
+    setUsuarioId(practicante.usuarioId);
+    setUserProfile({
+      nombre: practicante.nombre,
+      cinturon: practicante.cinturon,
+      maestria: practicante.maestria,
+      altura: practicante.altura || 175,
+      peso: practicante.peso || 75
+    });
+    setReport(null);
+    setActiveTab("analizador");
+    setHistorialVersion(0);
+    console.log(`[App] Practicante activo: ${practicante.nombre} (${practicante.usuarioId})`);
+  };
+
   useEffect(() => {
-    const kioskoId = "00000000-0000-0000-0000-000000000001";
-    
-    const silentAuth = async () => {
-      try {
-        const token = localStorage.getItem("openbjj_jwt");
-        if (!token) {
-          console.log("[App] Modo Kiosco: Auto-autenticando en segundo plano...");
-          const res = await fetch("/api/usuario/auth", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ usuarioId: kioskoId, pin: "1234" })
-          });
-          const data = await res.json();
-          if (res.ok && data.success) {
-            localStorage.setItem("openbjj_jwt", data.token);
-            localStorage.setItem("openbjj_user_id", kioskoId);
-            fetchUserProfile(data.token);
-          }
-        } else {
-          fetchUserProfile(token);
-        }
-      } catch (e) {
-        console.warn("[App] Error en silent auth:", e);
-      }
-    };
-    silentAuth();
+    if (!usuarioId) return;
+    fetchUserProfile();
   }, [usuarioId]);
 
   const fetchUserProfile = async (token?: string) => {
@@ -240,6 +232,12 @@ function App() {
     transition: "all 0.2s"
   });
 
+  // Si aun no hay practicante activo, mostrar pantalla de seleccion
+  if (!usuarioId) {
+    return <WelcomeScreen onPracticanteSeleccionado={handlePracticanteSeleccionado} />;
+  }
+
+
   return (
     <div className="container" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
       <header
@@ -270,6 +268,40 @@ function App() {
           </p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "6px 10px",
+            borderRadius: "8px",
+            background: "rgba(99,102,241,0.1)",
+            border: "1px solid rgba(99,102,241,0.2)"
+          }}>
+            <div style={{
+              width: "28px",
+              height: "28px",
+              borderRadius: "7px",
+              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 800,
+              fontSize: "0.85rem"
+            }}>
+              {userProfile.nombre.charAt(0).toUpperCase()}
+            </div>
+            <span style={{ color: "#a5b4fc", fontSize: "0.85rem", fontWeight: 600 }}>
+              {userProfile.nombre}
+            </span>
+          </div>
+          <button
+            className="btn-secondary"
+            style={{ padding: "8px 12px", fontSize: "0.8rem" }}
+            onClick={() => setUsuarioId(null)}
+            title="Cambiar practicante"
+          >
+            Cambiar Practicante
+          </button>
           <button
             className="btn-secondary"
             style={{
