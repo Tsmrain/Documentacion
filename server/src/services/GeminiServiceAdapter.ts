@@ -86,7 +86,7 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
       for (const currentModel of modelsToTry) {
         try {
           const url = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${activeKey}`;
-          const imageParts = frames.slice(0, 9).map(f => ({
+          const imageParts = frames.slice(0, 5).map(f => ({
             inlineData: {
               mimeType: "image/jpeg",
               data: f
@@ -170,7 +170,7 @@ ${promptJSON}`
     if (activeKey) {
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${activeKey}`;
-        const imageParts = frames.slice(0, 9).map(f => ({
+        const imageParts = frames.slice(0, 3).map(f => ({
           inlineData: {
             mimeType: "image/jpeg",
             data: f
