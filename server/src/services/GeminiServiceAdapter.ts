@@ -81,7 +81,7 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
     console.log(`[Gemini Service - Two-Phase RAG] Fragmento JJU inyectado para tecnica: ${tecnicaDetectada || "baseline"}`);
 
     if (activeKey) {
-      const modelsToTry = Array.from(new Set([primaryModel, "gemini-2.5-flash", "gemini-1.5-flash"]));
+      const modelsToTry = Array.from(new Set([primaryModel, "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash-latest"]));
 
       for (const currentModel of modelsToTry) {
         try {
@@ -105,7 +105,7 @@ PROMPT Y METRICAS:
 ${promptJSON}`
           };
 
-          const response = await fetch(url, {
+          let response = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -121,6 +121,20 @@ ${promptJSON}`
               }
             })
           });
+
+          // Si recibimos 429 (Rate Limit por cuota gratuita por minuto), esperar 1.5s y reintentar una vez
+          if (response.status === 429) {
+            console.warn(`[Gemini API Warning] HTTP Status 429 (Limite por minuto) en modelo ${currentModel}. Pausando 1.5s antes de reintentar...`);
+            await new Promise(r => setTimeout(r, 1500));
+            response = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [textPart, ...imageParts] }],
+                generationConfig: { responseMimeType: "application/json", temperature: 0.1, maxOutputTokens: 2048 }
+              })
+            });
+          }
 
           if (response.ok) {
             const data: any = await response.json();
