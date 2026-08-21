@@ -174,6 +174,76 @@ export class PersistenceFacade implements IPersistenceService {
     }
   }
 
+  async registrarPracticante(nombre: string, cinturon: string): Promise<UsuarioPerfil> {
+    try {
+      const { v4: uuidv4 } = await import("uuid");
+      const nuevoId = uuidv4();
+      const cinturonEnum = (cinturon?.toUpperCase() as Cinturon) || Cinturon.BLANCO;
+
+      const dbUser = await prisma.usuario.create({
+        data: {
+          id: nuevoId,
+          nombre: nombre.trim(),
+          email: `${nuevoId}@openbjj.dojo`,
+          cinturon: cinturonEnum,
+          altura: 1.75,
+          peso: 75.0
+        }
+      });
+
+      await prisma.perfilCompetencia.create({
+        data: {
+          usuarioId: nuevoId,
+          erroresHistoricos: {}
+        }
+      });
+
+      let maestria = "Principiante";
+      if (dbUser.cinturon === Cinturon.AZUL) maestria = "Intermedio";
+      else if (dbUser.cinturon === Cinturon.MORADO || dbUser.cinturon === Cinturon.MARRON) maestria = "Avanzado";
+      else if (dbUser.cinturon === Cinturon.NEGRO) maestria = "Maestro";
+
+      console.log(`[PersistenceFacade] Nuevo practicante registrado: ${nombre} (${nuevoId})`);
+      return {
+        usuarioId: dbUser.id,
+        nombre: dbUser.nombre,
+        cinturon: dbUser.cinturon,
+        maestria,
+        altura: Number(dbUser.altura),
+        peso: Number(dbUser.peso)
+      };
+    } catch (error: any) {
+      console.error("[PersistenceFacade] Error al registrar practicante:", error.message);
+      throw new Error("No se pudo registrar el practicante. Intenta de nuevo.");
+    }
+  }
+
+  async listarPracticantes(): Promise<UsuarioPerfil[]> {
+    try {
+      const usuarios = await prisma.usuario.findMany({
+        orderBy: { nombre: "asc" }
+      });
+
+      return usuarios.map(u => {
+        let maestria = "Principiante";
+        if (u.cinturon === Cinturon.AZUL) maestria = "Intermedio";
+        else if (u.cinturon === Cinturon.MORADO || u.cinturon === Cinturon.MARRON) maestria = "Avanzado";
+        else if (u.cinturon === Cinturon.NEGRO) maestria = "Maestro";
+        return {
+          usuarioId: u.id,
+          nombre: u.nombre,
+          cinturon: u.cinturon,
+          maestria,
+          altura: Number(u.altura),
+          peso: Number(u.peso)
+        };
+      });
+    } catch (error: any) {
+      console.warn("[PersistenceFacade] Error al listar practicantes:", error.message);
+      return [];
+    }
+  }
+
   async cargarPerfil(usuarioId: string): Promise<PerfilCompetencia> {
     try {
       const normalizedId = this.normalizarUsuarioId(usuarioId);
