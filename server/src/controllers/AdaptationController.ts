@@ -54,33 +54,35 @@ export class AdaptationController {
       "Guardia Abierta": []
     };
 
-    if (Array.isArray(historial)) {
-      historial.forEach(h => {
-        const tecnica = (h.tecnicaId || h.reporte?.tecnicaId || "").toLowerCase();
-        const desviacion = h.desviacionGrados ?? h.reporte?.desviacionGrados ?? h.desviacion ?? 0;
-        const score = Math.max(0, Math.min(100, 100 - Math.round(desviacion * 1.8)));
+    historial.forEach(h => {
+      const tecnica = (h.tecnicaId || "").toLowerCase();
+      const desviacion = h.desviacionGrados || 0;
+      const score = Math.max(0, Math.min(100, 100 - Math.round(desviacion * 1.8)));
 
-        if (tecnica.includes("montada") || tecnica.includes("mount")) {
-          scores["Montada"].push(score);
-        } else if (tecnica.includes("espalda") || tecnica.includes("back")) {
-          scores["Espalda"].push(score);
-        } else if (tecnica.includes("lateral") || tecnica.includes("side") || tecnica.includes("100-kilos") || tecnica.includes("100kilos")) {
-          scores["Control Lateral"].push(score);
-        } else if (tecnica.includes("pasaje") || tecnica.includes("pass") || tecnica.includes("derribo") || tecnica.includes("takedown")) {
-          scores["Pasaje de Guardia"].push(score);
-        } else if (tecnica.includes("media") || tecnica.includes("half")) {
-          scores["Media Guardia"].push(score);
-        } else if (tecnica.includes("abierta") || tecnica.includes("open")) {
-          scores["Guardia Abierta"].push(score);
-        } else if (tecnica.includes("cerrada") || tecnica.includes("closed") || tecnica.includes("guardia")) {
-          scores["Guardia Cerrada"].push(score);
-        } else if (tecnica) {
-          scores["Guardia Cerrada"].push(score);
-        }
-      });
-    }
+      if (tecnica.includes("guardia-cerrada") || tecnica.includes("cerrada") || tecnica.includes("closed")) {
+        scores["Guardia Cerrada"].push(score);
+      } else if (tecnica.includes("pasaje") || tecnica.includes("pass")) {
+        scores["Pasaje de Guardia"].push(score);
+      } else if (tecnica.includes("lateral") || tecnica.includes("side")) {
+        scores["Control Lateral"].push(score);
+      } else if (tecnica.includes("montada") || tecnica.includes("mount")) {
+        scores["Montada"].push(score);
+      } else if (tecnica.includes("espalda") || tecnica.includes("back")) {
+        scores["Espalda"].push(score);
+      } else if (tecnica.includes("media") || tecnica.includes("half")) {
+        scores["Media Guardia"].push(score);
+      } else if (tecnica.includes("abierta") || tecnica.includes("open")) {
+        scores["Guardia Abierta"].push(score);
+      } else {
+        scores["Guardia Cerrada"].push(score);
+      }
+    });
 
-    const calcAvg = (arr: number[]) => arr.length > 0 ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0;
+    const calcAvg = (arr: number[]) => {
+      if (arr.length === 0) return 0;
+      const sum = arr.reduce((a, b) => a + b, 0);
+      return Math.round(sum / arr.length);
+    };
 
     return [
       { nombre: "Guardia Cerrada", porcentaje: calcAvg(scores["Guardia Cerrada"]) },
@@ -93,6 +95,41 @@ export class AdaptationController {
     ];
   }
 
+  private async obtenerVideoYouTubeRelacionado(usuarioId: string, terminoBusqueda: string): Promise<string> {
+    const terminoLimpio = (terminoBusqueda || "bjj tutorial").replace(/_/g, " ").replace(/-/g, " ");
+    const fallbackUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(terminoLimpio + " bjj tutorial");
+
+    try {
+      let fuentes: any[] = [];
+      if (this.ragController && typeof this.ragController.obtenerFuentes === "function") {
+        fuentes = await this.ragController.obtenerFuentes(usuarioId);
+      } else if (this.persistence && typeof (this.persistence as any).obtenerFuentesConocimiento === "function") {
+        fuentes = await (this.persistence as any).obtenerFuentesConocimiento(usuarioId);
+      }
+
+      const fuentesYouTube = fuentes.filter((f: any) => f.tipo === "youtube" && f.url);
+      if (fuentesYouTube.length > 0) {
+        const busquedaClean = terminoLimpio.toLowerCase();
+        const match = fuentesYouTube.find((f: any) =>
+          (f.titulo || "").toLowerCase().includes(busquedaClean) ||
+          busquedaClean.includes((f.titulo || "").toLowerCase())
+        );
+
+        if (match) {
+          console.log(`[Adaptación RAG] Video de fuente agregada seleccionado para '${terminoLimpio}': ${match.url}`);
+          return match.url;
+        }
+
+        console.log(`[Adaptación RAG] Seleccionando primera fuente de YouTube agregada por el practicante: ${fuentesYouTube[0].url}`);
+        return fuentesYouTube[0].url;
+      }
+    } catch (e: any) {
+      console.warn("[Adaptación RAG] Error al consultar fuentes agregadas de YouTube:", e.message);
+    }
+
+    return fallbackUrl;
+  }
+
   async evaluarAdaptabilidad(usuarioId: string, reporte: string | null): Promise<RutaAprendizaje> {
     const perfil = await this.persistence.cargarPerfil(usuarioId);
     let historial: any[] = [];
@@ -103,12 +140,13 @@ export class AdaptationController {
     }
 
     const posicionesMaestria = this.calcularMaestriaPorPosicion(historial);
-    
+
     if (!reporte) {
+      const videoInicial = await this.obtenerVideoYouTubeRelacionado(usuarioId, "shrimp bjj drill");
       return {
         nivelCompetenciaActual: "Principiante",
         drillRecomendado: "Movimiento de cadera (Shrimping) básico",
-        videoYouTubeUrl: "https://youtube.com/watch?v=shrimp101",
+        videoYouTubeUrl: videoInicial,
         mensajeAdaptativo: "Continúa practicando los drills básicos para consolidar tus posiciones.",
         ultimaTecnica: historial.length > 0 ? (historial[historial.length - 1].tecnicaId || "") : undefined,
         posicionesMaestria
@@ -130,53 +168,25 @@ export class AdaptationController {
 
     // Recalcular posicionesMaestria agregando el reporte actual
     const tecnicaActual = (evaluacion.tecnicaId || "").toLowerCase();
-    const scoreActual = Math.max(0, Math.min(100, 100 - Math.round(desviacionGrados * 1.8)));
     const historialConActual = [...historial, { tecnicaId: tecnicaActual, desviacionGrados }];
     const posicionesActualizadas = this.calcularMaestriaPorPosicion(historialConActual);
 
     if (hayFalloRecurrente) {
-      console.log(`[Adaptación] Fallo recurrente (> 3) en ${errorArticular}. Conmutando estrategia didáctica.`);
-      const resConmutada = this.conmutarEstrategiaDidactica(perfil, {
-        desviacionArticular: errorArticular,
-        desviacionGrados,
-        severidad: evaluacion.severidad || "Moderado"
-      });
-      resConmutada.ultimaTecnica = evaluacion.tecnicaId;
-      resConmutada.posicionesMaestria = posicionesActualizadas;
-      return resConmutada;
+      console.log(`[Adaptación] Fallo recurrente (> 3) en ${errorArticular}. Conmutando estrategia didáctica a fuentes RAG.`);
+      const videoRecurrente = await this.obtenerVideoYouTubeRelacionado(usuarioId, errorArticular);
+      return {
+        nivelCompetenciaActual: "Reforzamiento Anatómico",
+        drillRecomendado: `Drill de fortalecimiento de manguito rotador y rotación de ${errorArticular.replace("_", " ")}`,
+        videoYouTubeUrl: videoRecurrente,
+        mensajeAdaptativo: `Alerta pedagógica: Has fallado más de 3 veces consecutivas en tu ${errorArticular.replace("_", " ")}. Recomendamos conmutar a ejercicios de aislamiento anatómico para corregir el ángulo.`,
+        ultimaTecnica: evaluacion.tecnicaId,
+        posicionesMaestria: posicionesActualizadas
+      };
     }
 
-    // Buscar en RAG un video de YouTube inyectado para esta tecnica
-    const tecnicaBusqueda = (evaluacion.tecnicaId || "bjj").replace(/-/g, " ").toLowerCase();
-    let videoRecomendado = "https://www.youtube.com/results?search_query=" + encodeURIComponent(tecnicaBusqueda + " bjj tutorial"); // Fallback dinamico
-
-    
-    if (this.ragController) {
-      try {
-        const fuentes = await this.ragController.obtenerFuentes(usuarioId);
-        const fuentesYouTube = fuentes.filter((f: any) => f.tipo === "youtube" && f.url);
-        
-        if (fuentesYouTube.length > 0) {
-          // Intentar buscar uno que coincida con la tecnica actual o articulacion
-          const artBusqueda = errorArticular.replace(/_/g, " ").toLowerCase();
-          
-          const match = fuentesYouTube.find((f: any) => 
-            f.titulo.toLowerCase().includes(tecnicaBusqueda) || 
-            f.titulo.toLowerCase().includes(artBusqueda)
-          );
-          
-          if (match) {
-            videoRecomendado = match.url;
-            console.log(`[Adaptacion] Video RAG encontrado para '${tecnicaBusqueda}': ${videoRecomendado}`);
-          } else {
-            videoRecomendado = fuentesYouTube[0].url;
-            console.log(`[Adaptacion] Video RAG generico seleccionado: ${videoRecomendado}`);
-          }
-        }
-      } catch (e) {
-        console.warn("[Adaptacion] Error al consultar fuentes RAG:", e);
-      }
-    }
+    // Buscar en fuentes RAG agregadas por el usuario
+    const tecnicaBusqueda = (evaluacion.tecnicaId || errorArticular || "bjj").replace(/-/g, " ").toLowerCase();
+    const videoRecomendado = await this.obtenerVideoYouTubeRelacionado(usuarioId, tecnicaBusqueda);
 
     return {
       nivelCompetenciaActual: "Principiante",
@@ -191,15 +201,6 @@ export class AdaptationController {
   evaluarRecurrenciaErrores(perfil: PerfilCompetencia, errorKey: string): boolean {
     const fallosConsecutivos = perfil.erroresHistoricos[errorKey] || 0;
     return fallosConsecutivos > 3;
-  }
-
-  conmutarEstrategiaDidactica(perfil: PerfilCompetencia, error: ErrorBiomecanico): RutaAprendizaje {
-    return {
-      nivelCompetenciaActual: "Reforzamiento Anatomico",
-      drillRecomendado: `Drill de fortalecimiento de manguito rotador y rotación de ${error.desviacionArticular.replace("_", " ")}`,
-      videoYouTubeUrl: "https://youtube.com/watch?v=drill_aislamiento_anatomico",
-      mensajeAdaptativo: `Alerta pedagogica: Has fallado mas de 3 veces consecutivas en tu ${error.desviacionArticular.replace("_", " ")}. Recomendamos conmutar a ejercicios de aislamiento anatomico para corregir el angulo.`
-    };
   }
 
   async registrarVisualizacion(usuarioId: string, videoId: string): Promise<boolean> {
