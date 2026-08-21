@@ -81,7 +81,7 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
     console.log(`[Gemini Service - Two-Phase RAG] Fragmento JJU inyectado para tecnica: ${tecnicaDetectada || "baseline"}`);
 
     if (activeKey) {
-      const modelsToTry = [primaryModel, "gemini-2.5-flash"];
+      const modelsToTry = [primaryModel, "gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-flash-lite"];
 
       for (const currentModel of Array.from(new Set(modelsToTry))) {
         try {
