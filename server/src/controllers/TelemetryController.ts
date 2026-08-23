@@ -62,7 +62,7 @@ export class TelemetryController {
           usuarioId,
           tipoEvento,
           duracionSesionSegundos: duracionSegundos ?? null,
-          detalles: detalles ?? null
+          detalles: detalles ? (detalles as any) : undefined
         }
       });
       console.log(

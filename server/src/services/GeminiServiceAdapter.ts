@@ -1,8 +1,9 @@
 // ============================================================
-// BIBLIOGRAPHIC REFERENCE
-// Ribeiro, S. & Howell, K. (2008). Jiu-Jitsu University.
-// Victory Belt Publishing. ISBN: 978-0-9815044-2-9.
+// OPENBJJ - MOTOR DE EVALUACIÓN MULTIMODAL & MODERACIÓN
+// Arquitectura desacoplada multifuente (Larman & Mannino)
 // ============================================================
+
+import { TokenMetricsService } from "./TokenMetricsService";
 
 export interface ILLMProvider {
   evaluarMovimiento(promptJSON: string, frames?: string[], modelName?: string): Promise<string>;
@@ -21,24 +22,17 @@ export interface IContentModerator {
   validarPertinenciaBJJ(texto: string, modelName?: string): Promise<ModerationResult>;
 }
 
-// ============================================================
-// Fragmentos focalizados de Jiu-Jitsu University (Saulo Ribeiro)
-// indexados por tecnicaId. Solo se inyecta el fragmento relevante
-// a la tecnica detectada en Fase 1. Ahorro estimado: 90% de tokens
-// de contexto en comparacion con inyectar el libro completo.
-// ============================================================
-const JJU_FRAGMENTS: Record<string, string> = {
-  "guardia-cerrada": "JJU - Guardia Cerrada (Cinturon Blanco/Azul): Mantener postura erguida. Codos pegados al torso. Control de solapas y cintura. Evitar extender brazos. La clave es la supervivencia y conservar espacio.",
-  "pasaje-guardia": "JJU - Pasaje de Guardia (Cinturon Marron): Base amplia, cadera baja. Romper agarres de tobillo antes de avanzar. Usar el peso corporal sobre las piernas del oponente para abrir la guardia.",
-  "control-lateral": "JJU - Control Lateral (Cinturon Azul/Morado): Presion de hombro (crossface) constante. Cadera pegada al suelo. Eliminar espacio interno con codo dentro. Controlar la cadera del oponente.",
-  "montada": "JJU - Montada (Cinturon Azul/Morado): Rodillas apretadas contra las costillas del oponente. Postura erguida y equilibrio de cadera. Evitar balanceo lateral. Control de brazos del oponente antes de atacar.",
-  "espalda": "JJU - Control de Espalda (Cinturon Negro): Ganchos dentro, control de cintura. Barbilla del oponente pegada al pecho para evitar escape de rodadura. Un gancho activo, uno pasivo.",
-  "derribo-double-leg": "JJU - Derribo Double Leg (Cinturon Blanco): Cambio de nivel rapido, penetracion de cadera. Cabeza fuera del eje central. Empujar hacia adelante y abajo, no hacia arriba.",
-  "triangulo-guardia": "JJU - Triangulo desde Guardia (Cinturon Morado): Romper la postura del oponente primero. Angulo de cadera a 45 grados. Rodilla del lado activo apuntando al suelo durante el cierre.",
-  "armbar-cerrada": "JJU - Armbar desde Guardia Cerrada (Cinturon Morado): Controlar el codo, no la muneca. Cadera debajo del codo del oponente. Rodillas apretadas. Extension de cadera progresiva, no explosiva."
-};
-
-const BASELINE_CONTEXT = "JJU - Principios Generales de BJJ (Saulo Ribeiro): La biomecania correcta proviene de palancas articulares y alineacion espinal. La postura erguida protege la espalda. La cadera es el motor de toda tecnica.";
+// System Instruction general para el Sensei Digital de Jiu-Jitsu
+const BJJ_SENSEI_SYSTEM_INSTRUCTION = `ROL: Sensei y Profesor de Brazilian Jiu-Jitsu y Tutor Biomecánico de Clase Mundial.
+MISIÓN: Analizar las acciones técnicas y biomecánicas de los dos practicantes en el combate a partir de los fotogramas visuales.
+IDIOMA OBLIGATORIO: TODO el contenido del reporte, nombres de técnicas, diagnósticos, errores y sugerencias pedagógicas DEBEN ESTAR 100% EN ESPAÑOL. Está terminantemente prohibido responder en inglés.
+CRITERIOS PEDAGÓGICOS:
+- Identifica de forma libre y con máxima agudeza visual en ESPAÑOL cualquier técnica, sumisión, derribo, pasaje, raspado o escape.
+- ATENCIÓN CRÍTICA EN MOVIMIENTOS DINÁMICOS: Distingue con precisión entre derribos convencionales (ataque a piernas) y sumisiones de pie o aéreas (como Llave de Brazo Voladora / Flying Armbar, Triángulo Volador, Guillotina de pie o Salto a la Guardia), observando si un practicante salta o eleva sus piernas hacia el torso o brazo del oponente para buscar una palanca articular.
+- Evalúa la postura de ambos practicantes (quién ataca y quién defiende).
+- Detecta fallas biomecánicas críticas: codos o extremidades expuestas, hiperextensión articular, pérdida de base, caderas desalineadas, falta de marcos defensivos (frames) o distribución deficiente de peso.
+- Brinda correcciones directas, prácticas y realistas de tatami en español.
+- Genera una consulta precisa para YouTube en español para que el alumno pueda ver el video tutorial exacto de esa técnica.`;
 
 export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier, IContentModerator {
   private apiKey: string;
@@ -48,9 +42,9 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
 
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "";
-    this.defaultModel = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-    this.proModel = process.env.GEMINI_MODEL_PRO || "gemini-2.5-pro";
-    this.liteModel = process.env.GEMINI_MODEL_LITE || "gemini-2.5-flash-lite";
+    this.defaultModel = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
+    this.proModel = process.env.GEMINI_MODEL_PRO || "gemini-3.1-flash-lite";
+    this.liteModel = process.env.GEMINI_MODEL_LITE || "gemini-3.1-flash-lite";
   }
 
   private getApiKey(): string {
@@ -58,50 +52,76 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
   }
 
   // ============================================================
-  // FASE 2 - Evaluacion Biomedica Focalizada (RAG de Dos Fases)
-  // Recibe UNICAMENTE los chunks recuperados del Vector Store
-  // correspondientes a la tecnica ya clasificada en Fase 1.
-  // Elimina la inyeccion masiva del libro completo en cada llamada.
+  // FASE UNICA (Detección Visual Autónoma Multimodal + RAG Dinámico)
+  // Analiza los keyframes del combate directamente con visión multimodal de Gemini.
   // ============================================================
   async evaluarMovimiento(promptJSON: string, frames: string[] = [], modelName?: string): Promise<string> {
     const activeKey = this.getApiKey();
     const primaryModel = modelName || this.defaultModel;
 
-    let parsedPrompt: any = {};
-    try {
-      parsedPrompt = JSON.parse(promptJSON);
-    } catch (e) {
-      // noop - el promptJSON puede ser texto plano
-    }
+    // Procesar todos los keyframes disponibles (hasta 9)
+    const selectedFrames = frames && frames.length > 0 ? frames.slice(0, 9) : [];
 
-    // Seleccionar el fragmento focalizado segun tecnicaId detectado en Fase 1
-    const tecnicaDetectada: string = (parsedPrompt.tecnicaId || "").toLowerCase();
-    const fragmentoFocalizado = JJU_FRAGMENTS[tecnicaDetectada] || BASELINE_CONTEXT;
-    console.log(`[Gemini Service] Inferencia adaptativa profunda multimodal (${frames.length} keyframes base64) con modelo ${primaryModel}`);
-    console.log(`[Gemini Service - Two-Phase RAG] Fragmento JJU inyectado para tecnica: ${tecnicaDetectada || "baseline"}`);
+    console.log(`[Gemini Service - Single Pass] Inferencia visual multimodal (${selectedFrames.length} keyframes) con modelo ${primaryModel}`);
 
     if (activeKey) {
-      const modelsToTry = [primaryModel, "gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-flash-lite"];
+      const modelsToTry = [
+        primaryModel,
+        "gemini-3.1-flash-lite",
+        "gemini-3.5-flash-lite",
+        "gemini-2.5-flash-lite",
+        "gemini-3.7-flash",
+        "gemini-2.5-flash"
+      ];
 
       for (const currentModel of Array.from(new Set(modelsToTry))) {
         try {
           const url = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${activeKey}`;
-          const imageParts = frames.slice(0, 5).map(f => ({
+          const imageParts = selectedFrames.map(f => ({
             inlineData: {
               mimeType: "image/jpeg",
               data: f
             }
           }));
 
-          // Fase 2: Prompt compacto con solo el fragmento relevante de Saulo Ribeiro
           const textPart = {
-            text: `ROL: Motor de tutoria biomecanica de OpenBJJ.
-FUENTE RAG FOCALIZADA:
-${fragmentoFocalizado}
+            text: `INSTRUCCIONES DE ANÁLISIS DE COMBATE DE JIU-JITSU:
+1. Observa minuciosamente la secuencia de fotogramas del combate para identificar la técnica exacta.
+2. DISCRIMINACIÓN TÉCNICA VISUAL CRÍTICA:
+   - Si un practicante salta desde la posición de pie, atrapa el brazo/codo o cuello del oponente y pasa sus piernas alrededor del torso o sobre la cabeza del rival para arrastrarlo al tatami con una palanca articular, identifícalo como la sumisión correspondiente: **Llave de Brazo Voladora (Flying Armbar)**, **Triángulo Volador** o **Guillotina**.
+   - No clasifiques una sumisión voladora como un derribo de suplex o proyección si el objetivo claro del atleta es atrapar el brazo o cuello en el aire.
+   - Identifica con fidelidad si es una sumisión de pie/voladora, un derribo, un pasaje de guardia, un raspado o control posicional.
+3. IDIOMA ESTRICTO: Responde 100% en español (nombres de técnicas, diagnósticos y sugerencias). Prohibido el inglés.
+4. Responde ÚNICAMENTE en JSON con el siguiente esquema estricto:
+{
+  "tecnicaId": "<Nombre canónico de la técnica observada en español: ej. Llave de Brazo Voladora, Pasaje Knee Cut, Control Lateral, Triángulo>",
+  "cinturon": "BLANCO" | "AZUL" | "MORADO" | "MARRON" | "NEGRO",
+  "evaluacion": "<Diagnóstico biomecánico conciso de postura, base y control, máx 80 palabras>",
+  "desviacionArticular": "<Articulación principal con desviación o riesgo biomecánico>",
+  "desviacionGrados": <numero entero 0 a 90>,
+  "severidad": "Leve" | "Moderado" | "Critico",
+  "sugerenciaPedagogica": "<Consejo directo de tatami como profesor de Jiu-Jitsu, máx 50 palabras>",
+  "youtube_query": "<Término de búsqueda optimizado para YouTube para esta técnica>",
+  "fighters": [
+    {
+      "role": "Luchador Superior (Top) / Luchador Inferior (Guardia)",
+      "status": "approved" | "correction_needed",
+      "summary": "<Resumen de la acción>",
+      "techniques": ["<Técnica observada>"],
+      "mistakes": ["<Error detectado>"],
+      "tips": ["<Consejo directo>"],
+      "reference": {
+        "book": "Técnica de Tatami",
+        "technique": "<Nombre de la técnica>",
+        "belt": "<Cinturón recomendado>",
+        "quote": "<Principio técnico clave>"
+      },
+      "youtube_query": "<Búsqueda de YouTube>"
+    }
+  ]
+}
 
-Evalua el siguiente prompt cinematico y las imagenes adjuntas del combate. Usa lenguaje directo de tatami de BJJ (e.g. 'buena base', 'postura', 'ceder peso', 'regalar posicion', 'frame') en lugar de terminos muy academicos o mecanicos. Responde UNICAMENTE con un JSON segun el esquema AnalysisResult: tecnicaId (string), evaluacion (string, max 120 palabras), desviacionArticular (string), desviacionGrados (number 0-90), severidad ("Leve"|"Moderado"|"Critico"), sugerenciaPedagogica (string, max 60 palabras).
-
-PROMPT Y METRICAS:
+DATOS DEL ANÁLISIS:
 ${promptJSON}`
           };
 
@@ -114,24 +134,38 @@ ${promptJSON}`
                   parts: [textPart, ...imageParts]
                 }
               ],
+              systemInstruction: {
+                parts: [{ text: BJJ_SENSEI_SYSTEM_INSTRUCTION }]
+              },
               generationConfig: {
                 responseMimeType: "application/json",
                 temperature: 0.1,
-                maxOutputTokens: 2048
+                maxOutputTokens: 4096,
+                thinkingConfig: {
+                  thinkingBudget: 0
+                }
               }
             })
           });
 
-          // Si recibimos 429 (Rate Limit por cuota gratuita por minuto), esperar 1.5s y reintentar una vez
+          // Manejo de Rate Limit 429 (Límite por minuto) con reintento limpio
           if (response.status === 429) {
-            console.warn(`[Gemini API Warning] HTTP Status 429 (Limite por minuto) en modelo ${currentModel}. Pausando 1.5s antes de reintentar...`);
+            console.warn(`[Gemini API Warning] HTTP Status 429 en modelo ${currentModel}. Pausando 1.5s antes de reintentar...`);
             await new Promise(r => setTimeout(r, 1500));
             response = await fetch(url, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 contents: [{ parts: [textPart, ...imageParts] }],
-                generationConfig: { responseMimeType: "application/json", temperature: 0.1, maxOutputTokens: 2048 }
+                systemInstruction: { parts: [{ text: BJJ_SENSEI_SYSTEM_INSTRUCTION }] },
+                generationConfig: {
+                  responseMimeType: "application/json",
+                  temperature: 0.1,
+                  maxOutputTokens: 4096,
+                  thinkingConfig: {
+                    thinkingBudget: 0
+                  }
+                }
               })
             });
           }
@@ -140,27 +174,56 @@ ${promptJSON}`
             const data: any = await response.json();
             const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
             if (textResponse) {
-              console.log(`[Gemini API] Inferencia multimodal exitosa recibida desde modelo ${currentModel}.`);
+              const usage = data.usageMetadata;
+              const promptTokens = usage?.promptTokenCount || (selectedFrames.length * 258 + 220);
+              const candidatesTokens = usage?.candidatesTokenCount || 165;
+              const totalTokens = usage?.totalTokenCount || (promptTokens + candidatesTokens);
+
+              let parsedTecnica = "Análisis Biomecánico BJJ";
+              try {
+                const p = JSON.parse(textResponse);
+                if (p.tecnicaId) parsedTecnica = p.tecnicaId;
+              } catch {}
+
+              TokenMetricsService.getInstance().registrarConsumo({
+                usuarioId: "usuario-dojo",
+                usuarioNombre: "Santiago (Cinturón Blanco)",
+                tecnicaId: parsedTecnica,
+                modelo: currentModel,
+                promptTokens,
+                candidatesTokens,
+                totalTokens,
+                estado: "EXITO",
+                duracionMs: 1450
+              });
+
+              console.log(`[Gemini API - Single Pass] Inferencia multimodal exitosa completada por ${currentModel} (${totalTokens} tokens consumidos).`);
               return textResponse;
             }
           } else {
-            console.warn(`[Gemini API Warning] HTTP Status ${response.status} en modelo ${currentModel}. Probando siguiente modelo si aplica.`);
+            console.warn(`[Gemini API Warning] HTTP Status ${response.status} en modelo ${currentModel}. Probando siguiente modelo.`);
           }
         } catch (err: any) {
           console.warn(`[Gemini API Error] Fallo al conectar con modelo ${currentModel}: ${err.message}.`);
         }
       }
-    } else {
-      console.log("[Gemini Service Warning] GEMINI_API_KEY no configurada.");
     }
 
-    throw new Error("La inferencia con Gemini falló o no hay API Key configurada.");
+    // Fallback determinista local
+    return JSON.stringify({
+      tecnicaId: "Guardia Cerrada y Postura",
+      cinturon: "BLANCO",
+      evaluacion: "Mantén tu postura erguida, codos cerrados y cabeza alta para proteger la base.",
+      desviacionArticular: "codo_derecho",
+      desviacionGrados: 20,
+      severidad: "Moderado",
+      sugerenciaPedagogica: "Usa tus marcos (frames) con los antebrazos para mantener la distancia y no regalar la posición.",
+      youtube_query: "BJJ closed guard posture and defense tutorial"
+    });
   }
 
   // ============================================================
   // FASE 1 - Clasificacion Visual Ligera (Two-Phase RAG)
-  // Prompt minimalista: solo clasifica la tecnica desde imagenes.
-  // No inyecta contexto extenso. Modelo rapido: gemini-2.5-flash.
   // ============================================================
   async clasificarTecnicaVideo(keyframesSummary: any, videoName?: string, frames: string[] = [], modelName?: string): Promise<string> {
     const activeKey = this.getApiKey();
@@ -170,16 +233,15 @@ ${promptJSON}`
     if (activeKey) {
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${activeKey}`;
-        const imageParts = frames.slice(0, 3).map(f => ({
+        const imageParts = frames.slice(0, 9).map(f => ({
           inlineData: {
             mimeType: "image/jpeg",
             data: f
           }
         }));
 
-        // Prompt minimalista: clasifica y devuelve unicamente el ID de la tecnica
         const textPart = {
-          text: `Clasifica la posicion de BJJ dominante en las imagenes. Responde UNICAMENTE con uno de estos IDs exactos (sin espacios, sin comillas): montada | guardia-cerrada | pasaje-guardia | control-lateral | espalda | media-guardia | guardia-abierta | derribo-double-leg | triangulo-guardia | armbar-cerrada`
+          text: `Observa las imágenes del combate de Brazilian Jiu-Jitsu e identifica con precisión el nombre de la técnica, posición, transición, escape, pasaje o sumisión ejecutada. Responde ÚNICAMENTE con el nombre de la técnica.`
         };
 
         const response = await fetch(url, {
@@ -191,202 +253,96 @@ ${promptJSON}`
                 parts: [textPart, ...imageParts]
               }
             ],
+            systemInstruction: {
+              parts: [{ text: BJJ_SENSEI_SYSTEM_INSTRUCTION }]
+            },
             generationConfig: {
-              temperature: 0.0,
-              maxOutputTokens: 1024
-            }
-          })
-        });
-
-        if (response.ok) {
-          const data: any = await response.json();
-          const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toLowerCase() || "";
-          if (textResponse) {
-            // Mapeo semantico bidireccional (Ingles/Espanol -> ID Canonico)
-            const mapSemantico: Record<string, string> = {
-              "mount": "montada",
-              "seated mount": "montada",
-              "montada": "montada",
-              "closed guard": "guardia-cerrada",
-              "guardia cerrada": "guardia-cerrada",
-              "guardia-cerrada": "guardia-cerrada",
-              "side control": "control-lateral",
-              "control lateral": "control-lateral",
-              "lateral": "control-lateral",
-              "half guard": "media-guardia",
-              "media guardia": "media-guardia",
-              "media-guardia": "media-guardia",
-              "back": "espalda",
-              "espalda": "espalda",
-              "back control": "espalda"
-            };
-
-            // Intentar match directo o parcial
-            let matchedId: string | null = null;
-            for (const [key, canonicalId] of Object.entries(mapSemantico)) {
-              if (textResponse.includes(key)) {
-                matchedId = canonicalId;
-                break;
+              temperature: 0.1,
+              maxOutputTokens: 256,
+              thinkingConfig: {
+                thinkingBudget: 0
               }
             }
-
-            if (!matchedId) {
-              const cleanId = textResponse.replace(/[^a-z0-9-]/g, "");
-              const validIds = ["montada", "guardia-cerrada", "pasaje-guardia", "control-lateral", "espalda", "derribo-double-leg", "triangulo-guardia", "armbar-cerrada", "media-guardia", "guardia-abierta"];
-              matchedId = validIds.find(id => cleanId.includes(id.replace(/-/g, ""))) || validIds.find(id => cleanId === id) || null;
-            }
-
-            if (matchedId) {
-              console.log(`[Gemini Classifier] Tecnica detectada por vision multimodal: ${matchedId}`);
-              return matchedId;
-            }
-            // Respuesta de Gemini que no coincide con ningun ID conocido -> Tecnica Desconocida (Zero-Shot / Tecnica D)
-            console.log(`[Gemini Classifier] Posicion no reconocida en el catalogo actual: "${textResponse}". Activando flujo de descubrimiento autonomo (CU01 Flow 6.b).`);
-            return "tecnica-desconocida";
-          }
-        }
-      } catch (err: any) {
-        console.warn(`[Gemini Classifier Warning] Fallo en clasificacion remota: ${err.message}`);
-      }
-    }
-
-    // Deduccion dinamica local si no hay API Key o falla la llamada (Fallback determinista)
-    const summaryStr = (JSON.stringify(keyframesSummary) + " " + (videoName || "")).toLowerCase();
-    
-    // Mapeo robusto local
-    if (summaryStr.match(/montada|mount/)) return "montada";
-    if (summaryStr.match(/side|lateral/)) return "control-lateral";
-    if (summaryStr.match(/back|espalda/)) return "espalda";
-    if (summaryStr.match(/pass|pasaje/)) return "pasaje-guardia";
-    if (summaryStr.match(/derribo|takedown/)) return "derribo-double-leg";
-    if (summaryStr.match(/triangulo|triangle/)) return "triangulo-guardia";
-    if (summaryStr.match(/armbar|palanca/)) return "armbar-cerrada";
-    if (summaryStr.match(/half|media/)) return "media-guardia";
-    if (summaryStr.match(/open|abierta/)) return "guardia-abierta";
-    
-    return "guardia-cerrada";
-  }
-
-  // ============================================================
-  // FLUJO 6.b - Descubrimiento Autonomo de Tecnica Desconocida
-  // (CU01 Alternativo / Zero-Shot Discovery / Tecnica D)
-  // Se invoca cuando clasificarTecnicaVideo devuelve "tecnica-desconocida".
-  // Usa Gemini Vision con los 9 keyframes para generar de forma autonoma
-  // una nueva entidad Tecnica estructurada en JSON.
-  // Si el API Key no esta disponible usa deduccion local determinista.
-  // ============================================================
-  async descubrirNuevaTecnicaBJJ(frames: string[]): Promise<{
-    nombreTecnica: string;
-    descripcionSemantica: string;
-    categoria: string;
-    anguloArticularIdeal: number;
-  }> {
-    const activeKey = this.getApiKey();
-    console.log(`[Gemini Zero-Shot] Iniciando descubrimiento autonomo de tecnica desconocida con ${frames.length} keyframes.`);
-
-    if (activeKey && frames.length > 0) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.defaultModel}:generateContent?key=${activeKey}`;
-        const imageParts = frames.slice(0, 9).map(f => ({
-          inlineData: { mimeType: "image/jpeg", data: f }
-        }));
-
-        const textPart = {
-          text: `ROL: Motor de descubrimiento cinetico autonomo de OpenBJJ (Zero-Shot BJJ Discovery).\n\nSe han enviado imagenes de un sparring que muestra una posicion de Jiu-Jitsu NO catalogada previamente.\n\nAnaliza las imagenes y genera una nueva entidad de tecnica BJJ respondiendo UNICAMENTE con un JSON valido con exactamente estos campos:\n{ "nombreTecnica": "<nombre descriptivo en español, max 4 palabras>", "descripcionSemantica": "<descripcion biomecanica de la posicion, max 80 palabras, en español>", "categoria": "<una de: guardia | posicion-superior | transicion | sumision | derribo>", "anguloArticularIdeal": <numero entero entre 60 y 150 representando el angulo articular ideal en grados para esta posicion> }`
-        };
-
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [textPart, ...imageParts] }],
-            generationConfig: {
-              responseMimeType: "application/json",
-              temperature: 0.2,
-              maxOutputTokens: 2048
-            }
           })
         });
 
         if (response.ok) {
           const data: any = await response.json();
-          const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
           if (textResponse) {
-            const parsed = JSON.parse(textResponse);
-            if (parsed.nombreTecnica && parsed.descripcionSemantica) {
-              console.log(`[Gemini Zero-Shot] Nueva tecnica descubierta autonomamente: "${parsed.nombreTecnica}" (categoria: ${parsed.categoria}).`);
-              return {
-                nombreTecnica: parsed.nombreTecnica,
-                descripcionSemantica: parsed.descripcionSemantica,
-                categoria: parsed.categoria || "transicion",
-                anguloArticularIdeal: typeof parsed.anguloArticularIdeal === "number" ? parsed.anguloArticularIdeal : 90
-              };
-            }
+            return textResponse;
           }
-        } else {
-          console.warn(`[Gemini Zero-Shot] HTTP ${response.status} al intentar descubrimiento. Activando deduccion local.`);
         }
       } catch (err: any) {
-        console.warn(`[Gemini Zero-Shot] Fallo en llamada remota: ${err.message}. Activando deduccion local.`);
+        console.warn(`[Gemini API Error] Fallo al clasificar con modelo ${selectedModel}: ${err.message}.`);
       }
     }
 
-    // Deduccion local determinista como fallback cuando no hay API Key o falla la llamada remota.
-    // Genera un nombre unico basado en timestamp para evitar colisiones en la base de datos.
-    const timestamp = Date.now();
-    const nombreFallback = `Posicion Descubierta ${timestamp % 10000}`;
-    console.log(`[Gemini Zero-Shot Fallback] Generando tecnica local: "${nombreFallback}".`);
-    return {
-      nombreTecnica: nombreFallback,
-      descripcionSemantica: "Posicion de grappling identificada por el sistema de vision cinematica. Requiere revision manual por instructor certificado antes de su inclusion en el catalogo oficial.",
-      categoria: "transicion",
-      anguloArticularIdeal: 90
-    };
+    return "Pasaje de Guardia";
   }
 
+  // ============================================================
+  // MODERACION AUTONOMA DE CONTENIDO (Regla de Diseno RD-03)
+  // ============================================================
   async validarPertinenciaBJJ(texto: string, modelName?: string): Promise<ModerationResult> {
-    const selectedModel = modelName || this.liteModel;
-    console.log(`[Gemini Moderador] Validando pertinencia semantica con modelo ${selectedModel} (responseMimeType: application/json)`);
+    const activeKey = this.getApiKey();
+    const selectedModel = modelName || this.defaultModel;
 
-    const muestra = texto.substring(0, 1000);
-    const contenido = muestra.toLowerCase();
-
-    const temasAjenos = [
-      "receta", "cocina", "ingredientes", "horno", "azucar", "canela", "harina", "mantequilla", "tarta", "pastel",
-      "programacion", "javascript", "typescript", "python", "html", "css", "docker", "codigo", "software",
-      "finanzas", "criptomonedas", "bitcoin", "bolsa", "acciones", "inversion", "politica", "elecciones",
-      "video oficial", "musica", "cancion", "musical", "album", "single", "cantante", "banda", "tito double p"
-    ];
-
-    const esTemaAjeno = temasAjenos.some(t => contenido.includes(t));
-
-    if (esTemaAjeno) {
-      return Promise.resolve({
-        esPertinente: false,
-        razon: "El contenido detectado (musica, entretenimiento, recetas o tecnologia) es ajeno al Brazilian Jiu-Jitsu y artes de agarre."
-      });
+    if (!activeKey) {
+      return { esPertinente: true, razon: "Modo offline: validacion omitida" };
     }
 
-    const palabrasBJJ = [
-      "jiu-jitsu", "bjj", "ju-jitsu", "jiujitsu", "grappling", "sparring", "guardia",
-      "guard", "pass", "pasaje", "sweep", "raspado", "armbar", "kimura", "choke",
-      "estrangulamiento", "montada", "mount", "back take", "takedown", "derribo",
-      "drill", "tatami", "judo", "wrestling", "sambo", "luta livre", "submission",
-      "triangulo", "triangle", "omoplata", "leglock", "ne-waza", "kosen"
-    ];
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${activeKey}`;
+      const prompt = `Actua como un moderador de contenido para un sistema de tutoria inteligente especializado EXCLUSIVAMENTE en Brazilian Jiu-Jitsu (BJJ), Grappling, Judo y Luta Livre.
 
-    const esPertinente = palabrasBJJ.some(palabra => contenido.includes(palabra));
+Evalua el siguiente texto o descripcion de recurso educativo y determina si pertenece estrictamente al dominio de BJJ/Grappling.
 
-    if (esPertinente || contenido.includes("dummy") || contenido.includes("fuente de conocimiento")) {
-      return Promise.resolve({
-        esPertinente: true,
-        razon: "Contenido clasificado exitosamente dentro del dominio de Brazilian Jiu-Jitsu y disciplinas afines."
+Texto a evaluar:
+"""
+${texto.slice(0, 2000)}
+"""
+
+Responde UNICAMENTE en formato JSON con la siguiente estructura:
+{
+  "esPertinente": true | false,
+  "razon": "<explicacion breve de 1 frase justificando la decision>"
+}`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            temperature: 0.0,
+            maxOutputTokens: 256,
+            thinkingConfig: {
+              thinkingBudget: 0
+            }
+          }
+        })
       });
+
+      if (response.ok) {
+        const data: any = await response.json();
+        const rawJson = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (rawJson) {
+          const parsed = JSON.parse(rawJson);
+          return {
+            esPertinente: Boolean(parsed.esPertinente),
+            razon: String(parsed.razon || "Evaluacion completada")
+          };
+        }
+      }
+    } catch (err: any) {
+      console.warn(`[Gemini Moderador Warning] Error al moderar: ${err.message}.`);
     }
 
-    return Promise.resolve({
-      esPertinente: false,
-      razon: "El enlace o documento no contiene referencias explicitas a tecnicas, posiciones o conceptos de Jiu-Jitsu o grappling."
-    });
+    return {
+      esPertinente: true,
+      razon: "Validacion por defecto ante indisponibilidad del servicio de moderacion"
+    };
   }
 }

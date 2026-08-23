@@ -76,7 +76,7 @@ export function HistoryView({ usuarioId, onSelectReport, refreshVersion, onHisto
 
   const itemsFiltrados = historial.filter(item => {
     if (!filtroTecnica) return true;
-    const tecnica = item.reporte?.tecnicaId || "";
+    const tecnica = item.reporte?.tecnicaId || item.tecnicaId || "";
     return tecnica.toLowerCase().includes(filtroTecnica.toLowerCase());
   });
 
@@ -213,10 +213,10 @@ export function HistoryView({ usuarioId, onSelectReport, refreshVersion, onHisto
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <p style={{ fontSize: '0.95rem', fontWeight: 600, color: '#f8fafc', margin: '0 0 2px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {reporte.tecnicaId ? reporte.tecnicaId.replace(/-/g, " ").toUpperCase() : "SPARRING GENERAL"}
+                        {(reporte.tecnicaId || item.tecnicaId || "SPARRING GENERAL").replace(/-/g, " ").toUpperCase()}
                       </p>
                       <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {reporte.severidad || "LEVE"} • {reporte.desviacionArticular ? reporte.desviacionArticular.replace(/_/g, " ") : "General"} ({desviacion}°)
+                        {reporte.severidad || "LEVE"} • {(reporte.desviacionArticular || "General").replace(/_/g, " ")} ({desviacion}°)
                       </p>
                     </div>
                   </div>

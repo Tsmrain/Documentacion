@@ -94,6 +94,7 @@ async function runIngestaPlaylists() {
       chunkBatch.map(async (url) => {
         try {
           const res = await ragController.procesarEIngestarFuente(null, {
+            titulo: url,
             url,
             usuarioId
           }, usuarioId);

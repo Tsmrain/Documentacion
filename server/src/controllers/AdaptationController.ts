@@ -17,6 +17,15 @@ export interface PerfilCompetencia {
   historialVisualizaciones: HistorialVisualizacion[];
 }
 
+export interface TecnicaEvaluadaItem {
+  nombre: string;
+  porcentaje: number;
+  intentos: number;
+  ultimaDesviacion: number;
+  severidad: string;
+  fecha: string;
+}
+
 export interface RutaAprendizaje {
   nivelCompetenciaActual: string;
   drillRecomendado: string;
@@ -24,6 +33,7 @@ export interface RutaAprendizaje {
   mensajeAdaptativo: string;
   ultimaTecnica?: string;
   posicionesMaestria?: { nombre: string; porcentaje: number }[];
+  tecnicasEvaluadas?: TecnicaEvaluadaItem[];
 }
 
 export interface IPersistenceService {
@@ -43,38 +53,80 @@ export class AdaptationController {
     this.ragController = ragController;
   }
 
+  private calcularTecnicasEvaluadas(historial: any[]): TecnicaEvaluadaItem[] {
+    const mapaTecnicas: Map<string, {
+      nombre: string;
+      scores: number[];
+      ultimaDesviacion: number;
+      severidad: string;
+      fecha: string;
+    }> = new Map();
+
+    historial.forEach(h => {
+      const nombre = (h.tecnicaId || h.reporte?.tecnicaId || "Sparring General").replace(/-/g, " ").trim();
+      const desviacion = h.desviacionGrados ?? h.reporte?.desviacionGrados ?? h.desviacion ?? 20;
+      const score = Math.max(10, Math.min(100, 100 - Math.round(Number(desviacion) * 1.5)));
+      const severidad = h.reporte?.severidad || (score > 70 ? "Leve" : "Moderado");
+      const fecha = h.fecha ? new Date(h.fecha).toLocaleDateString("es-ES") : "Reciente";
+
+      const key = nombre.toLowerCase();
+      if (!mapaTecnicas.has(key)) {
+        mapaTecnicas.set(key, {
+          nombre: nombre.toUpperCase(),
+          scores: [score],
+          ultimaDesviacion: Number(desviacion),
+          severidad,
+          fecha
+        });
+      } else {
+        const item = mapaTecnicas.get(key)!;
+        item.scores.push(score);
+      }
+    });
+
+    return Array.from(mapaTecnicas.values()).map(item => {
+      const avg = Math.round(item.scores.reduce((a, b) => a + b, 0) / item.scores.length);
+      return {
+        nombre: item.nombre,
+        porcentaje: avg,
+        intentos: item.scores.length,
+        ultimaDesviacion: item.ultimaDesviacion,
+        severidad: item.severidad,
+        fecha: item.fecha
+      };
+    });
+  }
+
   private calcularMaestriaPorPosicion(historial: any[]): { nombre: string; porcentaje: number }[] {
     const scores: Record<string, number[]> = {
+      "Derribos y Proyecciones": [],
       "Guardia Cerrada": [],
       "Pasaje de Guardia": [],
       "Control Lateral": [],
-      "Montada": [],
-      "Espalda": [],
+      "Montada y Espalda": [],
       "Media Guardia": [],
-      "Guardia Abierta": []
+      "Guardia Abierta y Sumisiones": []
     };
 
     historial.forEach(h => {
       const tecnica = (h.tecnicaId || "").toLowerCase();
-      const desviacion = h.desviacionGrados || 0;
-      const score = Math.max(0, Math.min(100, 100 - Math.round(desviacion * 1.8)));
+      const desviacion = h.desviacionGrados ?? h.desviacion ?? 20;
+      const score = Math.max(10, Math.min(100, 100 - Math.round(Number(desviacion) * 1.5)));
 
-      if (tecnica.includes("guardia-cerrada") || tecnica.includes("cerrada") || tecnica.includes("closed")) {
-        scores["Guardia Cerrada"].push(score);
-      } else if (tecnica.includes("pasaje") || tecnica.includes("pass")) {
-        scores["Pasaje de Guardia"].push(score);
-      } else if (tecnica.includes("lateral") || tecnica.includes("side")) {
+      if (tecnica.includes("derribo") || tecnica.includes("suplex") || tecnica.includes("proyeccion") || tecnica.includes("takedown") || tecnica.includes("single leg") || tecnica.includes("voladora") || tecnica.includes("judo") || tecnica.includes("wrestling")) {
+        scores["Derribos y Proyecciones"].push(score);
+      } else if (tecnica.includes("lateral") || tecnica.includes("side") || tecnica.includes("100 kilos") || tecnica.includes("cien kilos")) {
         scores["Control Lateral"].push(score);
-      } else if (tecnica.includes("montada") || tecnica.includes("mount")) {
-        scores["Montada"].push(score);
-      } else if (tecnica.includes("espalda") || tecnica.includes("back")) {
-        scores["Espalda"].push(score);
+      } else if (tecnica.includes("pasaje") || tecnica.includes("pass") || tecnica.includes("knee cut") || tecnica.includes("torreando")) {
+        scores["Pasaje de Guardia"].push(score);
+      } else if (tecnica.includes("montada") || tecnica.includes("mount") || tecnica.includes("espalda") || tecnica.includes("back") || tecnica.includes("mataleon")) {
+        scores["Montada y Espalda"].push(score);
       } else if (tecnica.includes("media") || tecnica.includes("half")) {
         scores["Media Guardia"].push(score);
-      } else if (tecnica.includes("abierta") || tecnica.includes("open")) {
-        scores["Guardia Abierta"].push(score);
-      } else {
+      } else if (tecnica.includes("cerrada") || tecnica.includes("closed") || tecnica.includes("fechada")) {
         scores["Guardia Cerrada"].push(score);
+      } else {
+        scores["Guardia Abierta y Sumisiones"].push(score);
       }
     });
 
@@ -85,19 +137,18 @@ export class AdaptationController {
     };
 
     return [
+      { nombre: "Derribos y Proyecciones", porcentaje: calcAvg(scores["Derribos y Proyecciones"]) },
       { nombre: "Guardia Cerrada", porcentaje: calcAvg(scores["Guardia Cerrada"]) },
       { nombre: "Pasaje de Guardia", porcentaje: calcAvg(scores["Pasaje de Guardia"]) },
       { nombre: "Control Lateral", porcentaje: calcAvg(scores["Control Lateral"]) },
-      { nombre: "Montada", porcentaje: calcAvg(scores["Montada"]) },
-      { nombre: "Espalda", porcentaje: calcAvg(scores["Espalda"]) },
+      { nombre: "Montada y Espalda", porcentaje: calcAvg(scores["Montada y Espalda"]) },
       { nombre: "Media Guardia", porcentaje: calcAvg(scores["Media Guardia"]) },
-      { nombre: "Guardia Abierta", porcentaje: calcAvg(scores["Guardia Abierta"]) }
+      { nombre: "Guardia Abierta y Sumisiones", porcentaje: calcAvg(scores["Guardia Abierta y Sumisiones"]) }
     ];
   }
 
   private async obtenerVideoYouTubeRelacionado(usuarioId: string, terminoBusqueda: string): Promise<string> {
-    const terminoLimpio = (terminoBusqueda || "bjj tutorial").replace(/_/g, " ").replace(/-/g, " ");
-    const fallbackUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(terminoLimpio + " bjj tutorial");
+    const terminoLimpio = (terminoBusqueda || "bjj tutorial").replace(/_/g, " ").replace(/-/g, " ").toLowerCase();
 
     try {
       let fuentes: any[] = [];
@@ -107,27 +158,89 @@ export class AdaptationController {
         fuentes = await (this.persistence as any).obtenerFuentesConocimiento(usuarioId);
       }
 
-      const fuentesYouTube = fuentes.filter((f: any) => f.tipo === "youtube" && f.url);
+      // Filtrar todas las fuentes de YouTube (case-insensitive) con URL de video específica
+      const fuentesYouTube = fuentes.filter((f: any) =>
+        (String(f.tipo).toUpperCase() === "YOUTUBE" || String(f.tipo).toLowerCase() === "youtube") &&
+        f.url && (f.url.includes("watch?v=") || f.url.includes("youtu.be/"))
+      );
+
       if (fuentesYouTube.length > 0) {
-        const busquedaClean = terminoLimpio.toLowerCase();
-        const match = fuentesYouTube.find((f: any) =>
-          (f.titulo || "").toLowerCase().includes(busquedaClean) ||
-          busquedaClean.includes((f.titulo || "").toLowerCase())
+        // Familias y conceptos clave de BJJ para matching semántico de alta precisión
+        const FAMILIAS_BJJ = [
+          { tag: "montada", terms: ["montada", "mount", "mounted"] },
+          { tag: "guardia_cerrada", terms: ["guardia cerrada", "closed guard", "guarda fechada"] },
+          { tag: "media_guardia", terms: ["media guardia", "half guard", "meia guarda", "deep half"] },
+          { tag: "guardia_abierta", terms: ["guardia abierta", "open guard", "de la riva", "spider", "lasso", "mariposa", "butterfly"] },
+          { tag: "control_lateral", terms: ["control lateral", "side control", "100 kilos", "cien kilos", "cross side"] },
+          { tag: "espalda", terms: ["espalda", "back control", "back take", "back mount"] },
+          { tag: "tortuga", terms: ["tortuga", "turtle"] },
+          { tag: "derribo", terms: ["derribo", "takedown", "single leg", "double leg", "suplex", "proyeccion", "judo", "wrestling"] },
+          { tag: "voladora", terms: ["voladora", "flying"] },
+          { tag: "llave_brazo", terms: ["llave de brazo", "armbar", "arm bar", "juji", "llave de codo", "brazo"] },
+          { tag: "triangulo", terms: ["triangulo", "triangle", "sankaku"] },
+          { tag: "kimura", terms: ["kimura", "ude garami", "figura 4"] },
+          { tag: "americana", terms: ["americana", "keylock"] },
+          { tag: "guillotina", terms: ["guillotina", "guillotine"] },
+          { tag: "mataleon", terms: ["mataleon", "mata leon", "rear naked", "rnc"] },
+          { tag: "pasaje", terms: ["pasaje", "pass", "passing", "knee cut", "torreando", "smash pass"] },
+          { tag: "escape", terms: ["escape", "salida", "defensa", "escapar"] }
+        ];
+
+        // Identificar qué familias están presentes en la búsqueda
+        const familiasPresentesEnQuery = FAMILIAS_BJJ.filter(fam =>
+          fam.terms.some(t => terminoLimpio.includes(t))
         );
 
-        if (match) {
-          console.log(`[Adaptación RAG] Video de fuente agregada seleccionado para '${terminoLimpio}': ${match.url}`);
-          return match.url;
+        let mejorMatch: any = null;
+        let maxScore = -1;
+
+        for (const fuente of fuentesYouTube) {
+          const tit = (fuente.titulo || "").toLowerCase();
+          let score = 0;
+
+          let familiasCoincidentes = 0;
+          for (const fam of familiasPresentesEnQuery) {
+            const videoTieneFamilia = fam.terms.some(t => tit.includes(t));
+            if (videoTieneFamilia) {
+              score += 40;
+              familiasCoincidentes++;
+            }
+          }
+
+          // Si coinciden múltiples conceptos (ej: Armbar + Mount), bonificación masiva
+          if (familiasCoincidentes >= 2) {
+            score += 100;
+          }
+
+          // Coincidencias de palabras individuales
+          const palabras = terminoLimpio.split(/\s+/).filter(w => w.length > 2);
+          for (const palabra of palabras) {
+            if (tit.includes(palabra)) {
+              score += 5;
+            }
+          }
+
+          if (score > maxScore) {
+            maxScore = score;
+            mejorMatch = fuente;
+          }
         }
 
-        console.log(`[Adaptación RAG] Seleccionando primera fuente de YouTube agregada por el practicante: ${fuentesYouTube[0].url}`);
+        if (mejorMatch && maxScore > 0) {
+          console.log(`[Adaptación RAG] Video exacto seleccionado ('${mejorMatch.titulo}') [Score: ${maxScore}]: ${mejorMatch.url}`);
+          return mejorMatch.url;
+        }
+
+        // Si no hay match directo, entregar el primer video del acervo técnico del dojo
+        console.log(`[Adaptación RAG] Entregando video técnico guardado en dojo: ${fuentesYouTube[0].url}`);
         return fuentesYouTube[0].url;
       }
     } catch (e: any) {
-      console.warn("[Adaptación RAG] Error al consultar fuentes agregadas de YouTube:", e.message);
+      console.warn("[Adaptación RAG] Error al consultar fuentes guardadas de YouTube:", e.message);
     }
 
-    return fallbackUrl;
+    // Video técnico educativo por defecto en español (nunca URL de búsqueda)
+    return "https://www.youtube.com/watch?v=BPEXBXJpLEw";
   }
 
   async evaluarAdaptabilidad(usuarioId: string, reporte: string | null): Promise<RutaAprendizaje> {
@@ -140,6 +253,7 @@ export class AdaptationController {
     }
 
     const posicionesMaestria = this.calcularMaestriaPorPosicion(historial);
+    const tecnicasEvaluadas = this.calcularTecnicasEvaluadas(historial);
 
     if (!reporte) {
       const videoInicial = await this.obtenerVideoYouTubeRelacionado(usuarioId, "shrimp bjj drill");
@@ -148,8 +262,9 @@ export class AdaptationController {
         drillRecomendado: "Movimiento de cadera (Shrimping) básico",
         videoYouTubeUrl: videoInicial,
         mensajeAdaptativo: "Continúa practicando los drills básicos para consolidar tus posiciones.",
-        ultimaTecnica: historial.length > 0 ? (historial[historial.length - 1].tecnicaId || "") : undefined,
-        posicionesMaestria
+        ultimaTecnica: historial.length > 0 ? (historial[0].tecnicaId || "") : undefined,
+        posicionesMaestria,
+        tecnicasEvaluadas
       };
     }
 
@@ -166,10 +281,16 @@ export class AdaptationController {
       perfil.erroresHistoricos[errorArticular] = 0;
     }
 
-    // Recalcular posicionesMaestria agregando el reporte actual
+    // Recalcular posicionesMaestria y tecnicasEvaluadas agregando el reporte actual
     const tecnicaActual = (evaluacion.tecnicaId || "").toLowerCase();
-    const historialConActual = [...historial, { tecnicaId: tecnicaActual, desviacionGrados }];
+    const historialConActual = [{
+      tecnicaId: evaluacion.tecnicaId || tecnicaActual,
+      desviacionGrados,
+      reporte: evaluacion,
+      fecha: new Date().toISOString()
+    }, ...historial];
     const posicionesActualizadas = this.calcularMaestriaPorPosicion(historialConActual);
+    const tecnicasEvaluadasActualizadas = this.calcularTecnicasEvaluadas(historialConActual);
 
     if (hayFalloRecurrente) {
       console.log(`[Adaptación] Fallo recurrente (> 3) en ${errorArticular}. Conmutando estrategia didáctica a fuentes RAG.`);
@@ -180,12 +301,13 @@ export class AdaptationController {
         videoYouTubeUrl: videoRecurrente,
         mensajeAdaptativo: `Alerta pedagógica: Has fallado más de 3 veces consecutivas en tu ${errorArticular.replace("_", " ")}. Recomendamos conmutar a ejercicios de aislamiento anatómico para corregir el ángulo.`,
         ultimaTecnica: evaluacion.tecnicaId,
-        posicionesMaestria: posicionesActualizadas
+        posicionesMaestria: posicionesActualizadas,
+        tecnicasEvaluadas: tecnicasEvaluadasActualizadas
       };
     }
 
-    // Buscar en fuentes RAG agregadas por el usuario
-    const tecnicaBusqueda = (evaluacion.tecnicaId || errorArticular || "bjj").replace(/-/g, " ").toLowerCase();
+    // Buscar en fuentes RAG agregadas por el usuario o generar búsqueda de YouTube optimizada
+    const tecnicaBusqueda = (evaluacion.youtube_query || evaluacion.tecnicaId || errorArticular || "bjj").replace(/-/g, " ").toLowerCase();
     const videoRecomendado = await this.obtenerVideoYouTubeRelacionado(usuarioId, tecnicaBusqueda);
 
     return {
@@ -194,7 +316,8 @@ export class AdaptationController {
       videoYouTubeUrl: videoRecomendado,
       mensajeAdaptativo: `No descuides tu ${errorArticular.replace("_", " ")}, ajusta la posición antes de que el oponente aproveche el espacio.`,
       ultimaTecnica: evaluacion.tecnicaId,
-      posicionesMaestria: posicionesActualizadas
+      posicionesMaestria: posicionesActualizadas,
+      tecnicasEvaluadas: tecnicasEvaluadasActualizadas
     };
   }
 

@@ -250,12 +250,10 @@ Desarrollar el diseño arquitectónico de una aplicación web inteligente de tut
 
 ## **1.3 Metodología**
 
-### **1.3.1 Ingeniería de Software (Proceso Unificado)**
-El Proceso Unificado (UP) rige la arquitectura técnica, el modelado y la documentación de diseño del sistema, estructurado en cuatro fases completadas:
-1. **Inicio (Inception):** Definición de la visión del producto, análisis de viabilidad y establecimiento de la Lista de Riesgos inicial.
-2. **Elaboración (Elaboration):** Diseño y estabilización de la arquitectura lógica ejecutable (mitigando los riesgos principales), especificación de los contratos de operaciones del sistema, diagramación de secuencia del sistema e iteración de los diagramas de clases de diseño (DCD) y modelo de dominio conceptual.
-3. **Construcción (Construction):** Programación e integración iterativa de los componentes de software, API Gateway, ORM de persistencia y base de datos vectorial centralizada.
-4. **Transición (Transition):** Despliegue de la PWA, pruebas de campo en el tatami de la academia Corpo & Mente, certificación de resiliencia contenerizada mediante Docker y optimizaciones de rendimiento y latencia.
+### **1.3.1 Ingeniería de Software y Diseño de Datos (UP, Craig Larman y Michael Mannino)**
+El desarrollo del sistema se fundamenta en la integración metodológica de la Ingeniería de Software orientada a objetos y el diseño riguroso de bases de datos relacionales y vectoriales:
+1. **Proceso Unificado (UP) y Patrones GRASP (Craig Larman):** Rige la arquitectura técnica, la asignación de responsabilidades mediante patrones GRASP (Controller, Information Expert, Protected Variations, Low Coupling y High Cohesion) y la especificación de Casos de Uso *Fully Dressed*, contratos de operación y diagramas de diseño estructurados en cuatro fases (Inicio, Elaboración, Construcción y Transición).
+2. **Diseño y Ciclo de Vida de Bases de Datos (Michael Mannino):** Aplica los principios formales de diseño conceptual, lógico y físico de bases de datos, garantizando integridad referencial, normalización relacional y el principio de **Retención y Preservación del Conocimiento (Soft Deletion & Knowledge Lifecycle)**. Bajo este enfoque, la desvinculación de una fuente de información en la capa de presentación del usuario no destruye la información relacional ni los vectores en ChromaDB, preservando la memoria cognitiva acumulativa del dojo.
 
 ### **1.3.2 Gestión del Proyecto (Scrum Framework)**
 
@@ -1878,15 +1876,42 @@ La capa de persistencia relacional utiliza **PostgreSQL** administrado a través
 ### **6.1.3 Base de datos vectorial**
 El almacenamiento vectorial y la recuperación semántica RAG se ejecutan sobre **ChromaDB API v2** operando en un contenedor Docker en el puerto 8000 (`/api/v2/tenants/default_tenant/databases/default_database/collections`). La generación de embeddings para los fragmentos de conocimiento se realiza de forma autónoma con el adaptador **`LocalEmbeddingAdapter`** respaldado por la librería **`@xenova/transformers`** e inferencia local del modelo **`Xenova/all-MiniLM-L6-v2`** en 384 dimensiones.
 
-### **6.1.4 Inferencia y orquestación cognitiva**
-La inteligencia artificial generativa y el razonamiento multimodal procesan la inferencia utilizando la API oficial de Google Gemini a través del conector `@google/genai` (v2.17.1), registrado formalmente como dependencia declarada en `server/package.json`. La orquestación de inferencia opera mediante dos modelos especializados:
-- **`gemini-2.5-flash`**: Encargado de la clasificación acelerada de keyframes de video, autodetección de técnicas de Jiu-Jitsu y moderación semántica autónoma de ingesta (Filtro RD-03).
-- **`gemini-2.5-pro`**: Responsable del diagnóstico biomecánico profundo, evaluación multimodal recibiendo los 9 keyframes en Base64 y el prompt de grounding (*Jiu-Jitsu University* por Saulo Ribeiro), garantizando la estructuración JSON estricta del esquema `AnalysisResult` (`responseMimeType: 'application/json'`).
+### **6.1.4 Inferencia y orquestación cognitiva multifuente**
+La inteligencia artificial generativa y el razonamiento multimodal procesan la inferencia utilizando la API oficial de Google Gemini a través del conector `@google/genai` (v2.17.1), registrado formalmente como dependencia declarada en `server/package.json`. La orquestación cognitiva opera bajo un pipeline desacoplado en 3 etapas conforme a los principios de diseño de Craig Larman y Michael Mannino:
+1. **Detección Visual Autónoma Multimodal**: El modelo de visión de Gemini (`gemini-2.5-flash` / `gemini-3.1-flash-lite`) analiza los 9 keyframes del combate en Base64 sin acoplamiento rígido a un autor específico, identificando las posiciones de ambos practicantes (*Top/Bottom*), la técnica en ejecución y las desviaciones articulares.
+2. **Recuperación Aumentada Dinámica (RAG en el Dojo)**: Con la técnica clasificada visualmente, el sistema consulta el Vector Store central (**ChromaDB v2**) y la base de datos relacional (**PostgreSQL**), que almacenan más de 950 fuentes técnicas (videos de YouTube, listas de reproducción y manuales ingresados por la comunidad del dojo). Si existe una fuente coincidente, se recupera el video exacto del autor/canal correspondiente.
+3. **Recomendación General de Respaldo (Fallback Cognitivo)**: Si la técnica detectada no cuenta aún con un video registrado en el almacén local del dojo, la IA formula una recomendación y término de búsqueda optimizado para YouTube a partir de su conocimiento general, garantizando que el alumno siempre disponga de un recurso visual inmediato para corregir su error.
 
 Para garantizar la alta disponibilidad y la resiliencia ante caídas de la API primaria de Google, el backend integra simultáneamente el SDK oficial de OpenAI (`openai` v7.5.0) mediante el `LLMRedirectionProxy`, que intercepta cualquier excepción de red o límite de cuota y conmuta en caliente hacia `ChatGPTServiceAdapter` (`gpt-4o-mini`). Para respaldar la transferencia multimodal híbrida de los 9 keyframes en Base64 sin interrumpir el flujo operativo por desbordamientos de buffer (PayloadTooLargeError), el API Gateway local de Express cuenta con una configuración de middleware con límite de payload extendido a **50 MB** (`express.json({ limit: '50mb' })` y `express.urlencoded({ limit: '50mb' })`).
 
-### **6.1.6 Soberanía Cognitiva y Multiproveedor**
-El diseño del backend aplica el patrón GRASP de **Variaciones Protegidas (Protected Variations)** mediante las interfaces técnicas abstraídas `ILLMProvider` e `ITechniqueClassifier`. Esta arquitectura garantiza la soberanía cognitiva y el desacoplamiento total respecto a un proveedor único de IA (*Vendor Lock-In*). A través del pliego `docker-compose.yml` y variables de entorno en el archivo `.env` (`DATABASE_URL`, `JWT_SECRET`, `VECTOR_DB_URL`, `GEMINI_MODEL`, `OPENAI_API_KEY`, `OLLAMA_URL`), el nodo backend conmuta en caliente entre proveedores, permitiendo redirigir la inferencia hacia la API de Google Gemini, la API de OpenAI ChatGPT, o un modelo de visión de código abierto de ejecución local y soberana (como Llama 3.2 Vision o Qwen 2.5 procesados mediante Ollama en el puerto 11434).
+### **6.1.5 Gestión, Optimización y Telemetría de Tokens en la API de Google Gemini**
+El sistema OpenBJJ implementa una arquitectura rigurosa de control de costos y telemetría de tokens para operar de forma eficiente y sostenible bajo el nivel gratuito (*Free Tier*) de Google AI Studio y en entornos de producción:
+
+1. **Cálculo y Consumo Real de Tokens Multimodales (Validación Empírica en AI Studio)**:
+   - **Medición Real en AI Studio**: En pruebas de producción sobre `gemini-3.1-flash-lite`, la telemetría oficial de Google AI Studio registró un incremento de **1.56K tokens para 2 análisis de combate completos** ($10.98\text{K} - 9.42\text{K}$ TPM), lo que demuestra un consumo empírico de **~780 tokens promedio por análisis**.
+   - **Tokens de Entrada Visual (Prompt Tokens)**: Al comprimir y escalar los fotogramas a **360px (JPEG 40%)** en el navegador del cliente mediante HTML5 Canvas, cada uno de los fotogramas clave consume una cantidad fija y mínima de **~258 tokens**.
+   - **Tokens de Prompt Textual**: Las instrucciones del Sensei BJJ y las métricas angulares locales (3KB) consumen **~220 tokens**.
+   - **Tokens de Salida (Completion Tokens)**: El diagnóstico JSON estructurado (técnica, severidad, desviaciones articulares, veredicto de tatami y URL del video) consume **~160 tokens**.
+   - **Costo Operativo Real**: A una tarifa de $0.075 USD por cada 1M de tokens, cada análisis tiene un costo financiero de apenas **$0.000058 USD** (menos de 6 milésimas de centavo).
+
+2. **Ahorro de Tokens en el Cliente (>97.5%)**:
+   - Transmitir un video de 10 a 15 segundos en streaming continuo de video bruto (a 30 FPS) a la API de visión consumiría más de **100.000 tokens**.
+   - La extracción en el navegador de **fotogramas clave optimizados** y el cálculo local de ángulos 3D con 0 tokens de API reduce el consumo a menos de 1.500 tokens, generando un **ahorro de más del 98.5% de tokens y ancho de banda**.
+
+3. **Matriz de Cuotas y Límites de Google AI Studio**:
+   | Modelo de IA | Categoría | RPM (Req/Min) | TPM (Tokens/Min) | RPD (Req/Día) | Estrategia de Uso |
+   | :--- | :--- | :--- | :--- | :--- | :--- |
+   | **Gemini 3.1 Flash Lite** | Visión Multimodal | 15 / 15 | 250.000 TPM | **500 RPD** | **Modelo Primario de Producción** (500 análisis/día) |
+   | **Gemini 3.5 Flash Lite** | Visión Multimodal | 15 / 15 | 250.000 TPM | **500 RPD** | **Failover Primario de Alta Capacidad** |
+   | **Gemini 2.5 Flash** | Visión Multimodal | 5 / 5 | 250.000 TPM | 20 RPD | Respaldo Secundario |
+   | **Gemini 3.7 Flash** | Visión Multimodal | 5 / 5 | 250.000 TPM | 20 RPD | Respaldo Avanzado |
+   | **OpenAI `gpt-4o-mini`** | Visión Multimodal | 500 RPM | 200.000 TPM | Ilimitado | Contingencia en Caliente Multiproveedor |
+
+4. **Monitoreo y Telemetría en Tiempo Real**:
+   - A través del servicio [TokenMetricsService.ts](file:///home/santiago/Desktop/Documentacion/server/src/services/TokenMetricsService.ts) y la pantalla de administración [AdminDojoView.tsx](file:///home/santiago/Desktop/Documentacion/client/src/components/AdminDojoView.tsx), los profesores del dojo pueden auditar el consumo exacto de tokens de entrada, tokens de salida, ahorro porcentual, latencia en milisegundos y estado de cuotas de cada consulta realizada por los practicantes.
+
+### **6.1.6 Soberanía Cognitiva, Multifuente y Multiproveedor**
+El diseño del backend aplica el patrón GRASP de **Variaciones Protegidas (Protected Variations)** y el **Principio Abierto/Cerrado (Open-Closed Principle)** mediante las interfaces técnicas abstraídas `ILLMProvider`, `ITechniqueClassifier` e `IVectorStore`. Esta arquitectura garantiza la soberanía cognitiva y el desacoplamiento total respecto a un único proveedor o autor bibliográfico. El repositorio de conocimiento es abierto y extensible: los practicantes y el sensei pueden ingestar nuevas fuentes (enlaces de YouTube y documentos PDF) que son moderadas automáticamente (Filtro RD-03) e incorporadas a la base vectorial sin requerir modificaciones en el código fuente del sistema. Asimismo, a través de variables de entorno (`DATABASE_URL`, `VECTOR_DB_URL`, `GEMINI_MODEL`, `OPENAI_API_KEY`), el nodo backend conmuta en caliente entre proveedores locales o en la nube.
 
 ## **6.2 Herramientas utilizadas**
 

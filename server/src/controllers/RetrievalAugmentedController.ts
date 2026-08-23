@@ -33,8 +33,10 @@ export class RetrievalAugmentedController {
       const chunks = await this.vectorStore.buscarSimilitud(tecnicaId, []);
       
       if (chunks && chunks.length > 0) {
-        console.log(`[RAG] Chunks recuperados para tecnica ${tecnicaId}. Aplicando RAG Vivo Personalizado.`);
-        return this.promptBuilder.compilarPromptRAG(metricas, chunks);
+        // Optimización RAG: Inyectar únicamente el Top-1 chunk más relevante (máx 150 palabras)
+        const topChunk = chunks.slice(0, 1);
+        console.log(`[RAG Single-Pass] Top-1 Chunk recuperado para técnica ${tecnicaId}. Aplicando RAG Vivo Compacto.`);
+        return this.promptBuilder.compilarPromptRAG(metricas, topChunk);
       } else {
         console.log(`[RAG] 0 chunks recuperados. Conmutando a Modo Baseline Fallback.`);
         return this.promptBuilder.compilarPromptBaseline(metricas);
@@ -173,16 +175,16 @@ export class RetrievalAugmentedController {
   async eliminarFuente(usuarioId: string, fuenteId: string): Promise<boolean> {
     const targetUserId = usuarioId || "user-default";
     try {
+      // Soft Delete: Oculta la fuente de la vista del practicante en PostgreSQL
       await this.persistence.eliminarFuenteConocimiento(targetUserId, fuenteId);
+      console.log(`[RAG Controller - Soft Delete] Fuente ${fuenteId} desvinculada del usuario ${targetUserId}. Vector RAG en ChromaDB preservado para aprendizaje continuo.`);
     } catch (dbErr: any) {
-      console.warn(`[RAG Controller] Error al eliminar fuente relacional: ${dbErr.message}`);
+      console.warn(`[RAG Controller] Error al desvincular fuente relacional: ${dbErr.message}`);
     }
     
-    try {
-      await this.vectorStore.eliminarChunk(fuenteId);
-    } catch (e: any) {
-      console.warn("[RAG] Error al purgar chunk de ChromaDB:", e.message);
-    }
+    // NOTA: Siguiendo la filosofía de Michael Mannino y retención de conocimiento,
+    // NO se purga el chunk de ChromaDB para que el motor RAG siga aprendiendo y utilizando
+    // el conocimiento técnico acumulado para la tutoría del dojo.
     
     return true;
   }

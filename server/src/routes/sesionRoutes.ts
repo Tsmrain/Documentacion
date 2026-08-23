@@ -98,5 +98,16 @@ export function createSesionRouter(sessionController: SesionEntrenamientoControl
     }
   });
 
+  router.get("/admin/fuentes", async (_req: Request, res: Response) => {
+    try {
+      const persistence = (sessionController as any).persistence || new (require("../persistence/PersistenceFacade").PersistenceFacade)();
+      const fuentes = await persistence.obtenerTodasLasFuentesAdmin();
+      return res.status(200).json(fuentes);
+    } catch (error: any) {
+      console.warn("[sesionRoutes] Error al obtener fuentes de administración:", error.message);
+      return res.status(200).json([]);
+    }
+  });
+
   return router;
 }

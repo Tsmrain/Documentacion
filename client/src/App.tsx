@@ -7,9 +7,10 @@ import { ProgresoView } from "./components/ProgresoView";
 import { HistoryView } from "./components/HistoryView";
 import { PerfilView } from "./components/PerfilView";
 import { WelcomeScreen } from "./components/WelcomeScreen";
+import { AdminDojoView } from "./components/AdminDojoView";
 
 // Union de tabs validos. "reporte" es un tab dedicado para el resultado del analisis biomecanico.
-type TabId = "analizador" | "reporte" | "progreso" | "historial" | "perfil" | "rag";
+type TabId = "analizador" | "reporte" | "progreso" | "historial" | "perfil" | "administracion" | "rag";
 
 // Extrae 9 keyframes del video en formato JPEG Base64.
 // Escala a 360px maximo para optimizar consumo de tokens de Gemini.
@@ -75,6 +76,7 @@ function safeJsonParse(raw: string): any | null {
 function App() {
   const [report, setReport] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<TabId>("analizador");
+  const [previousTab, setPreviousTab] = useState<TabId>("analizador");
   const [usuarioId, setUsuarioId] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<{
     nombre: string;
@@ -102,19 +104,89 @@ function App() {
   // Ref para evitar iniciar un nuevo analisis si uno ya esta en curso
   const analyzingRef = useRef(false);
 
+  // --- Restauración automática de sesión al recargar la página ---
+  useEffect(() => {
+    const savedToken = localStorage.getItem("openbjj_jwt");
+    const savedUserId = localStorage.getItem("openbjj_user_id");
+    const savedProfile = localStorage.getItem("openbjj_user_profile");
+
+    if (savedToken && savedUserId) {
+      setUsuarioId(savedUserId);
+      if (savedProfile) {
+        try {
+          const prof = JSON.parse(savedProfile);
+          setUserProfile(prof);
+          const esAdm = prof.rol === "ADMIN" ||
+            prof.nombre?.toLowerCase() === "admin" ||
+            prof.nombre?.toLowerCase() === "administrador" ||
+            prof.nombre?.toLowerCase() === "sensei";
+          if (esAdm) {
+            setActiveTab("administracion");
+          }
+        } catch {}
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    setUsuarioId(null);
+    setSelectedFile(null);
+    setReport(null);
+    setIsAnalyzing(false);
+    setAnalysisProgress("");
+    setAnalysisError(null);
+    setActiveTab("analizador");
+    setPreviousTab("analizador");
+    localStorage.removeItem("openbjj_jwt");
+    localStorage.removeItem("openbjj_user_id");
+    localStorage.removeItem("openbjj_user_profile");
+  };
+
+  const openRag = () => {
+    if (activeTab !== "rag") {
+      setPreviousTab(activeTab);
+    }
+    setActiveTab("rag");
+  };
+
+  const closeRag = () => {
+    setActiveTab(previousTab);
+  };
+
   const handlePracticanteSeleccionado = (practicante: any) => {
     setUsuarioId(practicante.usuarioId);
-    setUserProfile({
+    const esAdm = practicante.rol === "ADMIN" ||
+      practicante.nombre?.toLowerCase() === "admin" ||
+      practicante.nombre?.toLowerCase() === "administrador" ||
+      practicante.nombre?.toLowerCase() === "sensei" ||
+      practicante.nombre?.toLowerCase() === "dojo_admin";
+
+    const perfilObj = {
+      usuarioId: practicante.usuarioId,
       nombre: practicante.nombre,
       cinturon: practicante.cinturon,
       maestria: practicante.maestria,
+      rol: esAdm ? "ADMIN" : "PRACTICANTE",
       altura: practicante.altura || 175,
       peso: practicante.peso || 75
-    });
+    };
+
+    setUserProfile(perfilObj as any);
+    localStorage.setItem("openbjj_user_profile", JSON.stringify(perfilObj));
+    localStorage.setItem("openbjj_user_id", practicante.usuarioId);
+
+    // Limpieza estricta de estado por sesión (evita que un video previo permanezca)
+    setSelectedFile(null);
     setReport(null);
-    setActiveTab("analizador");
+    setIsAnalyzing(false);
+    setAnalysisProgress("");
+    setAnalysisError(null);
+
+    const initialTab: TabId = esAdm ? "administracion" : "analizador";
+    setActiveTab(initialTab);
+    setPreviousTab(initialTab);
     setHistorialVersion(0);
-    console.log(`[App] Practicante activo: ${practicante.nombre} (${practicante.usuarioId})`);
+    console.log(`[App] Usuario activo: ${practicante.nombre} (${practicante.usuarioId}) - Rol: ${esAdm ? "ADMIN" : "PRACTICANTE"}`);
   };
 
   useEffect(() => {
@@ -127,7 +199,7 @@ function App() {
       const headers: any = {};
       const t = token || localStorage.getItem("openbjj_jwt");
       if (t) headers["Authorization"] = `Bearer ${t}`;
-      
+
       const res = await fetch(`/api/sesion/perfil?usuarioId=${usuarioId}`, { headers });
       if (res.ok) {
         const json = await res.json();
@@ -160,7 +232,7 @@ function App() {
       const token = localStorage.getItem("openbjj_jwt");
       const response = await fetch("/api/sesion/analizar", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
@@ -221,15 +293,23 @@ function App() {
     }
   };
 
+  const esAdmin = (userProfile as any)?.rol === "ADMIN" || 
+    userProfile.nombre.toLowerCase() === "admin" || 
+    userProfile.nombre.toLowerCase() === "administrador" ||
+    userProfile.nombre.toLowerCase() === "sensei" || 
+    userProfile.nombre.toLowerCase() === "dojo_admin";
+
   const tabBtnStyle = (tab: TabId): React.CSSProperties => ({
-    padding: "10px 20px",
-    background: activeTab === tab ? "#6366f1" : "rgba(255,255,255,0.02)",
-    color: "#ffffff",
-    border: "none",
-    borderRadius: "6px",
-    fontWeight: 600,
+    padding: "10px 18px",
+    background: activeTab === tab ? "linear-gradient(135deg, #dc2626, #b91c1c)" : "rgba(255,255,255,0.03)",
+    color: activeTab === tab ? "#ffffff" : "#cbd5e1",
+    border: activeTab === tab ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(255,255,255,0.06)",
+    borderRadius: "10px",
+    fontWeight: 700,
+    fontSize: "0.9rem",
     cursor: "pointer",
-    transition: "all 0.2s"
+    transition: "all 0.2s",
+    boxShadow: activeTab === tab ? "0 4px 15px rgba(220, 38, 38, 0.4)" : "none"
   });
 
   // Si aun no hay practicante activo, mostrar pantalla de seleccion
@@ -245,73 +325,104 @@ function App() {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          padding: "16px 0",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+          padding: "18px 0",
+          borderBottom: "1px solid rgba(220, 38, 38, 0.2)",
           marginBottom: "24px"
         }}
       >
-        <div>
-          <h1
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <img
+            src="/logo-corpo-mente.png"
+            alt="Corpo e Mente Logo"
             style={{
-              margin: 0,
-              fontSize: "1.8rem",
-              fontWeight: 800,
-              background: "linear-gradient(135deg, #a5b4fc 0%, #6366f1 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent"
+              width: "52px",
+              height: "52px",
+              borderRadius: "50%",
+              objectFit: "cover",
+              border: "2px solid #dc2626",
+              boxShadow: "0 0 20px rgba(220, 38, 38, 0.5)"
             }}
-          >
-            OpenBJJ
-          </h1>
-          <p style={{ margin: "4px 0 0 0", color: "#64748b", fontSize: "0.85rem" }}>
-            Tutor Inteligente de Jiu-Jitsu para Corrección Técnica
-          </p>
+          />
+          <div>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: "1.7rem",
+                fontWeight: 900,
+                letterSpacing: "-0.5px",
+                background: "linear-gradient(135deg, #ffffff 0%, #fca5a5 60%, #dc2626 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent"
+              }}
+            >
+              CORPO E MENTE BJJ
+            </h1>
+            <p style={{ margin: "2px 0 0 0", color: "#94a3b8", fontSize: "0.82rem", fontWeight: 600 }}>
+              Academia de Jiu-Jitsu & Judô — Sistema de Biomecánica 3D
+            </p>
+          </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <div style={{
             display: "flex",
             alignItems: "center",
-            gap: "8px",
-            padding: "6px 10px",
-            borderRadius: "8px",
-            background: "rgba(99,102,241,0.1)",
-            border: "1px solid rgba(99,102,241,0.2)"
+            gap: "10px",
+            padding: "6px 12px",
+            borderRadius: "10px",
+            background: "rgba(220, 38, 38, 0.08)",
+            border: "1px solid rgba(220, 38, 38, 0.25)"
           }}>
             <div style={{
               width: "28px",
               height: "28px",
-              borderRadius: "7px",
-              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #dc2626, #991b1b)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontWeight: 800,
-              fontSize: "0.85rem"
+              fontSize: "0.85rem",
+              color: "#ffffff"
             }}>
               {userProfile.nombre.charAt(0).toUpperCase()}
             </div>
-            <span style={{ color: "#a5b4fc", fontSize: "0.85rem", fontWeight: 600 }}>
-              {userProfile.nombre}
-            </span>
+            <div>
+              <span style={{ color: "#f8fafc", fontSize: "0.85rem", fontWeight: 700, display: "block" }}>
+                {userProfile.nombre}
+              </span>
+              {esAdmin && (
+                <span style={{ fontSize: "0.68rem", color: "#f87171", fontWeight: 800, textTransform: "uppercase" }}>
+                  ADMIN DOJO
+                </span>
+              )}
+            </div>
           </div>
           <button
             className="btn-secondary"
-            style={{ padding: "8px 12px", fontSize: "0.8rem" }}
-            onClick={() => setUsuarioId(null)}
-            title="Cambiar practicante"
+            style={{ padding: "8px 14px", fontSize: "0.82rem" }}
+            onClick={handleLogout}
+            title="Cerrar sesión"
           >
-            Cambiar Practicante
+            Cerrar Sesión
           </button>
           <button
             className="btn-secondary"
             style={{
               padding: "8px 14px",
-              fontSize: "0.85rem",
-              background: activeTab === "rag" ? "#6366f1" : undefined
+              fontSize: "0.82rem",
+              background: activeTab === "rag" ? "linear-gradient(135deg, #dc2626, #b91c1c)" : undefined,
+              borderColor: activeTab === "rag" ? "rgba(220, 38, 38, 0.5)" : undefined,
+              color: activeTab === "rag" ? "#ffffff" : undefined
             }}
-            onClick={() => setActiveTab(activeTab === "rag" ? "analizador" : "rag")}
+            onClick={() => {
+              if (activeTab === "rag") {
+                closeRag();
+              } else {
+                openRag();
+              }
+            }}
           >
-            {activeTab === "rag" ? "Volver al Analizador" : "Agregar Libro / Video"}
+            {activeTab === "rag" ? "Volver" : "Ingresar Fuente"}
           </button>
         </div>
       </header>
@@ -362,6 +473,21 @@ function App() {
         <button type="button" style={tabBtnStyle("perfil")} onClick={() => setActiveTab("perfil")}>
           Mi Perfil
         </button>
+        {esAdmin && (
+          <button
+            type="button"
+            style={{
+              ...tabBtnStyle("administracion"),
+              background: activeTab === "administracion" ? "linear-gradient(135deg, #dc2626, #991b1b)" : "rgba(220, 38, 38, 0.1)",
+              border: "1px solid rgba(220, 38, 38, 0.35)",
+              color: activeTab === "administracion" ? "#ffffff" : "#fca5a5",
+              marginLeft: "auto"
+            }}
+            onClick={() => setActiveTab("administracion")}
+          >
+            📊 Panel de Administración & Analítica
+          </button>
+        )}
       </div>
 
       <main
@@ -372,8 +498,10 @@ function App() {
         </section>
 
         <section>
-          {activeTab === "rag" ? (
-            <RagIngestionPanel onClose={() => setActiveTab("analizador")} usuarioId={usuarioId} />
+          {activeTab === "administracion" ? (
+            <AdminDojoView onOpenRag={openRag} />
+          ) : activeTab === "rag" ? (
+            <RagIngestionPanel onClose={closeRag} usuarioId={usuarioId} />
           ) : activeTab === "progreso" ? (
             <ProgresoView usuarioId={usuarioId} key={historialVersion} />
           ) : activeTab === "historial" ? (

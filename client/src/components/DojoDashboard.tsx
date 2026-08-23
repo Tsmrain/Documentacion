@@ -1,101 +1,118 @@
-import { useEffect, useState } from "react";
-
 interface DojoDashboardProps {
   usuarioId?: string;
   userProfile?: {
     nombre: string;
     cinturon: string;
     maestria: string;
+    altura?: number;
+    peso?: number;
   };
 }
 
-export function DojoDashboard({ usuarioId = "00000000-0000-0000-0000-000000000001", userProfile }: DojoDashboardProps) {
+const CINTURON_COLOR: Record<string, string> = {
+  BLANCO: "#f8fafc",
+  AZUL: "#3b82f6",
+  MORADO: "#8b5cf6",
+  MARRON: "#92400e",
+  NEGRO: "#0f172a"
+};
+
+export function DojoDashboard({ userProfile }: DojoDashboardProps) {
   const nombre = userProfile?.nombre || "Practicante";
   const cinturon = userProfile?.cinturon || "BLANCO";
   const maestria = userProfile?.maestria || "Principiante";
-
-  const [telemetria, setTelemetria] = useState<any>(null);
-
-  useEffect(() => {
-    const fetchTelemetria = async () => {
-      try {
-        const token = localStorage.getItem("openbjj_jwt");
-        const headers: any = {};
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-        const res = await fetch(`/api/sesion/telemetria?usuarioId=${usuarioId}`, { headers });
-        if (res.ok) {
-          const json = await res.json();
-          setTelemetria(json);
-        }
-      } catch (e) {
-        console.warn("[DojoDashboard] Error al consultar telemetría:", e);
-      }
-    };
-    fetchTelemetria();
-  }, [usuarioId]);
-
-  const evi = telemetria?.evi;
-  const metricas = telemetria?.metricasGlobales;
-  const alerta = evi?.alerta === "BAJO_COMPROMISO";
+  const altura = userProfile?.altura || 175;
+  const peso = userProfile?.peso || 75;
 
   return (
-    <div className="glass-panel p-6 animate-fade-in mb-6" style={{ padding: '20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }}></div>
-        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#cbd5e1' }}>Analizador de Movimiento Activo</span>
-      </div>
-
-      <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '12px' }}>
-        <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
-          Perfil del Practicante
+    <div className="glass-panel p-6 animate-fade-in mb-6" style={{ padding: '22px' }}>
+      {/* Estado del Sistema */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+        <div style={{
+          width: '10px',
+          height: '10px',
+          borderRadius: '50%',
+          background: '#10b981',
+          boxShadow: '0 0 10px #10b981'
+        }} />
+        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#e2e8f0' }}>
+          Analizador Cinemático 3D Activo
         </span>
-        <strong style={{ color: '#f1f5f9', fontSize: '0.95rem', display: 'block' }}>{nombre}</strong>
-        <span style={{ fontSize: '0.8rem', color: '#818cf8', fontWeight: 600 }}>Cinturón {cinturon}</span>
-        <span style={{ fontSize: '0.75rem', color: '#94a3b8', marginLeft: '8px' }}>({maestria})</span>
       </div>
 
-      {/* --- Panel de Actividad del Dojo en lenguaje sencillo --- */}
-      <div style={{ background: 'rgba(99, 102, 241, 0.04)', padding: '12px', borderRadius: '6px', border: `1px solid ${alerta ? 'rgba(239, 68, 68, 0.3)' : 'rgba(99, 102, 241, 0.15)'}` }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <span style={{ fontSize: '0.75rem', color: '#a5b4fc', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>
-            Uso en el Dojo
+      {/* Perfil del Alumno */}
+      <div style={{
+        background: 'rgba(255, 255, 255, 0.03)',
+        padding: '16px',
+        borderRadius: '14px',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        marginBottom: '16px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <span style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>
+            Practicante Activo
           </span>
-          <span style={{
-            fontSize: '0.7rem',
-            padding: '2px 8px',
-            borderRadius: '4px',
-            fontWeight: 700,
-            background: alerta ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
-            color: alerta ? '#f87171' : '#34d399',
-            border: `1px solid ${alerta ? 'rgba(239, 68, 68, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`
-          }}>
-            {alerta ? "POCO ENTRENAMIENTO" : "ENTRENAMIENTO AL DÍA"}
+          <div style={{
+            width: '10px',
+            height: '24px',
+            borderRadius: '3px',
+            background: CINTURON_COLOR[cinturon] || "#fff",
+            border: cinturon === "BLANCO" ? "1px solid rgba(255,255,255,0.4)" : "none"
+          }} />
+        </div>
+
+        <strong style={{ color: '#f8fafc', fontSize: '1.1rem', display: 'block', marginBottom: '2px' }}>
+          {nombre}
+        </strong>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+          <span style={{ fontSize: '0.85rem', color: '#818cf8', fontWeight: 700 }}>
+            Cinturón {cinturon}
+          </span>
+          <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+            • {maestria}
           </span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px', textAlign: 'center', marginBottom: '8px' }}>
-          <div style={{ background: 'rgba(0,0,0,0.2)', padding: '6px', borderRadius: '4px' }}>
-            <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>Hoy</span>
-            <strong style={{ fontSize: '0.9rem', color: '#f8fafc' }}>{metricas?.dau ?? 1}</strong>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '8px',
+          paddingTop: '10px',
+          borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+          fontSize: '0.78rem',
+          color: '#cbd5e1'
+        }}>
+          <div>
+            <span style={{ color: '#64748b', display: 'block' }}>Altura</span>
+            <strong>{altura <= 3 ? Math.round(altura * 100) : Math.round(altura)} cm</strong>
           </div>
-          <div style={{ background: 'rgba(0,0,0,0.2)', padding: '6px', borderRadius: '4px' }}>
-            <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>Esta Semana</span>
-            <strong style={{ fontSize: '0.9rem', color: '#f8fafc' }}>{metricas?.wau ?? 1}</strong>
+          <div>
+            <span style={{ color: '#64748b', display: 'block' }}>Peso</span>
+            <strong>{peso} kg</strong>
           </div>
-          <div style={{ background: 'rgba(0,0,0,0.2)', padding: '6px', borderRadius: '4px' }}>
-            <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>Este Mes</span>
-            <strong style={{ fontSize: '0.9rem', color: '#f8fafc' }}>{metricas?.mau ?? 1}</strong>
-          </div>
-        </div>
-
-        <div style={{ fontSize: '0.72rem', color: '#cbd5e1', display: 'flex', justifyContent: 'space-between' }}>
-          <span>Ritmo de Práctica:</span>
-          <strong style={{ color: '#38bdf8' }}>{evi ? (evi.evi * 100).toFixed(0) + "%" : "100%"}</strong>
         </div>
       </div>
 
-      <p style={{ margin: '12px 0 0 0', color: '#64748b', fontSize: '0.75rem' }}>
-        Análisis directo en tu dispositivo con inteligencia artificial.
+      {/* Tarjeta de Principios del Tatami */}
+      <div style={{
+        background: 'rgba(99, 102, 241, 0.05)',
+        padding: '14px',
+        borderRadius: '12px',
+        border: '1px solid rgba(99, 102, 241, 0.18)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+          <span style={{ fontSize: '0.9rem' }}>🥋</span>
+          <span style={{ fontSize: '0.78rem', color: '#a5b4fc', fontWeight: 700, textTransform: 'uppercase' }}>
+            Enfoque en el Tatami
+          </span>
+        </div>
+        <p style={{ margin: 0, fontSize: '0.78rem', color: '#cbd5e1', lineHeight: '1.4' }}>
+          "La biomecánica correcta nace del control del centro de gravedad y la postura erguida."
+        </p>
+      </div>
+
+      <p style={{ margin: '14px 0 0 0', color: '#475569', fontSize: '0.72rem', textAlign: 'center' }}>
+        Tutoría adaptativa y extracción de pose monocular client-side.
       </p>
     </div>
   );

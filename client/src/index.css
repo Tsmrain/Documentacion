@@ -1,18 +1,27 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Outfit', 'Inter', sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: dark;
-  color: #e2e8f0;
-  background-color: #0b0f19;
+  color: #f8fafc;
+  background-color: #050505;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Academy Brand Colors: Corpo e Mente */
+  --brand-red-primary: #dc2626;
+  --brand-red-light: #ef4444;
+  --brand-red-dark: #991b1b;
+  --brand-red-glow: rgba(220, 38, 38, 0.4);
+  --brand-black-deep: #050505;
+  --brand-black-card: rgba(18, 18, 20, 0.85);
+  --brand-white: #ffffff;
 }
 
 body {
@@ -20,7 +29,8 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(circle at top right, #1e1b4b 0%, #0b0f19 60%);
+  background: radial-gradient(ellipse at top, #2b080e 0%, #0f0a0a 45%, #050505 100%);
+  color: #f8fafc;
 }
 
 #root {
@@ -30,32 +40,33 @@ body {
   flex-direction: column;
 }
 
-/* Glassmorphism containers */
+/* Glassmorphism containers with Dojo Red highlights */
 .glass-panel {
-  background: rgba(17, 24, 39, 0.7);
+  background: var(--brand-black-card);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  border: 1px solid rgba(220, 38, 38, 0.18);
+  border-radius: 18px;
+  box-shadow: 0 10px 35px 0 rgba(0, 0, 0, 0.65), 0 0 15px rgba(220, 38, 38, 0.05);
 }
 
-/* Premium Buttons with micro-animations */
+/* Premium Buttons with micro-animations & Dojo Red gradient */
 .btn-primary {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 60%, #991b1b 100%);
   color: #ffffff;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
+  border-radius: 10px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.45);
+  letter-spacing: 0.02em;
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 22px rgba(220, 38, 38, 0.6);
   filter: brightness(1.1);
 }
 
@@ -64,36 +75,38 @@ body {
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: #e2e8f0;
   padding: 12px 24px;
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(220, 38, 38, 0.12);
+  border-color: rgba(220, 38, 38, 0.35);
+  color: #ffffff;
 }
 
 /* Inputs and Forms */
 .input-field {
-  background: rgba(17, 24, 39, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  background: rgba(12, 12, 14, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
   padding: 12px 16px;
   color: #ffffff;
   width: 100%;
   box-sizing: border-box;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .input-field:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: #dc2626;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.3);
 }
 
 /* Badges for severity */
@@ -102,7 +115,7 @@ body {
   color: #10b981;
   border: 1px solid rgba(16, 185, 129, 0.3);
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 0.8rem;
   font-weight: 600;
 }
@@ -112,34 +125,34 @@ body {
   color: #f59e0b;
   border: 1px solid rgba(245, 158, 11, 0.3);
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 0.8rem;
   font-weight: 600;
 }
 
 .badge-critico {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(220, 38, 38, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(220, 38, 38, 0.4);
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 0.8rem;
   font-weight: 600;
 }
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 /* Ergonomic spacing */
 .container {
-  max-width: 1200px;
+  max-width: 1240px;
   margin: 0 auto;
   padding: 24px;
   width: 100%;

@@ -54,13 +54,13 @@ export function ProgresoView({ usuarioId }: ProgresoViewProps) {
   // el fallback garantiza que siempre se muestran las 7 posiciones canonicas
   // incluso cuando el practicante no tiene historial registrado aun.
   const POSICIONES_CANONICAS = [
+    "Derribos y Proyecciones",
     "Guardia Cerrada",
     "Pasaje de Guardia",
     "Control Lateral",
-    "Montada",
-    "Espalda",
+    "Montada y Espalda",
     "Media Guardia",
-    "Guardia Abierta"
+    "Guardia Abierta y Sumisiones"
   ];
 
   const posicionesServidor: { nombre: string; porcentaje: number }[] = data.posicionesMaestria || [];
@@ -113,8 +113,43 @@ export function ProgresoView({ usuarioId }: ProgresoViewProps) {
           </div>
         )}
 
+        {/* --- Sección: Técnicas Específicas Evaluadas --- */}
+        {data.tecnicasEvaluadas && data.tecnicasEvaluadas.length > 0 && (
+          <div style={{ marginBottom: '28px' }}>
+            <h3 style={{ fontSize: '1.05rem', color: '#f8fafc', marginTop: 0, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>🥋</span> Técnicas Evaluadas ({data.tecnicasEvaluadas.length})
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {data.tecnicasEvaluadas.map((tec: any, idx: number) => {
+                let color = "#10b981";
+                if (tec.porcentaje < 50) color = "#ef4444";
+                else if (tec.porcentaje < 80) color = "#f59e0b";
+
+                return (
+                  <div key={idx} className="glass-panel" style={{ padding: '14px 16px', background: 'rgba(30, 41, 59, 0.5)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontWeight: 700, color: '#f1f5f9', fontSize: '0.9rem' }}>{tec.nombre}</span>
+                        <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '12px', background: 'rgba(255,255,255,0.06)', color: '#94a3b8' }}>
+                          {tec.intentos} {tec.intentos === 1 ? 'intento' : 'intentos'}
+                        </span>
+                      </div>
+                      <span style={{ color, fontWeight: 800, fontSize: '0.95rem' }}>{tec.porcentaje}%</span>
+                    </div>
+                    <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: `${tec.porcentaje}%`, height: '100%', background: color, transition: 'width 0.4s ease' }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div>
-          <h3 style={{ fontSize: '1rem', color: '#f1f5f9', marginTop: 0, marginBottom: '12px' }}>Nivel de Maestria por Posicion</h3>
+          <h3 style={{ fontSize: '1.05rem', color: '#f8fafc', marginTop: 0, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>📊</span> Dominio por Posición
+          </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {posicionesMaestria.map((pos: { nombre: string; porcentaje: number }, idx: number) => {
               let color = "#10b981";
