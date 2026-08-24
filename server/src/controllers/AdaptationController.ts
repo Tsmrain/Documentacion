@@ -214,7 +214,7 @@ export class AdaptationController {
     return "https://www.youtube.com/watch?v=BPEXBXJpLEw";
   }
 
-  async evaluarAdaptabilidad(usuarioId: string, reporte: string | null): Promise<RutaAprendizaje> {
+  async evaluarAdaptabilidad(usuarioId: string, reporte: string | null, rolPracticante: string = "ATACANTE"): Promise<RutaAprendizaje> {
     const perfil = await this.persistence.cargarPerfil(usuarioId);
     let historial: any[] = [];
     try {
@@ -280,16 +280,23 @@ export class AdaptationController {
       rodilla_izquierda: "Ejercicio: Mantén la rodilla izquierda firme y activa para controlar la base de tu compañero.",
       cadera: "Ejercicio: Realiza drills de escape de cadera (shrimping) y elevación de pelvis para mejorar tu palanca.",
     };
-    const drillSugerido = drillsPorArticulacion[errorArticular] || `Ejercicio: Repite 10 veces la entrada de ${evaluacion.tecnicaId || "la técnica"} enfocándote en cerrar los espacios y mantener una base sólida.`;
+
+    const esDefensa = rolPracticante === "DEFENSOR";
+    const drillDefensa = `Drill de Escape: Practica repeticiones de defensa, postura y escape frente a ${evaluacion.tecnicaId || "la técnica"}.`;
+    const drillAtaque = drillsPorArticulacion[errorArticular] || `Ejercicio: Repite 10 veces la entrada de ${evaluacion.tecnicaId || "la técnica"} enfocándote en cerrar los espacios y mantener una base sólida.`;
+    const drillSugerido = esDefensa ? drillDefensa : drillAtaque;
+
+    const tecnicaBusqueda = (evaluacion.youtube_query || (esDefensa ? `defensa escape ${evaluacion.tecnicaId || "bjj"}` : (evaluacion.tecnicaId || "bjj"))).replace(/-/g, " ").toLowerCase();
+    const videoRecomendado = await this.obtenerVideoYouTubeRelacionado(usuarioId, tecnicaBusqueda);
 
     if (hayFalloRecurrente) {
-      const videoRecurrente = await this.obtenerVideoYouTubeRelacionado(usuarioId, errorArticular);
       return {
         nivelCompetenciaActual: "Ajuste Técnico de Tatami",
         drillRecomendado: drillSugerido,
-        videoYouTubeUrl: videoRecurrente,
-        videoYouTubeAlternativo: `https://www.youtube.com/results?search_query=Tutorial+BJJ+defensa+postura+${encodeURIComponent(articulacionLimpia)}`,
-        mensajeAdaptativo: `Consejo del Sensei: En tus últimas prácticas has dejado el ${articulacionLimpia} algo expuesto. Tómate unos minutos para practicar este ajuste antes del combate.`,
+        videoYouTubeUrl: videoRecomendado,
+        mensajeAdaptativo: esDefensa
+          ? `Consejo del Sensei: En tus últimas defensas has dejado el ${articulacionLimpia} expuesto. Conecta tus agarres antes de que la sumisión se cierre.`
+          : `Consejo del Sensei: En tus últimas prácticas has dejado el ${articulacionLimpia} algo expuesto. Tómate unos minutos para practicar este ajuste antes del combate.`,
         ultimaTecnica: evaluacion.tecnicaId,
         posicionesMaestria: posicionesActualizadas,
         tecnicasEvaluadas: tecnicasEvaluadasActualizadas,
@@ -297,15 +304,13 @@ export class AdaptationController {
       };
     }
 
-    const tecnicaBusqueda = (evaluacion.youtube_query || evaluacion.tecnicaId || errorArticular || "bjj").replace(/-/g, " ").toLowerCase();
-    const videoRecomendado = await this.obtenerVideoYouTubeRelacionado(usuarioId, tecnicaBusqueda);
-
     return {
       nivelCompetenciaActual: "Principiante",
       drillRecomendado: drillSugerido,
       videoYouTubeUrl: videoRecomendado,
-      videoYouTubeAlternativo: `https://www.youtube.com/results?search_query=Tutorial+BJJ+${encodeURIComponent(evaluacion.tecnicaId || "detalles")}`,
-      mensajeAdaptativo: `Consejo del Sensei: No descuides la posición de tu ${articulacionLimpia}, mantén la presión antes de que tu compañero aproveche el espacio.`,
+      mensajeAdaptativo: esDefensa
+        ? `Consejo del Sensei: Mantén tu base pesada y protege tus brazos para no regalar sumisiones.`
+        : `Consejo del Sensei: No descuides la posición de tu ${articulacionLimpia}, mantén la presión antes de que tu compañero aproveche el espacio.`,
       ultimaTecnica: evaluacion.tecnicaId,
       posicionesMaestria: posicionesActualizadas,
       tecnicasEvaluadas: tecnicasEvaluadasActualizadas,

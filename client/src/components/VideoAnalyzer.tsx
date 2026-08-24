@@ -7,7 +7,7 @@ interface VideoAnalyzerProps {
   analysisError: string | null;
   selectedFile: File | null;
   onFileSelected: (file: File | null) => void;
-  onStartAnalysis: (file: File, tecnicaObjetivo?: string) => void;
+  onStartAnalysis: (file: File, tecnicaObjetivo?: string, rolPracticante?: "ATACANTE" | "DEFENSOR") => void;
 }
 
 export function VideoAnalyzer({
@@ -21,6 +21,7 @@ export function VideoAnalyzer({
   // URL de objeto local para previsualizacion de video en el navegador.
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [tecnicaObjetivo, setTecnicaObjetivo] = useState<string>("");
+  const [rolPracticante, setRolPracticante] = useState<"ATACANTE" | "DEFENSOR">("ATACANTE");
 
   useEffect(() => {
     if (selectedFile) {
@@ -40,7 +41,7 @@ export function VideoAnalyzer({
 
   const handleStartClick = () => {
     if (!selectedFile) return;
-    onStartAnalysis(selectedFile, tecnicaObjetivo.trim() || undefined);
+    onStartAnalysis(selectedFile, tecnicaObjetivo.trim() || undefined, rolPracticante);
   };
 
   return (
@@ -164,7 +165,8 @@ export function VideoAnalyzer({
                   <input
                     type="radio"
                     name="rolPracticante"
-                    defaultChecked
+                    checked={rolPracticante === "ATACANTE"}
+                    onChange={() => setRolPracticante("ATACANTE")}
                   />
                   🥋 Estaba Atacando (Tori)
                 </label>
@@ -172,6 +174,8 @@ export function VideoAnalyzer({
                   <input
                     type="radio"
                     name="rolPracticante"
+                    checked={rolPracticante === "DEFENSOR"}
+                    onChange={() => setRolPracticante("DEFENSOR")}
                   />
                   🛡️ Estaba Defendiendo (Uke)
                 </label>

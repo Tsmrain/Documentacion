@@ -42,9 +42,10 @@ export class SesionEntrenamientoController {
     const usuarioId = (typeof videoPayload === "object" && videoPayload.usuarioId) ? videoPayload.usuarioId : usuarioIdParam;
     const frames = (typeof videoPayload === "object" && Array.isArray(videoPayload.frames)) ? videoPayload.frames : [];
     const tecnicaObjetivo = (typeof videoPayload === "object" && videoPayload.tecnicaObjetivo) ? String(videoPayload.tecnicaObjetivo).trim() : undefined;
+    const rolPracticante = (typeof videoPayload === "object" && videoPayload.rolPracticante) ? String(videoPayload.rolPracticante).trim().toUpperCase() : "ATACANTE";
 
     console.log(`--------------------------------------------------------------------------------`);
-    console.log(`[Dojo Debug] Solicitud de Analisis recibida para usuarioId: ${usuarioId} (${frames.length} keyframes adjuntos)${tecnicaObjetivo ? ` | Técnica Objetivo: '${tecnicaObjetivo}'` : ''}`);
+    console.log(`[Dojo Debug] Solicitud de Analisis recibida para usuarioId: ${usuarioId} (${frames.length} keyframes adjuntos)${tecnicaObjetivo ? ` | Técnica Objetivo: '${tecnicaObjetivo}'` : ''} | Rol: ${rolPracticante}`);
     console.log("[Controller] Iniciando analisis cinematico...");
 
     // Moderacion de pertinencia de contenido de video
@@ -86,7 +87,8 @@ export class SesionEntrenamientoController {
       frames,
       undefined,
       undefined,
-      tecnicaObjetivo
+      tecnicaObjetivo,
+      rolPracticante
     );
     console.log(`[Dojo Debug] Single-Pass Gemini JSON respuesta recibida.`);
 
@@ -125,8 +127,8 @@ export class SesionEntrenamientoController {
     console.log(`[Dojo Debug] Diagnostico biomecanico de Gemini JSON recibido para técnica '${tecnicaId}'`);
     console.log(`--------------------------------------------------------------------------------`);
 
-    // 5. Evaluar adaptabilidad pedagogica.
-    const planTutoriasYYouTubeUrl = await this.adaptationController.evaluarAdaptabilidad(usuarioId, JSON.stringify(reporteParsed));
+    // 5. Evaluar adaptabilidad pedagogica orientada al rol del practicante
+    const planTutoriasYYouTubeUrl = await this.adaptationController.evaluarAdaptabilidad(usuarioId, JSON.stringify(reporteParsed), rolPracticante);
 
     // Guardar analisis en persistencia relacional y registrar telemetria
     try {

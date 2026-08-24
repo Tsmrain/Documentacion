@@ -212,7 +212,7 @@ function App() {
 
   // Iniciado desde VideoAnalyzer pero ejecutado en App.tsx para que el fetch
   // sobreviva la desmontada de VideoAnalyzer al cambiar de pestana.
-  const startAnalysis = useCallback(async (file: File, tecnicaObjetivo?: string) => {
+  const startAnalysis = useCallback(async (file: File, tecnicaObjetivo?: string, rolPracticante: "ATACANTE" | "DEFENSOR" = "ATACANTE") => {
     if (analyzingRef.current) return;
     analyzingRef.current = true;
     setIsAnalyzing(true);
@@ -241,7 +241,8 @@ function App() {
           fileName: file.name,
           frames,
           usuarioId,
-          tecnicaObjetivo
+          tecnicaObjetivo,
+          rolPracticante
         })
       });
 

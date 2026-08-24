@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 
 interface AnalysisReportViewProps {
@@ -11,14 +10,12 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
   const [isEditingTechnique, setIsEditingTechnique] = useState<boolean>(false);
   const [customTechnique, setCustomTechnique] = useState<string>("");
   const [activeReport, setActiveReport] = useState<any>(report);
-  const [perspectiva, setPerspectiva] = useState<"ATACANTE" | "DEFENSOR">("ATACANTE");
 
   useEffect(() => {
     setActiveReport(report);
     setFeedbackConfirmed(false);
     setIsEditingTechnique(false);
     setCustomTechnique("");
-    setPerspectiva("ATACANTE");
   }, [report]);
 
   if (!activeReport) return null;
@@ -39,37 +36,18 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
   const isApproved = severidad === "leve";
   const isCritical = severidad === "critico";
 
-  const isDefending = perspectiva === "DEFENSOR";
-
-  const cardBg = isDefending ? "#2563eb" : (isApproved ? "#16a34a" : isCritical ? "#dc2626" : "#ea580c");
-  const titleText = isDefending 
-    ? "TUTORÍA DEL SENSEI: CÓMO DEFENDER Y ESCAPAR" 
-    : (isApproved ? "TÉCNICA APROBADA (BUENA EJECUCIÓN)" : isCritical ? "CORRECCIÓN CRÍTICA" : "AJUSTE RECOMENDADO");
+  const cardBg = isApproved ? "#16a34a" : isCritical ? "#dc2626" : "#ea580c";
+  const titleText = isApproved ? "TÉCNICA APROBADA (BUENA EJECUCIÓN)" : isCritical ? "CORRECCIÓN CRÍTICA" : "AJUSTE RECOMENDADO";
   
-  // RAG / Dynamic Content
-  let evaluacionText = "No se detectaron problemas mayores en la técnica.";
-  if (isDefending) {
-    evaluacionText = reporte?.diagnosticoDefensa?.evaluacion || 
-      "Si tú estabas defendiendo: Mantén tu postura erguida, conecta inmediatamente tus manos para proteger el brazo y apila tu peso hacia el pecho de tu oponente para neutralizar la palanca.";
-  } else if (reporte?.sugerenciaPedagogica) {
-    evaluacionText = reporte.sugerenciaPedagogica;
-  } else if (reporte?.evaluacion) {
-    evaluacionText = reporte.evaluacion;
-  }
+  // Feedback principal
+  const evaluacionText = reporte?.sugerenciaPedagogica || reporte?.evaluacion || "Mantén tu postura erguida y protege tu posición.";
 
   const tecnicaRaw = reporte?.tecnicaId || "SPARRING GENERAL";
   const tecnicaName = (tecnicaRaw === "TECNICA_DESCONOCIDA_D" ? "Técnica Libre / Sparring Dinámico" : tecnicaRaw).replace(/-/g, " ").toUpperCase();
 
-  const handleResourceClick = (type: string) => {
-    if (type === "video") {
-      if (isDefending) {
-        const queryDefensa = reporte?.diagnosticoDefensa?.youtubeQueryDefensa || `Tutorial BJJ defensa y escape ${tecnicaName}`;
-        window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(queryDefensa)}`, "_blank");
-      } else if (planAdaptativo?.videoYouTubeUrl) {
-        window.open(planAdaptativo.videoYouTubeUrl, "_blank");
-      }
-    } else {
-      alert("Alineación con el motor RAG. El conocimiento base ha sido actualizado.");
+  const handleOpenVideo = () => {
+    if (planAdaptativo?.videoYouTubeUrl) {
+      window.open(planAdaptativo.videoYouTubeUrl, "_blank");
     }
   };
 
@@ -77,7 +55,6 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
     if (!customTechnique.trim()) return;
     const nuevaTecnica = customTechnique.trim();
     
-    // Actualizar localmente el reporte
     setActiveReport((prev: any) => ({
       ...prev,
       reporte: {
@@ -113,69 +90,29 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
   return (
     <div className="animate-fade-in" style={{ background: "#f8fafc", minHeight: "100%", paddingBottom: "20px", borderRadius: "16px", color: "#1e293b" }}>
       {/* Header */}
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', background: '#ffffff', borderTopLeftRadius: "16px", borderTopRightRadius: "16px", borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div style={{ background: '#000', color: '#fff', borderRadius: '4px', padding: '2px 6px', fontSize: '10px', fontWeight: 'bold', marginRight: '10px' }}>
-            IA
-          </div>
-          <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>Diagnóstico y Tutoría del Sensei</h2>
+      <header style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', background: '#ffffff', borderTopLeftRadius: "16px", borderTopRightRadius: "16px", borderBottom: '1px solid #e2e8f0' }}>
+        <div style={{ background: '#000', color: '#fff', borderRadius: '4px', padding: '2px 6px', fontSize: '10px', fontWeight: 'bold', marginRight: '10px' }}>
+          IA
         </div>
-
-        {/* Perspective Switcher */}
-        <div style={{ display: 'flex', background: '#f1f5f9', padding: '4px', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
-          <button
-            onClick={() => setPerspectiva("ATACANTE")}
-            style={{
-              padding: '6px 14px',
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              borderRadius: '7px',
-              border: 'none',
-              cursor: 'pointer',
-              background: !isDefending ? '#ffffff' : 'transparent',
-              color: !isDefending ? '#0f172a' : '#64748b',
-              boxShadow: !isDefending ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-              transition: 'all 0.2s'
-            }}
-          >
-            🥋 Estaba Atacando
-          </button>
-          <button
-            onClick={() => setPerspectiva("DEFENSOR")}
-            style={{
-              padding: '6px 14px',
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              borderRadius: '7px',
-              border: 'none',
-              cursor: 'pointer',
-              background: isDefending ? '#2563eb' : 'transparent',
-              color: isDefending ? '#ffffff' : '#64748b',
-              boxShadow: isDefending ? '0 1px 3px rgba(0,0,0,0.15)' : 'none',
-              transition: 'all 0.2s'
-            }}
-          >
-            🛡️ Estaba Defendiendo
-          </button>
-        </div>
+        <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>Diagnóstico y Tutoría del Sensei</h2>
       </header>
 
       <div style={{ padding: '20px' }}>
         
         {/* Verdict Card */}
         <div style={{ background: '#ffffff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', marginBottom: '20px' }}>
-          <div style={{ background: cardBg, padding: '30px 20px', color: '#ffffff', textAlign: 'center' }}>
+          <div style={{ background: cardBg, padding: '28px 20px', color: '#ffffff', textAlign: 'center' }}>
             <div style={{ 
-              width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' 
+              width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' 
             }}>
               {isApproved ? (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
               ) : (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
               )}
             </div>
-            <h3 style={{ margin: '0 0 12px 0', fontSize: '1.1rem', fontWeight: 800 }}>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '1.05rem', fontWeight: 800 }}>
               {titleText}
             </h3>
             <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: '1.5', opacity: 0.95 }}>
@@ -190,7 +127,7 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
               {tecnicaName}
             </div>
 
-            {/* Secuencia Multi-Posición si está disponible */}
+            {/* Secuencia Multi-Posición */}
             {reporte?.fasesSecuencia && Array.isArray(reporte.fasesSecuencia) && reporte.fasesSecuencia.length > 0 && (
               <div style={{ marginTop: "14px", padding: "12px", background: "rgba(241,245,249,0.7)", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
                 <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: "8px" }}>
@@ -264,147 +201,62 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
           </div>
         </div>
 
-        {/* Recurring Mistake Highlight (Alerta del Sensei) */}
-        {planAdaptativo?.esFalloRecurrente && (
-          <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderLeft: '4px solid #f59e0b', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#b45309', marginBottom: '8px' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-              <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800 }}>Atención del Sensei: Detalle Recurrente Detectado</h4>
-            </div>
-            <p style={{ margin: '0 0 12px 0', fontSize: '0.84rem', color: '#78350f', lineHeight: '1.5' }}>
-              {planAdaptativo.mensajeAdaptativo || "Has repetido este detalle en más de 3 sesiones. Recomendamos revisar este video específico para corregirlo."}
-            </p>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => handleResourceClick('video')}
-                style={{ flex: 1, minWidth: '160px', padding: '10px 14px', background: '#f59e0b', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                Ver Video de Corrección Recomendado
-              </button>
-              {planAdaptativo.videoYouTubeAlternativo && (
-                <button
-                  onClick={() => window.open(planAdaptativo.videoYouTubeAlternativo, "_blank")}
-                  style={{ flex: 1, minWidth: '160px', padding: '10px 14px', background: '#ffffff', color: '#b45309', border: '1px solid #fde68a', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-                >
-                  🔍 Ver Video Alternativo en YouTube
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Critical Mistakes / Coaching Points */}
-        <div style={{ 
-          background: isDefending ? '#eff6ff' : '#fff0f2', 
-          border: isDefending ? '1px solid #dbeafe' : '1px solid #ffe4e6', 
-          borderLeft: isDefending ? '4px solid #3b82f6' : '4px solid #ef4444', 
-          borderRadius: '12px', 
-          padding: '16px', 
-          marginBottom: '20px' 
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: isDefending ? '#1d4ed8' : '#b91c1c', marginBottom: '12px' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              {isDefending ? (
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-              ) : (
-                <>
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="8" x2="12" y2="12"></line>
-                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </>
-              )}
-            </svg>
-            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>
-              {isDefending ? "Puntos Críticos de Defensa y Supervivencia" : "Puntos Clave del Sensei para tu Próximo Intento"}
-            </h4>
+        <div style={{ background: '#fff0f2', border: '1px solid #ffe4e6', borderLeft: '4px solid #ef4444', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#b91c1c', marginBottom: '12px' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>Puntos Clave del Sensei para tu Próximo Intento</h4>
           </div>
           <ul style={{ margin: 0, paddingLeft: '20px', color: '#475569', fontSize: '0.85rem', lineHeight: '1.6' }}>
-            {isDefending ? (
-              <>
-                <li>{reporte?.diagnosticoDefensa?.evaluacion || "Mantén tu postura erguida y no permitas que tu compañero aísle completamente tu brazo o cuello."}</li>
-                {reporte?.diagnosticoDefensa?.detalleClaveDefensa && (
-                  <li>Detalle de escape: {reporte.diagnosticoDefensa.detalleClaveDefensa}</li>
-                )}
-              </>
-            ) : (
-              <>
-                {reporte?.evaluacion && <li>{reporte.evaluacion}</li>}
-                {reporte?.desviacionArticular && (
-                  <li>Detalle postural: Mantén tu {reporte.desviacionArticular.replace(/_/g, " ")} bien protegido y cerrado contra el cuerpo para no regalar espacio.</li>
-                )}
-              </>
+            {reporte?.evaluacion && <li>{reporte.evaluacion}</li>}
+            {reporte?.desviacionArticular && (
+              <li>Detalle postural: Mantén tu {reporte.desviacionArticular.replace(/_/g, " ")} bien protegido y cerrado contra el cuerpo para no regalar espacio.</li>
             )}
           </ul>
         </div>
 
         {/* Improvement Plan */}
-        <div style={{ 
-          background: isDefending ? '#f0fdfa' : '#f0fdf4', 
-          border: isDefending ? '1px solid #ccfbf1' : '1px solid #dcfce3', 
-          borderLeft: isDefending ? '4px solid #0d9488' : '4px solid #22c55e', 
-          borderRadius: '12px', 
-          padding: '16px', 
-          marginBottom: '30px' 
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: isDefending ? '#0f766e' : '#15803d', marginBottom: '12px' }}>
+        <div style={{ background: '#f0fdf4', border: '1px solid #dcfce3', borderLeft: '4px solid #22c55e', borderRadius: '12px', padding: '16px', marginBottom: '30px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#15803d', marginBottom: '12px' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>
-              {isDefending ? "Plan de Escape y Contraataque" : "Plan de Práctica Recomendado"}
-            </h4>
+            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>Plan de Práctica Recomendado</h4>
           </div>
           <ul style={{ margin: 0, paddingLeft: '20px', color: '#475569', fontSize: '0.85rem', lineHeight: '1.6' }}>
-            {isDefending ? (
-              <>
-                <li>{reporte?.diagnosticoDefensa?.sugerenciaPedagogica || "Drill de Escape: 1. Conecta tus manos en agarre S-Grip. 2. Apila tu peso hacia el pecho del rival. 3. Gira el pulgar hacia el tatami."}</li>
-                <li>Consejo del Sensei: Nunca esperes a que la sumisión esté cerrada al 100%. Defiende en el momento de la transición.</li>
-              </>
+            {planAdaptativo?.drillRecomendado ? (
+              <li>{planAdaptativo.drillRecomendado}</li>
             ) : (
-              <>
-                {planAdaptativo?.drillRecomendado ? (
-                  <li>{planAdaptativo.drillRecomendado}</li>
-                ) : (
-                  <li>Practica repeticiones suaves enfocándote en cerrar los espacios y mantener una base sólida.</li>
-                )}
-                {planAdaptativo?.mensajeAdaptativo && !planAdaptativo.esFalloRecurrente && (
-                  <li>{planAdaptativo.mensajeAdaptativo}</li>
-                )}
-              </>
+              <li>Practica repeticiones suaves enfocándote en cerrar los espacios y mantener una base sólida.</li>
+            )}
+            {planAdaptativo?.mensajeAdaptativo && (
+              <li>{planAdaptativo.mensajeAdaptativo}</li>
             )}
           </ul>
         </div>
 
-        {/* Learning Resources */}
+        {/* Learning Resources - ÚNICO BOTÓN ESPECÍFICO */}
         <div style={{ marginBottom: '30px' }}>
           <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '12px' }}>
-            RECURSOS DE APRENDIZAJE {isDefending ? "DE DEFENSA Y ESCAPE" : "DEL DOJO"}
+            VIDEO DE REFERENCIA TÉCNICA
           </span>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <button 
-              onClick={() => handleResourceClick('video')}
-              style={{ flex: 1, minWidth: '200px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 12px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
-              onMouseOver={e => e.currentTarget.style.background = '#f8fafc'}
-              onMouseOut={e => e.currentTarget.style.background = '#ffffff'}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33 2.78 2.78 0 0 0 1.94 2c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg>
-              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1e293b' }}>
-                {isDefending ? "Tutorial de Defensa y Escape" : "Video de Referencia del Dojo"}
+          <button 
+            onClick={handleOpenVideo}
+            style={{ width: '100%', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px 16px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '14px', textAlign: 'left' }}
+            onMouseOver={e => e.currentTarget.style.background = '#f8fafc'}
+            onMouseOut={e => e.currentTarget.style.background = '#ffffff'}
+          >
+            <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" strokeWidth="1"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </div>
+            <div style={{ flex: 1 }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a', display: 'block', marginBottom: '2px' }}>
+                Ver Video Tutorial de Referencia ({tecnicaName})
               </span>
-            </button>
-            {planAdaptativo?.videoYouTubeAlternativo && (
-              <button 
-                onClick={() => window.open(isDefending ? `https://www.youtube.com/results?search_query=Tutorial+BJJ+defensa+y+escape+${encodeURIComponent(tecnicaName)}` : planAdaptativo.videoYouTubeAlternativo, "_blank")}
-                style={{ flex: 1, minWidth: '200px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 12px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
-                onMouseOver={e => e.currentTarget.style.background = '#f8fafc'}
-                onMouseOut={e => e.currentTarget.style.background = '#ffffff'}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1e293b' }}>
-                  {isDefending ? "Buscar Más Escapes en YouTube" : "Ver Más Tutoriales en YouTube"}
-                </span>
-              </button>
-            )}
-          </div>
+              <span style={{ fontSize: '0.74rem', color: '#64748b', display: 'block' }}>
+                Abrir la clase técnica oficial recomendada por el Dojo
+              </span>
+            </div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
         </div>
 
         {/* Back Button */}
@@ -420,4 +272,3 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
     </div>
   );
 }
-

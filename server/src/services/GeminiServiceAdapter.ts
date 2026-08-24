@@ -11,7 +11,8 @@ export interface ILLMProvider {
     frames?: string[],
     modelName?: string,
     catalogoTecnicas?: string[],
-    tecnicaObjetivo?: string
+    tecnicaObjetivo?: string,
+    rolPracticante?: string
   ): Promise<string>;
 }
 
@@ -88,7 +89,8 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
     frames: string[] = [],
     modelName?: string,
     catalogoTecnicas: string[] = CATALOGO_TECNICAS_DEFAULT,
-    tecnicaObjetivo?: string
+    tecnicaObjetivo?: string,
+    rolPracticante: string = "ATACANTE"
   ): Promise<string> {
     const activeKey = this.getApiKey();
     const primaryModel = modelName || this.defaultModel;
@@ -105,11 +107,12 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
       new Set([...catalogoCombinado, "TECNICA_DESCONOCIDA_D"])
     );
 
-    console.log(`[Gemini Service] Inferencia estricta (${selectedFrames.length} keyframes). Catálogo: ${listaTecnicasValidas.length} técnicas.${tecnicaObjetivo ? ` Objetivo: '${tecnicaObjetivo}'` : ''}`);
+    console.log(`[Gemini Service] Inferencia estricta (${selectedFrames.length} keyframes). Catálogo: ${listaTecnicasValidas.length} técnicas.${tecnicaObjetivo ? ` Objetivo: '${tecnicaObjetivo}'` : ''} | Rol: ${rolPracticante}`);
 
     if (activeKey) {
       const modelsToTry = [
         primaryModel,
+        this.liteModel,
         "gemini-3.1-flash-lite",
         "gemini-3.5-flash-lite",
         "gemini-3.7-flash",
@@ -123,22 +126,26 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
             inlineData: { mimeType: "image/jpeg", data: f }
           }));
 
+          const esDefensor = rolPracticante === "DEFENSOR";
+
           const textPart = {
-            text: `INSTRUCCIONES DE TUTORÍA Y COACHING DUAL (ATAQUE Y DEFENSA) DE JIU-JITSU:
+            text: `INSTRUCCIONES DE TUTORÍA DEL SENSEI DE JIU-JITSU:
 1. Analiza minuciosamente los fotogramas clave de la acción de Brazilian Jiu-Jitsu.
-2. ENFOQUE DUAL (HABLA EN SEGUNDA PERSONA "TÚ" PARA AMBOS ROLES):
-   - 'evaluacion' y 'sugerenciaPedagogica': Consejos directos para el practicante si estuviera ATACANDO / ejecutando la técnica ("Lograste una buena entrada...", "Al caer al suelo pellizca tus rodillas...").
-   - 'diagnosticoDefensa': Consejos directos para el practicante si estuviera DEFENDIENDO / escapando de la técnica ("Si tú eres quien recibe el ataque: Mantén tu postura erguida, no permitas que extienda tu codo y conecta tus manos en agarre defensivo...").
-   - NUNCA hables en tercera persona como "El atacante ejecutó...". Habla siempre como un Sensei directo.
-3. IDENTIFICACIÓN DE LA TÉCNICA PRINCIPAL:
+2. ROL DEL PRACTICANTE A EVALUAR:
+   ${esDefensor 
+     ? `• El usuario que subió el video declara que es el DEFENSOR (quien recibe el ataque o está defendiendo).
+• Eres su Sensei. Tu evaluación, diagnóstico biomecánico y 3 pasos pedagógicos DEBEN SER EXCLUSIVAMENTE CONSEJOS DE DEFENSA, POSTURA Y ESCAPE para él (ej: cómo conectar agarres de defensa, esconder los codos, mantener base erguida y zafarse de la sumisión).
+• 'youtube_query': Debe ser una búsqueda en español para aprender a DEFENDER Y ESCAPAR de esta técnica exacta (ej: "Tutorial BJJ defensa y escape Llave de Brazo Voladora").`
+     : `• El usuario que subió el video declara que es el ATACANTE (quien aplica la técnica o sumisión).
+• Eres su Sensei. Tu evaluación, diagnóstico biomecánico y 3 pasos pedagógicos DEBEN SER EXCLUSIVAMENTE CONSEJOS DE ATAQUE Y FINALIZACIÓN para él (ej: cómo ajustar cadera, cerrar rodillas, mantener control y palanca).
+• 'youtube_query': Debe ser una búsqueda en español para ver el TUTORIAL DE EJECUCIÓN canónico de esta técnica (ej: "Tutorial BJJ Llave de Brazo Voladora detalles tecnicos").`}
+3. PERSPECTIVA DE TUTORÍA: Habla SIEMPRE en segunda persona ("Tú / Tus"): "Hiciste una buena entrada...", "Al caer al tatami no olvides cerrar tus rodillas...".
+4. IDENTIFICACIÓN DE LA TÉCNICA PRINCIPAL:
    ${tecnicaObjetivo 
-     ? `- El practicante está entrenando: "${tecnicaObjetivo}". Evalúa cómo la ejecutó.`
-     : `- Clasifica con precisión el nombre canónico y descriptivo en español de la técnica, sumisión, escape o pasaje principal observado (ej: "Llave de Brazo Voladora", "Kimura", "Triángulo", "Pasaje Knee Cut", "Raspado de Mariposa", "Escape de Montada", "Guillotina", "De la Riva", etc.).`}
-4. SECUENCIA MULTI-POSICIÓN (FASES DEL COMBATE): Desglosa cronológicamente en 'fasesSecuencia' las fases observadas (ej: ["1. Búsqueda de agarres de pie", "2. Salto envolviendo el brazo", "3. Control y palanca en el tatami"]).
-5. EVALUACIÓN ACCIONABLE:
-   - 'sugerenciaPedagogica': 3 pasos directos para finalizar la técnica.
-   - 'diagnosticoDefensa.sugerenciaPedagogica': 3 pasos directos para defender, escapar o sobrevivir a la sumisión/posición.
-6. YOUTUBE QUERY: Búsqueda del tutorial canónico en español.
+     ? `- El practicante está entrenando: "${tecnicaObjetivo}". Evalúa su desempeño.`
+     : `- Clasifica con precisión el nombre canónico y descriptivo en español de la técnica principal observada (ej: "Llave de Brazo Voladora", "Kimura", "Triángulo", "Pasaje Knee Cut", "Raspado de Mariposa", "Escape de Montada", "Guillotina", "De la Riva", etc.).`}
+5. SECUENCIA MULTI-POSICIÓN: Desglosa cronológicamente en 'fasesSecuencia' las fases observadas en el video.
+6. CONSEJO ACCIONABLE: 'sugerenciaPedagogica' debe tener 3 pasos directos (1. ... 2. ... 3. ...).
 
 DATOS CINEMÁTICOS LOCALES (3KB):
 ${promptJSON}`
@@ -150,7 +157,7 @@ ${promptJSON}`
             properties: {
               tecnicaId: {
                 type: "STRING",
-                description: "Nombre canónico y descriptivo en español de la técnica o sumisión principal detectada (ej: 'Llave de Brazo Voladora', 'Kimura', 'Pasaje Knee Cut')."
+                description: "Nombre canónico y descriptivo en español de la técnica detectada."
               },
               posicionBase: {
                 type: "STRING",
@@ -162,37 +169,12 @@ ${promptJSON}`
                 description: "Secuencia cronológica de las fases observadas en el combate."
               },
               cinturon: { type: "STRING", enum: ["BLANCO", "AZUL", "MORADO", "MARRON", "NEGRO"] },
-              evaluacion: { type: "STRING", description: "Consejo para el atacante en español en segunda persona, máx 80 palabras." },
+              evaluacion: { type: "STRING", description: "Diagnóstico biomecánico en español en segunda persona (Tú), máx 80 palabras." },
               desviacionArticular: { type: "STRING" },
               desviacionGrados: { type: "INTEGER" },
               severidad: { type: "STRING", enum: ["Leve", "Moderado", "Critico"] },
-              sugerenciaPedagogica: { type: "STRING", description: "3 pasos para el atacante en español, máx 50 palabras." },
-              diagnosticoDefensa: {
-                type: "OBJECT",
-                properties: {
-                  evaluacion: { type: "STRING", description: "Consejo para el defensor en español en segunda persona (Tú), máx 80 palabras." },
-                  sugerenciaPedagogica: { type: "STRING", description: "3 pasos directos para defender y escapar en español, máx 50 palabras." },
-                  detalleClaveDefensa: { type: "STRING", description: "Detalle biomecánico crítico de defensa (ej: 'Cerrar el codo', 'Conectar agarre S-Grip', 'Postura erguida')." },
-                  youtubeQueryDefensa: { type: "STRING", description: "Búsqueda en YouTube para aprender a defender y escapar de esta técnica exacta." }
-                },
-                required: ["evaluacion", "sugerenciaPedagogica"]
-              },
-              youtube_query: { type: "STRING", description: "Término en español optimizado para buscar la técnica exacta detectada." },
-              fighters: {
-                type: "ARRAY",
-                items: {
-                  type: "OBJECT",
-                  properties: {
-                    role: { type: "STRING" },
-                    status: { type: "STRING", enum: ["approved", "correction_needed"] },
-                    summary: { type: "STRING" },
-                    techniques: { type: "ARRAY", items: { type: "STRING" } },
-                    mistakes: { type: "ARRAY", items: { type: "STRING" } },
-                    tips: { type: "ARRAY", items: { type: "STRING" } }
-                  },
-                  required: ["role", "status", "summary"]
-                }
-              }
+              sugerenciaPedagogica: { type: "STRING", description: "3 pasos directos en español (1. ... 2. ... 3. ...), máx 50 palabras." },
+              youtube_query: { type: "STRING", description: "Término en español optimizado para buscar el video tutorial de referencia exacto." }
             },
             required: [
               "tecnicaId",

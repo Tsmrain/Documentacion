@@ -18,7 +18,8 @@ export class ChatGPTServiceAdapter implements ILLMProvider {
     frames: string[] = [],
     modelName?: string,
     catalogoTecnicas?: string[],
-    tecnicaObjetivo?: string
+    tecnicaObjetivo?: string,
+    rolPracticante?: string
   ): Promise<string> {
     console.log(`[ChatGPT Adapter] Evaluando movimiento con modelo ${this.model}...`);
     try {
