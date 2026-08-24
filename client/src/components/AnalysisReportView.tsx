@@ -33,19 +33,21 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
     );
   }
 
-  const desviacion = reporte?.desviacionGrados || 0;
-  const puntuacion = Math.max(0, Math.min(100, 100 - Math.round(desviacion * 1.8)));
-  const isApproved = puntuacion >= 80;
+  const severidad = (reporte?.severidad || "Moderado").toLowerCase();
+  const isApproved = severidad === "leve";
+  const isCritical = severidad === "critico";
 
-  const cardBg = isApproved ? "#22c55e" : "#f97316";
-  const titleText = isApproved ? "TÉCNICA APROBADA" : "CORRECCIÓN NECESARIA";
+  const cardBg = isApproved ? "#16a34a" : isCritical ? "#dc2626" : "#ea580c";
+  const titleText = isApproved ? "TÉCNICA APROBADA (BUENA EJECUCIÓN)" : isCritical ? "CORRECCIÓN CRÍTICA" : "AJUSTE RECOMENDADO";
   
   // RAG Content
   let evaluacionText = "No se detectaron problemas mayores en la técnica.";
-  if (!isApproved) {
-    evaluacionText = reporte?.sugerenciaPedagogica || "Estás perdiendo tu base y postura. Corrige tus frames y distribución de peso para evitar ser raspado o finalizado.";
-  } else if (reporte?.sugerenciaPedagogica) {
+  if (reporte?.sugerenciaPedagogica) {
     evaluacionText = reporte.sugerenciaPedagogica;
+  } else if (reporte?.evaluacion) {
+    evaluacionText = reporte.evaluacion;
+  } else if (!isApproved) {
+    evaluacionText = "Estás perdiendo tu base y postura. Corrige tus frames y distribución de peso para evitar ser raspado o finalizado.";
   }
 
   const tecnicaRaw = reporte?.tecnicaId || "SPARRING GENERAL";
@@ -72,7 +74,7 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
       },
       planAdaptativo: {
         ...prev.planAdaptativo,
-        drillRecomendado: `Practica repeticiones específicas (drills) de ${nuevaTecnica}`,
+        drillRecomendado: `Ejercicio: Practica repeticiones de entrada y control de ${nuevaTecnica}`,
         videoYouTubeUrl: `https://www.youtube.com/results?search_query=Tutorial+BJJ+${encodeURIComponent(nuevaTecnica)}`
       }
     }));
@@ -103,7 +105,7 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
         <div style={{ background: '#000', color: '#fff', borderRadius: '4px', padding: '2px 6px', fontSize: '10px', fontWeight: 'bold', marginRight: '10px' }}>
           IA
         </div>
-        <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>Diagnóstico</h2>
+        <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>Diagnóstico y Tutoría del Sensei</h2>
       </header>
 
       <div style={{ padding: '20px' }}>
@@ -124,7 +126,7 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
             <h3 style={{ margin: '0 0 12px 0', fontSize: '1.1rem', fontWeight: 800 }}>
               {titleText}
             </h3>
-            <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: '1.5', opacity: 0.9 }}>
+            <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: '1.5', opacity: 0.95 }}>
               {evaluacionText}
             </p>
           </div>
@@ -210,25 +212,49 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
           </div>
         </div>
 
-        {/* Critical Mistakes (Only if not approved) */}
-        {!isApproved && (
-          <div style={{ background: '#fff0f2', border: '1px solid #ffe4e6', borderLeft: '4px solid #ef4444', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#b91c1c', marginBottom: '12px' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-              <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>Puntos Clave a Ajustar</h4>
+        {/* Recurring Mistake Highlight (Alerta del Sensei) */}
+        {planAdaptativo?.esFalloRecurrente && (
+          <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderLeft: '4px solid #f59e0b', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#b45309', marginBottom: '8px' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800 }}>Atención del Sensei: Detalle Recurrente Detectado</h4>
             </div>
-            <ul style={{ margin: 0, paddingLeft: '20px', color: '#475569', fontSize: '0.85rem', lineHeight: '1.6' }}>
-              {reporte?.evaluacion ? (
-                <li>{reporte.evaluacion}</li>
-              ) : (
-                <li>Ajusta tu postura para mantener el peso bien distribuido sobre tu oponente.</li>
+            <p style={{ margin: '0 0 12px 0', fontSize: '0.84rem', color: '#78350f', lineHeight: '1.5' }}>
+              {planAdaptativo.mensajeAdaptativo || "Has repetido este detalle en más de 3 sesiones. Recomendamos revisar este video específico para corregirlo."}
+            </p>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => handleResourceClick('video')}
+                style={{ flex: 1, minWidth: '160px', padding: '10px 14px', background: '#f59e0b', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                Ver Video de Corrección Recomendado
+              </button>
+              {planAdaptativo.videoYouTubeAlternativo && (
+                <button
+                  onClick={() => window.open(planAdaptativo.videoYouTubeAlternativo, "_blank")}
+                  style={{ flex: 1, minWidth: '160px', padding: '10px 14px', background: '#ffffff', color: '#b45309', border: '1px solid #fde68a', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                >
+                  🔍 Ver Video Alternativo en YouTube
+                </button>
               )}
-              {reporte?.desviacionArticular && (
-                <li>Detalle de tatami: Mantén tu {reporte.desviacionArticular.replace(/_/g, " ")} bien protegido y cerrado contra el cuerpo para no regalar espacio ni palancas.</li>
-              )}
-            </ul>
+            </div>
           </div>
         )}
+
+        {/* Critical Mistakes / Coaching Points */}
+        <div style={{ background: '#fff0f2', border: '1px solid #ffe4e6', borderLeft: '4px solid #ef4444', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#b91c1c', marginBottom: '12px' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>Puntos Clave del Sensei para tu Próximo Intento</h4>
+          </div>
+          <ul style={{ margin: 0, paddingLeft: '20px', color: '#475569', fontSize: '0.85rem', lineHeight: '1.6' }}>
+            {reporte?.evaluacion && <li>{reporte.evaluacion}</li>}
+            {reporte?.desviacionArticular && (
+              <li>Detalle postural: Mantén tu {reporte.desviacionArticular.replace(/_/g, " ")} bien protegido y cerrado contra el cuerpo para no regalar espacio.</li>
+            )}
+          </ul>
+        </div>
 
         {/* Improvement Plan */}
         <div style={{ background: '#f0fdf4', border: '1px solid #dcfce3', borderLeft: '4px solid #22c55e', borderRadius: '12px', padding: '16px', marginBottom: '30px' }}>
@@ -242,7 +268,7 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
             ) : (
               <li>Practica repeticiones suaves enfocándote en cerrar los espacios y mantener una base sólida.</li>
             )}
-            {planAdaptativo?.mensajeAdaptativo && (
+            {planAdaptativo?.mensajeAdaptativo && !planAdaptativo.esFalloRecurrente && (
               <li>{planAdaptativo.mensajeAdaptativo}</li>
             )}
           </ul>
@@ -253,16 +279,27 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
           <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '12px' }}>
             RECURSOS DE APRENDIZAJE
           </span>
-          <div style={{ display: 'flex' }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button 
               onClick={() => handleResourceClick('video')}
-              style={{ width: '100%', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 12px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
+              style={{ flex: 1, minWidth: '200px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 12px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
               onMouseOver={e => e.currentTarget.style.background = '#f8fafc'}
               onMouseOut={e => e.currentTarget.style.background = '#ffffff'}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33 2.78 2.78 0 0 0 1.94 2c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1e293b' }}>Video de Referencia</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1e293b' }}>Video de Referencia del Dojo</span>
             </button>
+            {planAdaptativo?.videoYouTubeAlternativo && (
+              <button 
+                onClick={() => window.open(planAdaptativo.videoYouTubeAlternativo, "_blank")}
+                style={{ flex: 1, minWidth: '200px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 12px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
+                onMouseOver={e => e.currentTarget.style.background = '#f8fafc'}
+                onMouseOut={e => e.currentTarget.style.background = '#ffffff'}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1e293b' }}>Ver Más Tutoriales en YouTube</span>
+              </button>
+            )}
           </div>
         </div>
 

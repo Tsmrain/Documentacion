@@ -124,15 +124,22 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
           }));
 
           const textPart = {
-            text: `INSTRUCCIONES DE ALINEACIÓN Y DIAGNÓSTICO BIOMECÁNICO DE JIU-JITSU:
-1. Analiza minuciosamente los fotogramas clave del combate de Brazilian Jiu-Jitsu.
-2. IDENTIFICACIÓN DE LA TÉCNICA PRINCIPAL:
+            text: `INSTRUCCIONES DE TUTORÍA Y COACHING DIRECTO DE JIU-JITSU:
+1. Analiza minuciosamente los fotogramas clave de la acción de Brazilian Jiu-Jitsu.
+2. PERSPECTIVA DE TUTORÍA DIRECTA (SEGUNDA PERSONA "TÚ"):
+   - Evalúa DIRECTAMENTE al practicante que ejecuta la técnica (el usuario que subió el video).
+   - HABLA SIEMPRE EN SEGUNDA PERSONA ("Tú / Tus"): "Lograste una excelente entrada...", "Al caer al tatami abriste tus rodillas...", "Mantén su muñeca pegada a tu pecho...".
+   - ESTÁ TERMINANTEMENTE PROHIBIDO hablar en tercera persona ("El atacante ejecutó...", "El defensor hizo..."). Eres su Sensei hablándole a él.
+3. IDENTIFICACIÓN DE LA TÉCNICA PRINCIPAL:
    ${tecnicaObjetivo 
-     ? `- El practicante ha declarado que está practicando: "${tecnicaObjetivo}". Audita específicamente esta técnica.`
-     : `- Clasifica con precisión el nombre canónico y descriptivo en español de la técnica, sumisión, escape o pasaje principal observado (ej: "Llave de Brazo Voladora", "Armbar / Llave de Brazo", "Triángulo", "Kimura", "Pasaje Knee Cut", "Raspado de Mariposa", "Escape de Montada", "Guillotina", "De la Riva", etc.).`}
-3. SECUENCIA MULTI-POSICIÓN (FASES DEL COMBATE): Como en el video ocurren varias posiciones, desglosa cronológicamente en 'fasesSecuencia' las fases observadas (ej: ["1. Búsqueda de agarres de pie", "2. Salto envolviendo el brazo del rival", "3. Control de muñeca e hiperextensión en el tatami"]).
-4. REGLA DE DISCRIMINACIÓN VOLADORA: Si un practicante salta envolviendo el brazo, cuello o torso del rival para someter en el aire o buscar una palanca antes de tocar el suelo, clasifícalo inequívocamente como sumisión voladora ("Llave de Brazo Voladora", "Triángulo Volador" o "Guillotina de pie").
-5. YOUTUBE QUERY: Genera la consulta de búsqueda en YouTube óptima en español para ver el tutorial canónico de la técnica detectada (ej: "Tutorial BJJ Llave de Brazo Voladora detalles tecnicos").
+     ? `- El practicante está entrenando: "${tecnicaObjetivo}". Evalúa cómo la ejecutó.`
+     : `- Clasifica con precisión el nombre canónico y descriptivo en español de la técnica, sumisión, escape o pasaje principal observado (ej: "Llave de Brazo Voladora", "Kimura", "Triángulo", "Pasaje Knee Cut", "Raspado de Mariposa", "Escape de Montada", "Guillotina", "De la Riva", etc.).`}
+4. SECUENCIA MULTI-POSICIÓN (FASES DEL COMBATE): Desglosa cronológicamente en 'fasesSecuencia' las fases observadas (ej: ["1. Búsqueda de agarres de pie", "2. Salto envolviendo el brazo", "3. Control y palanca en el tatami"]).
+5. EVALUACIÓN Y CONSEJO ACCIONABLE DE TATAMI:
+   - 'evaluacion': Explica en 2 frases claras qué hizo bien y exactamente qué detalle le faltó ajustar.
+   - 'sugerenciaPedagogica': Da 3 pasos sencillos y directos para el próximo intento (ej: "1. Junta y pellizca con fuerza tus rodillas. 2. Pega su muñeca a tu pecho con el pulgar hacia arriba. 3. Eleva la cadera hacia el techo para finalizar.").
+   - 'severidad': Usa "Leve" (si la técnica funcionó bien con pequeños detalles de pulido), "Moderado" (si la posición se comprometió por un detalle técnico), "Critico" (si hubo error grave de postura o riesgo).
+6. YOUTUBE QUERY: Genera la consulta de búsqueda óptima en español para ver el tutorial de esta técnica exacta.
 
 DATOS CINEMÁTICOS LOCALES (3KB):
 ${promptJSON}`

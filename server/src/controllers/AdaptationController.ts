@@ -30,10 +30,12 @@ export interface RutaAprendizaje {
   nivelCompetenciaActual: string;
   drillRecomendado: string;
   videoYouTubeUrl: string;
+  videoYouTubeAlternativo?: string;
   mensajeAdaptativo: string;
   ultimaTecnica?: string;
   posicionesMaestria?: { nombre: string; porcentaje: number }[];
   tecnicasEvaluadas?: TecnicaEvaluadaItem[];
+  esFalloRecurrente?: boolean;
 }
 
 export interface IPersistenceService {
@@ -98,53 +100,31 @@ export class AdaptationController {
   }
 
   private calcularMaestriaPorPosicion(historial: any[]): { nombre: string; porcentaje: number }[] {
-    const scores: Record<string, number[]> = {
-      "Derribos y Proyecciones": [],
-      "Guardia Cerrada": [],
-      "Pasaje de Guardia": [],
-      "Control Lateral": [],
-      "Montada y Espalda": [],
-      "Media Guardia": [],
-      "Guardia Abierta y Sumisiones": []
-    };
+    const mapaPosiciones: Map<string, number[]> = new Map();
 
     historial.forEach(h => {
-      const tecnica = (h.tecnicaId || "").toLowerCase();
-      const desviacion = h.desviacionGrados ?? h.desviacion ?? 20;
+      const nombre = (h.tecnicaId || h.reporte?.tecnicaId || "Sparring").replace(/-/g, " ");
+      const desviacion = h.desviacionGrados ?? h.reporte?.desviacionGrados ?? h.desviacion ?? 20;
       const score = Math.max(10, Math.min(100, 100 - Math.round(Number(desviacion) * 1.5)));
 
-      if (tecnica.includes("derribo") || tecnica.includes("suplex") || tecnica.includes("proyeccion") || tecnica.includes("takedown") || tecnica.includes("single leg") || tecnica.includes("voladora") || tecnica.includes("judo") || tecnica.includes("wrestling")) {
-        scores["Derribos y Proyecciones"].push(score);
-      } else if (tecnica.includes("lateral") || tecnica.includes("side") || tecnica.includes("100 kilos") || tecnica.includes("cien kilos")) {
-        scores["Control Lateral"].push(score);
-      } else if (tecnica.includes("pasaje") || tecnica.includes("pass") || tecnica.includes("knee cut") || tecnica.includes("torreando")) {
-        scores["Pasaje de Guardia"].push(score);
-      } else if (tecnica.includes("montada") || tecnica.includes("mount") || tecnica.includes("espalda") || tecnica.includes("back") || tecnica.includes("mataleon")) {
-        scores["Montada y Espalda"].push(score);
-      } else if (tecnica.includes("media") || tecnica.includes("half")) {
-        scores["Media Guardia"].push(score);
-      } else if (tecnica.includes("cerrada") || tecnica.includes("closed") || tecnica.includes("fechada")) {
-        scores["Guardia Cerrada"].push(score);
+      const key = nombre.toLowerCase();
+      if (!mapaPosiciones.has(key)) {
+        mapaPosiciones.set(key, [score]);
       } else {
-        scores["Guardia Abierta y Sumisiones"].push(score);
+        mapaPosiciones.get(key)!.push(score);
       }
     });
 
-    const calcAvg = (arr: number[]) => {
-      if (arr.length === 0) return 0;
-      const sum = arr.reduce((a, b) => a + b, 0);
-      return Math.round(sum / arr.length);
-    };
+    const resultados: { nombre: string; porcentaje: number }[] = [];
+    mapaPosiciones.forEach((scores, nombre) => {
+      const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      resultados.push({
+        nombre: nombre.toUpperCase(),
+        porcentaje: avg
+      });
+    });
 
-    return [
-      { nombre: "Derribos y Proyecciones", porcentaje: calcAvg(scores["Derribos y Proyecciones"]) },
-      { nombre: "Guardia Cerrada", porcentaje: calcAvg(scores["Guardia Cerrada"]) },
-      { nombre: "Pasaje de Guardia", porcentaje: calcAvg(scores["Pasaje de Guardia"]) },
-      { nombre: "Control Lateral", porcentaje: calcAvg(scores["Control Lateral"]) },
-      { nombre: "Montada y Espalda", porcentaje: calcAvg(scores["Montada y Espalda"]) },
-      { nombre: "Media Guardia", porcentaje: calcAvg(scores["Media Guardia"]) },
-      { nombre: "Guardia Abierta y Sumisiones", porcentaje: calcAvg(scores["Guardia Abierta y Sumisiones"]) }
-    ];
+    return resultados;
   }
 
   private async obtenerVideoYouTubeRelacionado(usuarioId: string, terminoBusqueda: string): Promise<string> {
@@ -158,14 +138,12 @@ export class AdaptationController {
         fuentes = await (this.persistence as any).obtenerFuentesConocimiento(usuarioId);
       }
 
-      // Filtrar todas las fuentes de YouTube (case-insensitive) con URL de video específica
       const fuentesYouTube = fuentes.filter((f: any) =>
         (String(f.tipo).toUpperCase() === "YOUTUBE" || String(f.tipo).toLowerCase() === "youtube") &&
         f.url && (f.url.includes("watch?v=") || f.url.includes("youtu.be/"))
       );
 
       if (fuentesYouTube.length > 0) {
-        // Familias y conceptos clave de BJJ para matching semántico de alta precisión
         const FAMILIAS_BJJ = [
           { tag: "montada", terms: ["montada", "mount", "mounted"] },
           { tag: "guardia_cerrada", terms: ["guardia cerrada", "closed guard", "guarda fechada"] },
@@ -186,7 +164,6 @@ export class AdaptationController {
           { tag: "escape", terms: ["escape", "salida", "defensa", "escapar"] }
         ];
 
-        // Identificar qué familias están presentes en la búsqueda
         const familiasPresentesEnQuery = FAMILIAS_BJJ.filter(fam =>
           fam.terms.some(t => terminoLimpio.includes(t))
         );
@@ -207,12 +184,10 @@ export class AdaptationController {
             }
           }
 
-          // Si coinciden múltiples conceptos (ej: Armbar + Mount), bonificación masiva
           if (familiasCoincidentes >= 2) {
             score += 100;
           }
 
-          // Coincidencias de palabras individuales
           const palabras = terminoLimpio.split(/\s+/).filter(w => w.length > 2);
           for (const palabra of palabras) {
             if (tit.includes(palabra)) {
@@ -227,19 +202,15 @@ export class AdaptationController {
         }
 
         if (mejorMatch && maxScore > 0) {
-          console.log(`[Adaptación RAG] Video exacto seleccionado ('${mejorMatch.titulo}') [Score: ${maxScore}]: ${mejorMatch.url}`);
           return mejorMatch.url;
         }
 
-        // Si no hay match directo, entregar el primer video del acervo técnico del dojo
-        console.log(`[Adaptación RAG] Entregando video técnico guardado en dojo: ${fuentesYouTube[0].url}`);
         return fuentesYouTube[0].url;
       }
     } catch (e: any) {
       console.warn("[Adaptación RAG] Error al consultar fuentes guardadas de YouTube:", e.message);
     }
 
-    // Video técnico educativo por defecto en español (nunca URL de búsqueda)
     return "https://www.youtube.com/watch?v=BPEXBXJpLEw";
   }
 
@@ -281,7 +252,6 @@ export class AdaptationController {
       perfil.erroresHistoricos[errorArticular] = 0;
     }
 
-    // Recalcular posicionesMaestria y tecnicasEvaluadas agregando el reporte actual
     const tecnicaActual = (evaluacion.tecnicaId || "").toLowerCase();
     const historialConActual = [{
       tecnicaId: evaluacion.tecnicaId || tecnicaActual,
@@ -313,20 +283,20 @@ export class AdaptationController {
     const drillSugerido = drillsPorArticulacion[errorArticular] || `Ejercicio: Repite 10 veces la entrada de ${evaluacion.tecnicaId || "la técnica"} enfocándote en cerrar los espacios y mantener una base sólida.`;
 
     if (hayFalloRecurrente) {
-      console.log(`[Adaptación] Fallo recurrente (> 3) en ${errorArticular}. Conmutando estrategia didáctica a fuentes RAG.`);
       const videoRecurrente = await this.obtenerVideoYouTubeRelacionado(usuarioId, errorArticular);
       return {
         nivelCompetenciaActual: "Ajuste Técnico de Tatami",
         drillRecomendado: drillSugerido,
         videoYouTubeUrl: videoRecurrente,
+        videoYouTubeAlternativo: `https://www.youtube.com/results?search_query=Tutorial+BJJ+defensa+postura+${encodeURIComponent(articulacionLimpia)}`,
         mensajeAdaptativo: `Consejo del Sensei: En tus últimas prácticas has dejado el ${articulacionLimpia} algo expuesto. Tómate unos minutos para practicar este ajuste antes del combate.`,
         ultimaTecnica: evaluacion.tecnicaId,
         posicionesMaestria: posicionesActualizadas,
-        tecnicasEvaluadas: tecnicasEvaluadasActualizadas
+        tecnicasEvaluadas: tecnicasEvaluadasActualizadas,
+        esFalloRecurrente: true
       };
     }
 
-    // Buscar en fuentes RAG agregadas por el usuario o generar búsqueda de YouTube optimizada
     const tecnicaBusqueda = (evaluacion.youtube_query || evaluacion.tecnicaId || errorArticular || "bjj").replace(/-/g, " ").toLowerCase();
     const videoRecomendado = await this.obtenerVideoYouTubeRelacionado(usuarioId, tecnicaBusqueda);
 
@@ -334,10 +304,12 @@ export class AdaptationController {
       nivelCompetenciaActual: "Principiante",
       drillRecomendado: drillSugerido,
       videoYouTubeUrl: videoRecomendado,
+      videoYouTubeAlternativo: `https://www.youtube.com/results?search_query=Tutorial+BJJ+${encodeURIComponent(evaluacion.tecnicaId || "detalles")}`,
       mensajeAdaptativo: `Consejo del Sensei: No descuides la posición de tu ${articulacionLimpia}, mantén la presión antes de que tu compañero aproveche el espacio.`,
       ultimaTecnica: evaluacion.tecnicaId,
       posicionesMaestria: posicionesActualizadas,
-      tecnicasEvaluadas: tecnicasEvaluadasActualizadas
+      tecnicasEvaluadas: tecnicasEvaluadasActualizadas,
+      esFalloRecurrente: false
     };
   }
 
