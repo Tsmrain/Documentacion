@@ -96,7 +96,7 @@ export class RetrievalAugmentedController {
     }
 
     console.warn(`[oEmbed YouTube] Ambos intentos fallaron. Usando URL como identificador: ${url}`);
-    return `Video de YouTube BJJ: ${url}`;
+    return `Video de YouTube: ${url}`;
   }
 
   async procesarEIngestarFuente(archivoBlob: any, metadata: SourceMetadata, usuarioIdParam?: string): Promise<{ success: boolean; error?: string; razon?: string; degraded?: boolean; vectorizado?: boolean }> {

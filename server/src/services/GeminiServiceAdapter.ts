@@ -327,64 +327,105 @@ ${promptJSON}`
   // MODERACIÓN AUTÓNOMA DE CONTENIDO (Regla de Diseño RD-03)
   // ============================================================
   async validarPertinenciaBJJ(texto: string, modelName?: string): Promise<ModerationResult> {
-    const activeKey = this.getApiKey();
-    const selectedModel = modelName || this.defaultModel;
+    const muestra = texto.substring(0, 1500).toLowerCase();
 
-    if (!activeKey) {
-      return { esPertinente: true, razon: "Modo offline: validación omitida" };
+    // 1. Capa de Rechazo Rápido Heurístico (Términos ajenos obvios)
+    const temasAjenos = [
+      "receta", "cocina", "ingredientes", "horno", "azucar", "tarta", "pastel",
+      "video oficial", "cancion", "canción", "musical", "album", "álbum", "single", "cantante", "banda",
+      "tito double p", "dareyes", "corridos", "reggaeton", "pop music", "music video", "lyrics", "letra",
+      "programacion", "javascript", "typescript", "python", "docker",
+      "gameplay", "minecraft", "fortnite", "gaming",
+      "finanzas", "cripto", "bitcoin", "noticias politicas", "elecciones"
+    ];
+
+    if (temasAjenos.some(t => muestra.includes(t))) {
+      console.log(`[Moderador] Contenido rechazado por filtro temático ajeno: "${texto.substring(0, 80)}"`);
+      return {
+        esPertinente: false,
+        razon: "El contenido detectado (música, entretenimiento, cocina, tecnología o videojuegos) es ajeno al Brazilian Jiu-Jitsu y artes de agarre."
+      };
     }
 
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${activeKey}`;
-      const prompt = `Actúa como un moderador de contenido para un sistema de tutoría inteligente especializado EXCLUSIVAMENTE en Brazilian Jiu-Jitsu (BJJ), Grappling, Judo y Luta Livre.
+    // 2. Capa de IA con Gemini
+    const activeKey = this.getApiKey();
+    const selectedModel = modelName || this.liteModel;
 
-Evalúa el siguiente texto o descripción de recurso educativo y determina si pertenece estrictamente al dominio de BJJ/Grappling.
+    if (activeKey) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${activeKey}`;
+        const prompt = `Actúa como un moderador técnico para OpenBJJ (sistema de tutoría inteligente de Brazilian Jiu-Jitsu).
+Evalúa minuciosamente el título, canal o descripción del siguiente recurso educativo para determinar si trata sobre técnicas, conceptos, sparrings, derribos, pasajes, sumisiones o instrucción de Brazilian Jiu-Jitsu (BJJ), Grappling, No-Gi, Judo o Luta Livre.
 
-Texto a evaluar:
+IMPORTANTE: Si se trata de música, canciones, videoclips, recetas, videojuegos, entretenimiento general o cualquier tema no relacionado con artes marciales de agarre, DEBES clasificarlo como NO pertinente (esPertinente: false).
+
+Texto o Metadatos del recurso:
 """
-${texto.slice(0, 2000)}
+${texto.slice(0, 1000)}
 """
 
-Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
+Responde ÚNICAMENTE en formato JSON estricto:
 {
   "esPertinente": true | false,
-  "razon": "<explicación breve de 1 frase justificando la decisión>"
+  "razon": "<explicación breve de 1 frase en español justificando la decisión>"
 }`;
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            temperature: 0.0,
-            maxOutputTokens: 256,
-            thinkingConfig: {
-              thinkingBudget: 0
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.0,
+              maxOutputTokens: 256,
+              thinkingConfig: {
+                thinkingBudget: 0
+              }
             }
-          }
-        })
-      });
+          })
+        });
 
-      if (response.ok) {
-        const data: any = await response.json();
-        const rawJson = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (rawJson) {
-          const parsed = JSON.parse(rawJson);
-          return {
-            esPertinente: Boolean(parsed.esPertinente),
-            razon: String(parsed.razon || "Evaluación completada")
-          };
+        if (response.ok) {
+          const data: any = await response.json();
+          const rawJson = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (rawJson) {
+            const parsed = JSON.parse(rawJson);
+            const esValido = Boolean(parsed.esPertinente);
+            console.log(`[Gemini Moderador] Validación completada (${selectedModel}): ${esValido ? 'APROBADO' : 'RECHAZADO'} - ${parsed.razon}`);
+            return {
+              esPertinente: esValido,
+              razon: String(parsed.razon || (esValido ? "Aprobado por IA" : "Rechazado por IA"))
+            };
+          }
         }
+      } catch (err: any) {
+        console.warn(`[Gemini Moderador Warning] Error al moderar con IA: ${err.message}. Aplicando heurística local.`);
       }
-    } catch (err: any) {
-      console.warn(`[Gemini Moderador Warning] Error al moderar: ${err.message}.`);
+    }
+
+    // 3. Capa Heurística de Respaldo Local (si no hay API key o la llamada falló)
+    const palabrasBJJ = [
+      "jiu-jitsu", "bjj", "ju-jitsu", "jiujitsu", "grappling", "sparring", "guardia",
+      "guard", "pass", "pasaje", "sweep", "raspado", "armbar", "kimura", "choke",
+      "estrangulamiento", "montada", "mount", "back take", "takedown", "derribo",
+      "drill", "tatami", "judo", "wrestling", "sambo", "luta livre", "submission", "sumision",
+      "triangulo", "triangle", "omoplata", "leglock", "ne-waza", "kosen", "americana",
+      "knee cut", "de la riva", "half guard", "media guardia", "marcos defensivos", "frames",
+      "saulo ribeiro", "danaher", "gordon ryan", "marcelo garcia", "ibjjf", "adcc"
+    ];
+
+    const esPertinente = palabrasBJJ.some(palabra => muestra.includes(palabra));
+    if (esPertinente) {
+      return {
+        esPertinente: true,
+        razon: "Contenido clasificado dentro del dominio de Brazilian Jiu-Jitsu y disciplinas afines."
+      };
     }
 
     return {
-      esPertinente: true,
-      razon: "Validación por defecto ante indisponibilidad del servicio de moderación"
+      esPertinente: false,
+      razon: "El título o descripción del enlace no contiene referencias a técnicas, posiciones o conceptos de Jiu-Jitsu o grappling."
     };
   }
 }

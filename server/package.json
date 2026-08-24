@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "npx tsx src/index.ts",
-    "db:clean": "npx tsx src/scripts/cleanDb.ts"
+    "db:clean": "npx tsx src/scripts/cleanDb.ts",
+    "ingestar": "npx tsx src/scripts/ingestarPlaylists.ts"
   },
   "dependencies": {
     "@google/genai": "^2.17.1",
