@@ -215,11 +215,17 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
           <div style={{ background: '#fff0f2', border: '1px solid #ffe4e6', borderLeft: '4px solid #ef4444', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#b91c1c', marginBottom: '12px' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-              <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>Detalles a Corregir</h4>
+              <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>Puntos Clave a Ajustar</h4>
             </div>
             <ul style={{ margin: 0, paddingLeft: '20px', color: '#475569', fontSize: '0.85rem', lineHeight: '1.6' }}>
-              {reporte.desviacionArticular && <li>Ángulo incorrecto en: {reporte.desviacionArticular.replace(/_/g, " ")} ({desviacion} grados).</li>}
-              <li>Postura débil, estás regalando el espacio y la posición.</li>
+              {reporte?.evaluacion ? (
+                <li>{reporte.evaluacion}</li>
+              ) : (
+                <li>Ajusta tu postura para mantener el peso bien distribuido sobre tu oponente.</li>
+              )}
+              {reporte?.desviacionArticular && (
+                <li>Detalle de tatami: Mantén tu {reporte.desviacionArticular.replace(/_/g, " ")} bien protegido y cerrado contra el cuerpo para no regalar espacio ni palancas.</li>
+              )}
             </ul>
           </div>
         )}
@@ -228,13 +234,13 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
         <div style={{ background: '#f0fdf4', border: '1px solid #dcfce3', borderLeft: '4px solid #22c55e', borderRadius: '12px', padding: '16px', marginBottom: '30px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#15803d', marginBottom: '12px' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>Plan de Entrenamiento (RAG)</h4>
+            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>Plan de Práctica Recomendado</h4>
           </div>
           <ul style={{ margin: 0, paddingLeft: '20px', color: '#475569', fontSize: '0.85rem', lineHeight: '1.6' }}>
             {planAdaptativo?.drillRecomendado ? (
               <li>{planAdaptativo.drillRecomendado}</li>
             ) : (
-              <li>Mantén buena base, cede peso adecuadamente y usa tus frames/marcos para no perder la posición.</li>
+              <li>Practica repeticiones suaves enfocándote en cerrar los espacios y mantener una base sólida.</li>
             )}
             {planAdaptativo?.mensajeAdaptativo && (
               <li>{planAdaptativo.mensajeAdaptativo}</li>

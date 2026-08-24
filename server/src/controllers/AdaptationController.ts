@@ -292,14 +292,34 @@ export class AdaptationController {
     const posicionesActualizadas = this.calcularMaestriaPorPosicion(historialConActual);
     const tecnicasEvaluadasActualizadas = this.calcularTecnicasEvaluadas(historialConActual);
 
+    const nombresArticulaciones: { [k: string]: string } = {
+      codo_derecho: "codo derecho",
+      codo_izquierdo: "codo izquierdo",
+      rodilla_derecha: "rodilla derecha",
+      rodilla_izquierda: "rodilla izquierda",
+      cadera: "cadera y postura",
+      hombro_derecho: "hombro derecho",
+      hombro_izquierdo: "hombro izquierdo"
+    };
+    const articulacionLimpia = nombresArticulaciones[errorArticular] || errorArticular.replace(/_/g, " ");
+
+    const drillsPorArticulacion: { [k: string]: string } = {
+      codo_derecho: "Ejercicio: Practica 10 repeticiones manteniendo los codos bien pegados a tus costillas para proteger tus brazos.",
+      codo_izquierdo: "Ejercicio: Practica entradas asegurando que tu codo izquierdo quede cerrado y protegido contra tu cuerpo.",
+      rodilla_derecha: "Ejercicio: Haz repeticiones cerrando y pellizcando fuerte con las rodillas para asegurar el control de la posición.",
+      rodilla_izquierda: "Ejercicio: Mantén la rodilla izquierda firme y activa para controlar la base de tu compañero.",
+      cadera: "Ejercicio: Realiza drills de escape de cadera (shrimping) y elevación de pelvis para mejorar tu palanca.",
+    };
+    const drillSugerido = drillsPorArticulacion[errorArticular] || `Ejercicio: Repite 10 veces la entrada de ${evaluacion.tecnicaId || "la técnica"} enfocándote en cerrar los espacios y mantener una base sólida.`;
+
     if (hayFalloRecurrente) {
       console.log(`[Adaptación] Fallo recurrente (> 3) en ${errorArticular}. Conmutando estrategia didáctica a fuentes RAG.`);
       const videoRecurrente = await this.obtenerVideoYouTubeRelacionado(usuarioId, errorArticular);
       return {
-        nivelCompetenciaActual: "Reforzamiento Anatómico",
-        drillRecomendado: `Drill de fortalecimiento de manguito rotador y rotación de ${errorArticular.replace("_", " ")}`,
+        nivelCompetenciaActual: "Ajuste Técnico de Tatami",
+        drillRecomendado: drillSugerido,
         videoYouTubeUrl: videoRecurrente,
-        mensajeAdaptativo: `Alerta pedagógica: Has fallado más de 3 veces consecutivas en tu ${errorArticular.replace("_", " ")}. Recomendamos conmutar a ejercicios de aislamiento anatómico para corregir el ángulo.`,
+        mensajeAdaptativo: `Consejo del Sensei: En tus últimas prácticas has dejado el ${articulacionLimpia} algo expuesto. Tómate unos minutos para practicar este ajuste antes del combate.`,
         ultimaTecnica: evaluacion.tecnicaId,
         posicionesMaestria: posicionesActualizadas,
         tecnicasEvaluadas: tecnicasEvaluadasActualizadas
@@ -312,9 +332,9 @@ export class AdaptationController {
 
     return {
       nivelCompetenciaActual: "Principiante",
-      drillRecomendado: `Practica repeticiones (drills) para mejorar tu ${evaluacion.tecnicaId || "Guardia Cerrada"}`,
+      drillRecomendado: drillSugerido,
       videoYouTubeUrl: videoRecomendado,
-      mensajeAdaptativo: `No descuides tu ${errorArticular.replace("_", " ")}, ajusta la posición antes de que el oponente aproveche el espacio.`,
+      mensajeAdaptativo: `Consejo del Sensei: No descuides la posición de tu ${articulacionLimpia}, mantén la presión antes de que tu compañero aproveche el espacio.`,
       ultimaTecnica: evaluacion.tecnicaId,
       posicionesMaestria: posicionesActualizadas,
       tecnicasEvaluadas: tecnicasEvaluadasActualizadas
