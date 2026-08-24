@@ -537,7 +537,7 @@ export class PersistenceFacade implements IPersistenceService {
           OR: [
             { usuarioId: normalizedId },
             { usuarioId: DEFAULT_UUID },
-            { estadoValidacion: EstadoValidacion.ACEPTADA }
+            { estadoValidacion: EstadoValidacion.ACEPTADO }
           ]
         },
         orderBy: {
