@@ -12,6 +12,7 @@
 //   Denver.
 // ============================================================
 
+import "../env";
 import { PrismaClient, TipoEvento } from "@prisma/client";
 
 const prisma = new PrismaClient();

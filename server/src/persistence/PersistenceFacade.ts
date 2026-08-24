@@ -1,3 +1,4 @@
+import "../env";
 import { PrismaClient, Cinturon, SeveridadError, EstadoValidacion, TipoFuente } from '@prisma/client';
 import { PerfilCompetencia, IPersistenceService } from "../controllers/AdaptationController";
 import bcrypt from "bcryptjs";

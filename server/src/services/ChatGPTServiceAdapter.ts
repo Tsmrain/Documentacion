@@ -7,7 +7,7 @@ export class ChatGPTServiceAdapter implements ILLMProvider {
 
   constructor() {
     this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY || "",
+      apiKey: process.env.OPENAI_API_KEY || "dummy_key_for_optional_fallback",
     });
     // Usar gpt-4o-mini por defecto para ejecuciones reales, o el configurado en OPENAI_MODEL
     this.model = process.env.OPENAI_MODEL || "gpt-4o-mini";
