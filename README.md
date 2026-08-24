@@ -1695,8 +1695,10 @@ classDiagram
     class IPersistenceService {
         <<interface>>
         +cargarPerfil(usuarioId: String) PerfilCompetencia
-        +guardarAnalisis(analisis: AnalisisBiomecanico) boolean
-        +registrarVisualizacion(visualizacion: HistorialVisualizacion) boolean
+        +guardarAnalisis(usuarioId: String, analisis: AnalisisBiomecanico, planAdaptativo: PlanAdaptativo) boolean
+        +registrarVisualizacion(usuarioId: String, videoId: String) boolean
+        +obtenerHistorialAnalisis(usuarioId: String) List~HistorialItem~
+        +eliminarAnalisis(usuarioId: String, analisisId: String) boolean
     }
     
     class MediaPipePoseAdapter {
@@ -1711,20 +1713,22 @@ classDiagram
         +ingestarChunk(chunk: ChunkText) boolean
     }
 
-
     class GeminiServiceAdapter {
         -apiKey: String
         -client: GeminiClient
-        -geminiModel: String (process.env.GEMINI_MODEL || 'gemini-2.5-flash')
+        -geminiModel: String (process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite')
         +evaluarMovimiento(promptJSON: String) String
         +clasificarTecnicaVideo(keyframesSummary: KeyframesDataType) String
         +validarPertinenciaBJJ(texto: String) boolean
     }
-    class CentralDBPersistenceAdapter {
-        -apiEndpoint: String
+    class PersistenceFacade {
+        -prisma: PrismaClient
         +cargarPerfil(usuarioId: String) PerfilCompetencia
-        +guardarAnalisis(analisis: AnalisisBiomecanico) boolean
-        +registrarVisualizacion(visualizacion: HistorialVisualizacion) boolean
+        +guardarAnalisis(usuarioId: String, reporte: any, planAdaptativo: any) boolean
+        +registrarVisualizacion(usuarioId: String, videoId: String) boolean
+        +obtenerHistorialAnalisis(usuarioId: String) List~HistorialItem~
+        +eliminarAnalisis(usuarioId: String, analisisId: String) boolean
+        +obtenerFuentesConocimiento(usuarioId: String) List~FuenteConocimiento~
     }
     
     class SesionEntrenamientoController {
@@ -1882,13 +1886,26 @@ El almacenamiento vectorial y la recuperación semántica RAG se ejecutan sobre 
 
 ### **6.1.4 Inferencia y orquestación cognitiva multifuente**
 La inteligencia artificial generativa y el razonamiento multimodal procesan la inferencia utilizando la API oficial de Google Gemini a través del conector `@google/genai` (v2.17.1), registrado formalmente como dependencia declarada en `server/package.json`. La orquestación cognitiva opera bajo un pipeline desacoplado en 3 etapas conforme a los principios de diseño de Craig Larman y Michael Mannino:
-1. **Detección y Auditoría Visual Multimodal (Modo Dual)**: El modelo de visión de Gemini (`gemini-3.1-flash-lite` / `gemini-3.5-flash-lite`) analiza **9 keyframes de alta fidelidad (480px, JPEG 65%)** extraídos dinámicamente en el cliente para capturar tanto posiciones estáticas como movimientos explosivos (por ejemplo, *Llave de Brazo Voladora / Flying Armbar* o *Triángulo Volador*). Opera en dos modos:
-   - **Modo Descubrimiento Autónomo (Zero-Shot)**: Si el practicante no especifica la técnica, la IA clasifica visualmente la acción de ambos atletas (*Top/Bottom*), la posición base y detecta desviaciones articulares.
-   - **Modo Auditoría Guiada (Targeted Focus)**: Si el practicante indica la técnica que está entrenando (ej. *"Llave de Brazo Voladora"* o *"Pasaje Knee Cut"*), el sistema inyecta esta técnica dinámicamente en el `responseSchema` estricto y enfoca el 100% de la capacidad de razonamiento en auditar la corrección biomecánica (pinzado de rodillas, elevación de cadera, control de muñeca) con respecto a la literatura técnica.
-2. **Recuperación Aumentada Dinámica (RAG en el Dojo)**: Con la técnica clasificada o seleccionada, el sistema consulta el Vector Store central (**ChromaDB v2**) y la base de datos relacional (**PostgreSQL**), que almacenan más de 960 fuentes técnicas aprobadas (videos de YouTube con metadatos oEmbed y manuales estructurados). Si existe una fuente coincidente, se recupera el Top-1 chunk y el video exacto del profesor correspondiente.
-3. **Recomendación General de Respaldo (Fallback Cognitivo Baseline)**: Si la técnica evaluada no cuenta aún con un video registrado en el almacén local del dojo o si ChromaDB no estuviese disponible, la IA formula una recomendación y término de búsqueda optimizado para YouTube a partir de su conocimiento nativo de BJJ, garantizando que el alumno siempre disponga de un recurso visual inmediato para corregir su error.
 
-Para garantizar la alta disponibilidad y la resiliencia ante caídas de la API primaria de Google, el backend integra simultáneamente el SDK oficial de OpenAI (`openai` v7.5.0) mediante el `LLMRedirectionProxy`, que intercepta cualquier excepción de red o límite de cuota y conmuta en caliente hacia `ChatGPTServiceAdapter` (`gpt-4o-mini`). Para respaldar la transferencia multimodal híbrida de los 9 keyframes en Base64 sin interrumpir el flujo operativo por desbordamientos de buffer (PayloadTooLargeError), el API Gateway local de Express cuenta con una configuración de middleware con límite de payload extendido a **50 MB** (`express.json({ limit: '50mb' })` y `express.urlencoded({ limit: '50mb' })`).
+1. **Detección y Auditoría Visual Multimodal (Modo Dual)**: El modelo de visión de Gemini (`gemini-3.5-flash-lite` / `gemini-3.1-flash-lite`) analiza **9 keyframes de alta fidelidad (480px, JPEG 65%)** extraídos dinámicamente en el cliente para capturar tanto posiciones estáticas como movimientos explosivos (por ejemplo, *Llave de Brazo Voladora / Flying Armbar* o *Triángulo Volador*). Opera en dos modos:
+   - **Modo Descubrimiento Autónomo (Zero-Shot)**: Si el practicante no especifica la técnica, la IA clasifica visualmente la acción de ambos atletas (*Top/Bottom*), la posición base y detecta desviaciones articulares con soporte de *Visual Chain-of-Thought* (`secuenciaTemporalAnalizada`).
+   - **Modo Auditoría Guiada (Targeted Focus)**: Si el practicante indica la técnica que está entrenando (ej. *"Llave de Brazo Voladora"* o *"Pasaje Knee Cut"*), el sistema inyecta esta técnica dinámicamente en el `responseSchema` estricto y enfoca el 100% de la capacidad de razonamiento en auditar la corrección biomecánica (pinzado de rodillas, elevación de cadera, control de muñeca) con respecto a la literatura técnica.
+
+2. **Jerarquía de Resolución de Conocimiento y Videos en 3 Niveles (3-Tier Knowledge Resolution)**:
+   Para la asignación del video formativo y el plan de tutoría adaptativa, el sistema implementa una jerarquía estricta de 3 niveles:
+   - **Nivel 1 (Fuentes Personales del Practicante)**: El sistema prioriza en primer lugar las fuentes agregadas y curadas por el propio alumno (`usuarioId`).
+   - **Nivel 2 (Biblioteca Colectiva Global del Dojo - +900 Fuentes)**: Si el alumno no posee fuentes propias para esa técnica o si desvinculó una fuente de su vista personal (patrón *Soft Delete* hacia `DEFAULT_UUID` con estado `ACEPTADO`), el motor RAG consulta el repositorio central del dojo que cuenta con más de 900 videos técnicos curados (BJJ Fanatics, Bernardo Faria, John Danaher, HispaFight, etc.).
+   - **Nivel 3 (Búsqueda Externa Especializada en YouTube)**: Únicamente si en toda la biblioteca local de 900+ fuentes no existe un video coincidente, el sistema genera de forma autónoma una consulta de búsqueda dinámica especializada en YouTube.
+
+3. **Evolución Pedagógica Progresiva por Intentos y Persistencia en Historial**:
+   Cuando un practicante repite la misma técnica presentando desviaciones articulares, el sistema rastrea el número de intento consecutivo ($intentoNumero$) y adapta la estrategia pedagógica de forma dinámica:
+   - *Intento 1*: Fundamentos y ejecución canónica (*"Tutorial BJJ [Técnica] detalles técnicos"*).
+   - *Intento 2*: Corrección postural y aislamiento articular (*"Corrección de postura y [articulación]"*).
+   - *Intento 3*: Drills de repetición y memoria muscular (*"Drills de aislamiento y repetición"*).
+   - *Intento 4+*: Errores comunes que no debes cometer, variantes avanzadas y contraataques.
+   Cada plan adaptativo (`videoYouTubeUrl`, `drillRecomendado`, `mensajeAdaptativo`) se persiste íntegramente en PostgreSQL mediante `PersistenceFacade.guardarAnalisis`, garantizando que cada sesión del historial conserve y abra su video formativo específico y rotativo.
+
+Para garantizar la alta disponibilidad y la resiliencia ante caídas de la API primaria de Google, el backend integra simultáneamente el SDK oficial de OpenAI (`openai` v7.5.0) mediante el `LLMRedirectionProxy`, que intercepta cualquier excepción de red o límite de cuota y conmuta en caliente hacia `ChatGPTServiceAdapter` (`gpt-4o-mini`). Adicionalmente, el adaptador de Gemini incorpora un timeout resiliente de red mediante `AbortSignal.timeout(10000)` y configuración de seguridad deportiva (`safetySettings` con umbral `BLOCK_ONLY_HIGH`) para prevenir falsos positivos de bloqueo en descripciones de sumisiones marciales. Para respaldar la transferencia multimodal híbrida de los 9 keyframes en Base64 sin interrumpir el flujo operativo por desbordamientos de buffer (PayloadTooLargeError), el API Gateway local de Express cuenta con una configuración de middleware con límite de payload extendido a **50 MB** (`express.json({ limit: '50mb' })` y `express.urlencoded({ limit: '50mb' })`).
 
 ### **6.1.5 Gestión, Optimización y Telemetría de Tokens en la API de Google Gemini**
 El sistema OpenBJJ implementa una arquitectura rigurosa de control de costos y telemetría de tokens para operar de forma eficiente y sostenible bajo el nivel gratuito (*Free Tier*) de Google AI Studio y en entornos de producción:
