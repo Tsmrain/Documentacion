@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "npx tsx src/index.ts",
+    "build": "tsc",
     "db:clean": "npx tsx src/scripts/cleanDb.ts",
     "ingestar": "npx tsx src/scripts/ingestarPlaylists.ts"
   },

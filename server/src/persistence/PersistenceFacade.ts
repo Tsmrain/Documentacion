@@ -520,7 +520,7 @@ export class PersistenceFacade implements IPersistenceService {
 
           if (matches.length > 0) {
             const index = (intentoNumero - 1) % matches.length;
-            videoFinal = matches[index].url;
+            videoFinal = matches[index].url || "";
           } else {
             if (intentoNumero === 1) {
               videoFinal = `https://www.youtube.com/results?search_query=Tutorial+BJJ+${encodeURIComponent(tecId)}+ejecucion+paso+a+paso`;

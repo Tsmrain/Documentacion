@@ -40,7 +40,7 @@ export interface RutaAprendizaje {
 
 export interface IPersistenceService {
   cargarPerfil(usuarioId: string): Promise<PerfilCompetencia>;
-  guardarAnalisis(usuarioId: string, analisis: any): Promise<boolean>;
+  guardarAnalisis(usuarioId: string, analisis: any, planAdaptativo?: any): Promise<boolean>;
   registrarVisualizacion(usuarioId: string, videoId: string): Promise<boolean>;
   obtenerHistorialAnalisis(usuarioId: string): Promise<any[]>;
   eliminarAnalisis(usuarioId: string, analisisId: string): Promise<boolean>;
