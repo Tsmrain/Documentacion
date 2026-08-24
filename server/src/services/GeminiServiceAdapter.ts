@@ -343,9 +343,12 @@ ${promptJSON}`
             maxOutputTokens: 2048
           };
 
-          if (currentModel.includes("3.7") || currentModel.includes("thinking")) {
-            generationConfig.thinkingConfig = { thinkingBudget: 0 };
-          }
+          const safetySettings = [
+            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
+            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
+          ];
 
           let response = await fetch(url, {
             method: "POST",
@@ -353,7 +356,8 @@ ${promptJSON}`
             body: JSON.stringify({
               contents: [{ parts: [textPart, ...imageParts] }],
               systemInstruction: { parts: [{ text: BJJ_SENSEI_SYSTEM_INSTRUCTION }] },
-              generationConfig
+              generationConfig,
+              safetySettings
             })
           });
 

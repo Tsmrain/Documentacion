@@ -147,6 +147,9 @@ En este trabajo se expone el diseño y modelado orientado a objetos de una plata
     - [6.1.2 Base de datos relacional y ORM](#612-base-de-datos-relacional-y-orm)
     - [6.1.3 Base de datos vectorial](#613-base-de-datos-vectorial)
     - [6.1.4 Inferencia y orquestación cognitiva](#614-inferencia-y-orquestación-cognitiva)
+    - [6.1.5 Gestión, Optimización y Telemetría de Tokens](#615-gestión-optimización-y-telemetría-de-tokens-en-la-api-de-google-gemini)
+    - [6.1.6 Soberanía Cognitiva, Multifuente y Multiproveedor](#616-soberanía-cognitiva-multifuente-y-multiproveedor)
+    - [6.1.7 Implementación de Directrices Oficiales de Google Gemini API](#617-implementación-de-directrices-oficiales-de-google-gemini-api)
   - [6.2 Herramientas utilizadas](#62-herramientas-utilizadas)
     - [6.2.1 Lenguajes de programación, frameworks y librerías](#621-lenguajes-de-programación-frameworks-y-librerías)
     - [6.2.2 Entornos de desarrollo integrados](#622-entornos-de-desarrollo-integrados)
@@ -170,6 +173,7 @@ En este trabajo se expone el diseño y modelado orientado a objetos de una plata
 - [**Capítulo X: Conclusiones y Recomendaciones**](#capítulo-x-conclusiones-y-recomendaciones)
   - [10.1 Conclusiones](#101-conclusiones)
   - [10.2 Recomendaciones de Despliegue Físico](#102-recomendaciones-de-despliegue-físico)
+- [**Referencias**](#referencias)
 
 # **Índice de Tablas**
 
@@ -1914,6 +1918,25 @@ El sistema OpenBJJ implementa una arquitectura rigurosa de control de costos y t
 ### **6.1.6 Soberanía Cognitiva, Multifuente y Multiproveedor**
 El diseño del backend aplica el patrón GRASP de **Variaciones Protegidas (Protected Variations)** y el **Principio Abierto/Cerrado (Open-Closed Principle)** mediante las interfaces técnicas abstraídas `ILLMProvider`, `ITechniqueClassifier` e `IVectorStore`. Esta arquitectura garantiza la soberanía cognitiva y el desacoplamiento total respecto a un único proveedor o autor bibliográfico. El repositorio de conocimiento es abierto y extensible: los practicantes y el sensei pueden ingestar nuevas fuentes (enlaces de YouTube y documentos PDF) que son moderadas automáticamente (Filtro RD-03) e incorporadas a la base vectorial sin requerir modificaciones en el código fuente del sistema. Asimismo, a través de variables de entorno (`DATABASE_URL`, `VECTOR_DB_URL`, `GEMINI_MODEL`, `OPENAI_API_KEY`), el nodo backend conmuta en caliente entre proveedores locales o en la nube.
 
+### **6.1.7 Implementación de Directrices Oficiales de Google Gemini API**
+La arquitectura de inferencia multimodal y procesamiento cognitivo de OpenBJJ implementa y se alinea formalmente con las directrices y mejores prácticas publicadas en la documentación técnica oficial de Google Gemini API:
+
+1. **Instrucciones del Sistema (System Instructions)**:
+   - *Referencia Oficial*: Google Developers (2024), *System Instructions Guide*.
+   - *Aplicación en OpenBJJ*: En `GeminiServiceAdapter.ts`, se configura la directiva de sistema `systemInstruction: { parts: [{ text: BJJ_SENSEI_SYSTEM_INSTRUCTION }] }`. Esto establece de manera estricta el rol pedagógico del Sensei cinta negra, reglas de discriminación biomecánica (distinción de combate en pie vs. en el suelo) y la formulación obligatoria del feedback en segunda persona singular (*"Tus codos..."*, *"Tu postura..."*).
+
+2. **Comprensión Temporal de Video y Muestreo por Fotogramas Clave (Video Understanding)**:
+   - *Referencia Oficial*: Google Developers (2024), *Video Understanding with the Gemini API (JavaScript SDK)*.
+   - *Aplicación en OpenBJJ*: En lugar de transmitir video continuo en streaming pesado, el cliente PWA (`AdaptiveKeyframeExtractor.ts`) extrae 9 fotogramas clave con muestreo adaptativo temporal y los inyecta como `inlineData` estructurado junto a marcas de tiempo relativas `[Frame X] (Timestamp Ys)`. Esto reduce drásticamente el consumo de tokens y ancho de banda en más del 97%, permitiendo a Gemini analizar transiciones completas de sumisión y derribo con latencias inferiores a 1.2 segundos.
+
+3. **Estrategia de Prompting con Archivos y Documentación Técnica (Files API & Prompt Guide)**:
+   - *Referencia Oficial*: Google Developers (2024), *Prompting with Files & File API Guide*.
+   - *Aplicación en OpenBJJ*: Se combinan los principios de inyección de contexto documental para la vectorización de manuales técnicos en ChromaDB, estructurando los fragmentos con metadatos de autor, técnica y página, facilitando la recuperación semántica (RAG) con mínima entropía de información.
+
+4. **Configuración de Filtros de Seguridad y Políticas de Uso Ético (Safety Settings & Use Policy)**:
+   - *Referencias Oficiales*: Google Developers (2024), *Safety Settings and Harm Categories*; Google LLC (2024), *Generative AI Prohibited Use Policy*.
+   - *Aplicación en OpenBJJ*: El análisis deportivo de artes marciales involucra términos técnicos de agarre, palancas y estrangulaciones (*"choke"*, *"armbar"*, *"rotación cervical"*, *"derribo"*). Para prevenir falsos positivos de bloqueo por `HARM_CATEGORY_DANGEROUS_CONTENT` o violencia sin vulnerar las directrices de seguridad, el adaptador configura de forma explícita los umbrales de seguridad (`BLOCK_ONLY_HIGH`) para las cuatro categorías estándar (`HARASSMENT`, `HATE_SPEECH`, `SEXUALLY_EXPLICIT`, `DANGEROUS_CONTENT`), asegurando la continuidad del feedback pedagógico en un entorno deportivo formativo legítimo.
+
 ## **6.2 Herramientas utilizadas**
 
 ### **6.2.1 Lenguajes de programación, frameworks y librerías**
@@ -2158,8 +2181,15 @@ Para garantizar la continuidad operativa en la academia Corpo & Mente de forma a
 
 # Referencias
 
-1. IEEE Computer Society. (1998). *IEEE Std 830-1998: Recommended Practice for Software Requirements Specifications*.
+1. IEEE Computer Society. (1998). *IEEE Std 830-1998: Recommended Practice for Software Requirements Specifications*. IEEE.
 2. Larman, C. (2003). *UML and Patterns: An Introduction to Object-Oriented Analysis and Design and the Unified Process* (2nd Ed.). Prentice Hall.
-3. Google Developers. (2023). *MediaPipe Pose Landmarker: Framework for ML Pipelines*.
-4. Google Cloud. (2023). *Gemini API: Multimodal AI Platform*.
+3. Google Developers. (2023). *MediaPipe Pose Landmarker: Framework for ML Pipelines*. Google Open Source.
+4. Google Cloud. (2023). *Gemini API: Multimodal AI Platform*. Google Cloud Documentation.
 5. Mannino, M. V. (2019). *Database Design, Application Development, and Administration* (7th ed.). Chicago Business Press.
+6. Google Developers. (2024). *Gemini API: System Instructions and Text Generation Guide*. Google AI for Developers. https://ai.google.dev/gemini-api/docs/text-generation#system-instructions
+7. Google Developers. (2024). *Video Understanding with the Gemini API (JavaScript SDK)*. Google AI for Developers. https://ai.google.dev/gemini-api/docs/video-understanding#javascript
+8. Google Developers. (2024). *Prompting with Files & File API Guide*. Google AI for Developers. https://ai.google.dev/gemini-api/docs/files
+9. Google Developers. (2024). *File Prompting Strategies and Multimodal Best Practices*. Google AI for Developers. https://ai.google.dev/gemini-api/docs/files#prompt-guide
+10. Google Developers. (2024). *Safety Guidance and Ethical Considerations in Generative AI*. Google AI for Developers. https://ai.google.dev/gemini-api/docs/safety-guidance
+11. Google LLC. (2024). *Generative AI Additional Terms of Service & Prohibited Use Policy*. Google Policies. https://policies.google.com/terms/generative-ai/use-policy
+12. Google Developers. (2024). *Safety Settings and Harm Categories Configuration for the Gemini API*. Google AI for Developers. https://ai.google.dev/gemini-api/docs/safety-settings
