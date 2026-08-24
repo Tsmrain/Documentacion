@@ -132,16 +132,25 @@ export class AdaptationController {
     terminoBusqueda: string,
     esDefensa: boolean = false,
     tecnicaNombre?: string,
-    articulacionError?: string
+    articulacionError?: string,
+    hayFalloRecurrente: boolean = false,
+    videosVistos: string[] = []
   ): Promise<string> {
     const terminoLimpio = (terminoBusqueda || "bjj tutorial").replace(/_/g, " ").replace(/-/g, " ").toLowerCase();
     const tecnicaFormato = tecnicaNombre || (terminoBusqueda ? terminoBusqueda.replace(/_/g, " ").replace(/-/g, " ") : "BJJ");
     const articulacionFormato = articulacionError || "postura";
 
-    // Fallback determinista estructurado de YouTube Search (Patrón Information Expert)
-    const fallbackSearchQuery = esDefensa
-      ? `Tutorial BJJ defensa y escape de ${tecnicaFormato} ${articulacionFormato}`
-      : `Tutorial BJJ ${tecnicaFormato} ${articulacionFormato} correccion drill`;
+    // Fallback determinista estructurado de YouTube Search adaptativo
+    let fallbackSearchQuery = "";
+    if (hayFalloRecurrente) {
+      fallbackSearchQuery = esDefensa
+        ? `Tutorial BJJ errores comunes defensa y escape de ${tecnicaFormato} ${articulacionFormato} drills`
+        : `Tutorial BJJ correccion de errores comunes y drills ${tecnicaFormato} ${articulacionFormato}`;
+    } else {
+      fallbackSearchQuery = esDefensa
+        ? `Tutorial BJJ defensa y escape de ${tecnicaFormato} ${articulacionFormato}`
+        : `Tutorial BJJ ${tecnicaFormato} ${articulacionFormato} correccion drill`;
+    }
     const fallbackUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(fallbackSearchQuery.trim())}`;
 
     try {
@@ -201,6 +210,11 @@ export class AdaptationController {
             // Si el usuario está atacando, priorizar videos de ejecución sobre videos de escape
             if (!tieneTerminosDefensa) score += 50;
             else score -= 150;
+          }
+
+          // Si el usuario ya vio este video varias veces y hay fallo recurrente, rotar a una alternativa
+          if (videosVistos.includes(fuente.url) && hayFalloRecurrente) {
+            score -= 30; // Permite que otros videos del dojo con diferente enfoque tomen prioridad
           }
 
           // Coincidencia exacta de frases compuestas clave
@@ -342,7 +356,16 @@ export class AdaptationController {
     }
 
     tecnicaBusqueda = tecnicaBusqueda.replace(/-/g, " ").toLowerCase();
-    const videoRecomendado = await this.obtenerVideoYouTubeRelacionado(usuarioId, tecnicaBusqueda, esDefensa, evaluacion.tecnicaId, articulacionLimpia);
+    const videosVistosIds = (perfil.historialVisualizaciones || []).map((v: any) => v.videoId || v.url || "");
+    const videoRecomendado = await this.obtenerVideoYouTubeRelacionado(
+      usuarioId,
+      tecnicaBusqueda,
+      esDefensa,
+      evaluacion.tecnicaId,
+      articulacionLimpia,
+      hayFalloRecurrente,
+      videosVistosIds
+    );
 
     if (hayFalloRecurrente) {
       return {
