@@ -18,6 +18,7 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
   const [fuentesAdmin, setFuentesAdmin] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
   const [filtroFuentes, setFiltroFuentes] = useState<string>("todas");
+  const [busquedaFuentes, setBusquedaFuentes] = useState<string>("");
 
   useEffect(() => {
     cargarDatosAdmin();
@@ -57,18 +58,24 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
   const alertaDesercion = evi?.alerta === "BAJO_COMPROMISO";
 
   const fuentesFiltradas = fuentesAdmin.filter(f => {
-    if (filtroFuentes === "youtube") return f.tipo === "youtube";
-    if (filtroFuentes === "archivo") return f.tipo === "archivo";
-    if (filtroFuentes === "alumnos") return f.autorNombre !== "Administración Central" && !f.autorNombre.includes("Dojo Global");
+    if (filtroFuentes === "youtube" && f.tipo !== "youtube") return false;
+    if (filtroFuentes === "archivo" && f.tipo !== "archivo" && f.tipo !== "pdf" && f.tipo !== "PDF") return false;
+
+    if (busquedaFuentes.trim() !== "") {
+      const q = busquedaFuentes.toLowerCase().trim();
+      const matchTitulo = (f.titulo || "").toLowerCase().includes(q);
+      const matchAutor = (f.autorNombre || f.autor || "").toLowerCase().includes(q);
+      const matchUrl = (f.url || "").toLowerCase().includes(q);
+      return matchTitulo || matchAutor || matchUrl;
+    }
     return true;
   });
 
-  const totalFuentes = fuentesAdmin.length || adminStats?.totalFuentes || 957;
+  const totalFuentes = fuentesAdmin.length || adminStats?.totalFuentes || 967;
   const totalAlumnos = adminStats?.totalPracticantes ?? 0;
 
   return (
     <div className="glass-panel p-6 animate-fade-in" style={{ padding: "28px" }}>
-      {/* Encabezado Principal del Panel del Profesor */}
       <div style={{
         display: "flex",
         justifyContent: "space-between",
@@ -102,38 +109,40 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
             }}>
               Panel de Control del Dojo
             </h2>
-            <p style={{ margin: "2px 0 0 0", color: "#cbd5e1", fontSize: "0.85rem", fontWeight: 600 }}>
+            <span style={{ fontSize: "0.85rem", color: "#a1a1aa", display: "block", marginTop: "2px" }}>
               Academia Corpo e Mente — Asistencia, Rendimiento de Alumnos y Material de Enseñanza
-            </p>
+            </span>
           </div>
         </div>
 
-        <div>
-          <button
-            onClick={cargarDatosAdmin}
-            style={{
-              padding: "8px 14px",
-              borderRadius: "10px",
-              border: "1px solid rgba(255, 255, 255, 0.12)",
-              background: "rgba(255, 255, 255, 0.04)",
-              color: "#cbd5e1",
-              fontSize: "0.85rem",
-              fontWeight: 700,
-              cursor: "pointer"
-            }}
-          >
-            🔄 Actualizar
-          </button>
-        </div>
+        <button
+          onClick={cargarDatosAdmin}
+          disabled={cargando}
+          style={{
+            background: "rgba(255, 255, 255, 0.05)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            color: "#cbd5e1",
+            padding: "8px 16px",
+            borderRadius: "8px",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px"
+          }}
+        >
+          {cargando ? "Actualizando..." : "Actualizar"}
+        </button>
       </div>
 
-      {/* Pestañas de Navegación del Profesor */}
       <div style={{
         display: "flex",
         gap: "10px",
         marginBottom: "24px",
         borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
-        paddingBottom: "12px"
+        paddingBottom: "12px",
+        flexWrap: "wrap"
       }}>
         <button
           type="button"
@@ -149,7 +158,7 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
             cursor: "pointer"
           }}
         >
-          📊 Resumen del Dojo & Rendimiento
+          Resumen del Dojo & Rendimiento
         </button>
         <button
           type="button"
@@ -165,7 +174,7 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
             cursor: "pointer"
           }}
         >
-          🥋 Biblioteca Técnica ({totalFuentes} lecciones)
+          Biblioteca Técnica ({totalFuentes} lecciones)
         </button>
         <button
           type="button"
@@ -181,7 +190,7 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
             cursor: "pointer"
           }}
         >
-          👥 Alumnos del Dojo ({totalAlumnos})
+          Alumnos del Dojo ({totalAlumnos})
         </button>
         <button
           type="button"
@@ -197,7 +206,7 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
             cursor: "pointer"
           }}
         >
-          ⚡ Métricas de Tokens & IA
+          Métricas de Tokens & IA
         </button>
       </div>
 
@@ -207,12 +216,8 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
         </div>
       ) : (
         <>
-          {/* ============================================================ */}
-          {/* SECCIÓN 1: RESUMEN DEL DOJO & RENDIMIENTO */}
-          {/* ============================================================ */}
           {seccionActiva === "resumen" && (
             <div>
-              {/* 4 Indicadores Clave del Dojo */}
               <div style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
@@ -232,7 +237,7 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
                     {totalAlumnos}
                   </div>
                   <span style={{ fontSize: "0.75rem", color: "#34d399", fontWeight: 600 }}>
-                    ✓ Practicantes registrados
+                    Practicantes registrados
                   </span>
                 </div>
 
@@ -249,7 +254,7 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
                     {totalFuentes}
                   </div>
                   <span style={{ fontSize: "0.75rem", color: "#fecdd3", fontWeight: 600 }}>
-                    🥋 Videos y libros de Jiu-Jitsu listos
+                    Videos y lecciones técnicas activas
                   </span>
                 </div>
 
@@ -266,7 +271,7 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
                     {evi ? (evi.evi * 100).toFixed(0) + "%" : "100%"}
                   </div>
                   <span style={{ fontSize: "0.75rem", color: alertaDesercion ? "#fca5a5" : "#6ee7b7", fontWeight: 700 }}>
-                    {alertaDesercion ? "⚠️ ALERTA: Asistencia en descenso" : "✓ Ritmo de práctica óptimo"}
+                    {alertaDesercion ? "ALERTA: Asistencia en descenso" : "Ritmo de práctica óptimo"}
                   </span>
                 </div>
 
@@ -283,12 +288,11 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
                     {adminStats?.totalAnalisis ?? 0}
                   </div>
                   <span style={{ fontSize: "0.75rem", color: "#fca5a5", fontWeight: 600 }}>
-                    🎯 Consejos técnicos entregados
+                    Diagnósticos biomecánicos generados
                   </span>
                 </div>
               </div>
 
-              {/* Asistencia y Uso de Alumnos */}
               <div style={{
                 background: "rgba(18, 18, 20, 0.7)",
                 border: "1px solid rgba(220, 38, 38, 0.18)",
@@ -297,7 +301,7 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
               }}>
                 <div style={{ marginBottom: "14px" }}>
                   <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#f1f5f9" }}>
-                    📈 Alumnos que Entrenaron y Subieron Videos
+                    Alumnos que Entrenaron y Subieron Videos
                   </h3>
                   <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "#a1a1aa" }}>
                     Muestra cuántos alumnos diferentes utilizaron el tutor inteligente para revisar sus técnicas en cada periodo.
@@ -336,39 +340,107 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
             </div>
           )}
 
-          {/* ============================================================ */}
-          {/* SECCIÓN 2: BIBLIOTECA TÉCNICA DEL DOJO */}
-          {/* ============================================================ */}
           {seccionActiva === "biblioteca" && (
             <div>
               <div style={{
                 display: "flex",
                 justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "16px"
+                alignItems: "flex-start",
+                marginBottom: "16px",
+                flexWrap: "wrap",
+                gap: "12px"
               }}>
                 <div>
                   <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#f8fafc" }}>
-                    🥋 Biblioteca de Técnicas y Lecciones del Dojo
+                    Biblioteca de Técnicas y Lecciones del Dojo
                   </h3>
                   <p style={{ margin: "2px 0 0 0", color: "#a1a1aa", fontSize: "0.8rem" }}>
-                    Videos y manuales de Jiu-Jitsu que la inteligencia artificial consulta para corregir a los practicantes.
+                    Videos y manuales de Jiu-Jitsu que la inteligencia artificial consulta para orientar a los practicantes.
                   </p>
                 </div>
+              </div>
 
-                {/* Filtros */}
+              <div style={{
+                display: "flex",
+                gap: "12px",
+                alignItems: "center",
+                marginBottom: "14px",
+                flexWrap: "wrap"
+              }}>
+                <div style={{ flex: 1, minWidth: "280px", position: "relative" }}>
+                  <input
+                    type="text"
+                    value={busquedaFuentes}
+                    onChange={(e) => setBusquedaFuentes(e.target.value)}
+                    placeholder="Buscar lección por técnica, autor o palabra clave..."
+                    style={{
+                      width: "100%",
+                      padding: "10px 38px 10px 38px",
+                      background: "rgba(18, 18, 20, 0.85)",
+                      border: "1px solid rgba(220, 38, 38, 0.3)",
+                      borderRadius: "10px",
+                      color: "#f8fafc",
+                      fontSize: "0.85rem",
+                      outline: "none",
+                      boxSizing: "border-box"
+                    }}
+                  />
+                  <svg
+                    style={{
+                      position: "absolute",
+                      left: "12px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      width: "16px",
+                      height: "16px",
+                      stroke: "#94a3b8",
+                      strokeWidth: 2,
+                      fill: "none"
+                    }}
+                    viewBox="0 0 24 24"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  {busquedaFuentes && (
+                    <button
+                      type="button"
+                      onClick={() => setBusquedaFuentes("")}
+                      style={{
+                        position: "absolute",
+                        right: "10px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        background: "rgba(255, 255, 255, 0.08)",
+                        border: "none",
+                        color: "#94a3b8",
+                        borderRadius: "50%",
+                        width: "20px",
+                        height: "20px",
+                        fontSize: "0.75rem",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                      }}
+                      title="Limpiar búsqueda"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+
                 <div style={{ display: "flex", gap: "6px" }}>
                   {[
                     { id: "todas", label: `Todas (${fuentesAdmin.length})` },
                     { id: "youtube", label: "Videos YouTube" },
-                    { id: "archivo", label: "Manuales PDF" },
-                    { id: "alumnos", label: "Subidos por Alumnos" }
+                    { id: "archivo", label: "Manuales PDF" }
                   ].map(f => (
                     <button
                       key={f.id}
                       onClick={() => setFiltroFuentes(f.id)}
                       style={{
-                        padding: "6px 12px",
+                        padding: "9px 14px",
                         borderRadius: "8px",
                         border: "1px solid rgba(255,255,255,0.08)",
                         background: filtroFuentes === f.id ? "#dc2626" : "rgba(255,255,255,0.04)",
@@ -384,9 +456,23 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
                 </div>
               </div>
 
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "12px",
+                fontSize: "0.76rem",
+                color: "#94a3b8"
+              }}>
+                <span>
+                  Mostrando <strong style={{ color: "#f8fafc" }}>{fuentesFiltradas.length}</strong> de {fuentesAdmin.length} lecciones disponibles
+                  {busquedaFuentes && <span> para la búsqueda "<em style={{ color: "#fca5a5" }}>{busquedaFuentes}</em>"</span>}
+                </span>
+              </div>
+
               {fuentesFiltradas.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "40px", color: "#71717a", background: "rgba(0,0,0,0.2)", borderRadius: "12px" }}>
-                  No se encontraron lecciones bajo este filtro.
+                  No se encontraron lecciones bajo este criterio de búsqueda.
                 </div>
               ) : (
                 <div style={{
@@ -397,7 +483,7 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
                   overflowY: "auto",
                   paddingRight: "6px"
                 }}>
-                  {fuentesFiltradas.slice(0, 50).map((fuente: any) => (
+                  {fuentesFiltradas.slice(0, 100).map((fuente: any) => (
                     <div
                       key={fuente.id}
                       style={{
@@ -442,7 +528,7 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
                           background: "rgba(16, 185, 129, 0.12)",
                           border: "1px solid rgba(16, 185, 129, 0.3)"
                         }}>
-                          ✓ Lista para Enseñar
+                          Lista para Enseñar
                         </span>
                         {fuente.url && (
                           <a
@@ -453,12 +539,21 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
                               fontSize: "0.75rem",
                               color: "#60a5fa",
                               textDecoration: "none",
-                              padding: "4px 8px",
+                              padding: "4px 10px",
                               borderRadius: "6px",
-                              background: "rgba(59, 130, 246, 0.1)"
+                              background: "rgba(59, 130, 246, 0.1)",
+                              border: "1px solid rgba(59, 130, 246, 0.25)",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px"
                             }}
                           >
-                            Ver Video ↗
+                            Ver Video
+                            <svg style={{ width: "12px", height: "12px", stroke: "currentColor", fill: "none", strokeWidth: 2 }} viewBox="0 0 24 24">
+                              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                              <polyline points="15 3 21 3 21 9"></polyline>
+                              <line x1="10" y1="14" x2="21" y2="3"></line>
+                            </svg>
                           </a>
                         )}
                       </div>
@@ -469,9 +564,6 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
             </div>
           )}
 
-          {/* ============================================================ */}
-          {/* SECCIÓN 3: ALUMNOS DEL DOJO */}
-          {/* ============================================================ */}
           {seccionActiva === "alumnos" && (
             <div>
               <div style={{ marginBottom: "20px" }}>
