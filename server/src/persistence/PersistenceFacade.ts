@@ -344,7 +344,7 @@ export class PersistenceFacade implements IPersistenceService {
     }
   }
 
-  async guardarAnalisis(usuarioId: string, reporte: any): Promise<boolean> {
+  async guardarAnalisis(usuarioId: string, reporte: any, planAdaptativo?: any): Promise<boolean> {
     try {
       const normalizedId = this.normalizarUsuarioId(usuarioId);
       await this.obtenerPerfilUsuario(normalizedId);
@@ -363,6 +363,14 @@ export class PersistenceFacade implements IPersistenceService {
       const desviacionArt = parsedReport.desviacionArticular || "";
       const desviacionGr = parsedReport.desviacionGrados || 0;
 
+      // Guardar sugerencia estructurada con el video exacto que se le entregó al usuario
+      const sugerenciaData = JSON.stringify({
+        texto: sugerencia,
+        videoUrl: planAdaptativo?.videoYouTubeUrl || "",
+        drill: planAdaptativo?.drillRecomendado || "",
+        mensaje: planAdaptativo?.mensajeAdaptativo || ""
+      });
+
       await prisma.sesionEntrenamiento.create({
         data: {
           usuarioId: normalizedId,
@@ -370,7 +378,7 @@ export class PersistenceFacade implements IPersistenceService {
             create: {
               tecnicaId,
               severidad,
-              sugerenciaPedagogica: sugerencia,
+              sugerenciaPedagogica: sugerenciaData,
               erroresDetectados: {
                 create: {
                   desviacionArticular: desviacionArt,
@@ -443,28 +451,88 @@ export class PersistenceFacade implements IPersistenceService {
   async obtenerHistorialAnalisis(usuarioId: string): Promise<any[]> {
     try {
       const normalizedId = this.normalizarUsuarioId(usuarioId);
-      const sesiones = await prisma.sesionEntrenamiento.findMany({
-        where: { usuarioId: normalizedId },
-        include: {
-          analisis: {
-            include: {
-              erroresDetectados: true
+      const [sesiones, fuentes] = await Promise.all([
+        prisma.sesionEntrenamiento.findMany({
+          where: { usuarioId: normalizedId },
+          include: {
+            analisis: {
+              include: {
+                erroresDetectados: true
+              }
             }
+          },
+          orderBy: {
+            fecha: 'asc' // Orden ascendente para calcular el orden cronológico de intentos
           }
-        },
-        orderBy: {
-          fecha: 'desc'
-        }
-      });
+        }),
+        prisma.fuenteConocimiento.findMany({
+          where: {
+            OR: [
+              { usuarioId: normalizedId },
+              { usuarioId: DEFAULT_UUID },
+              { estadoValidacion: EstadoValidacion.ACEPTADO }
+            ]
+          }
+        })
+      ]);
 
-      return sesiones.map(s => {
+      const fuentesYouTube = fuentes.filter((f: any) =>
+        f.tipo === TipoFuente.YOUTUBE && f.url && (f.url.includes("watch?v=") || f.url.includes("youtu.be/"))
+      );
+
+      const contadorPorTecnica: Record<string, number> = {};
+
+      const sesionesMapeadas = sesiones.map(s => {
         const a = s.analisis;
         const err = a?.erroresDetectados?.[0];
         const tecId = a?.tecnicaId || "guardia-cerrada";
         const sev = a?.severidad ? (a.severidad === SeveridadError.CRITICO ? "Critico" : a.severidad === SeveridadError.LEVE ? "Leve" : "Moderado") : "Moderado";
         const desvGr = err ? Number(err.desviacionGrados) : 0;
         const desvArt = err?.desviacionArticular || "codo_derecho";
-        const sug = a?.sugerenciaPedagogica || "";
+        
+        let sugerenciaTexto = a?.sugerenciaPedagogica || "";
+        let guardadoVideoUrl = "";
+        let guardadoDrill = "";
+        let guardadoMensaje = "";
+
+        if (sugerenciaTexto.startsWith("{")) {
+          try {
+            const parsedSugg = JSON.parse(sugerenciaTexto);
+            sugerenciaTexto = parsedSugg.texto || sugerenciaTexto;
+            guardadoVideoUrl = parsedSugg.videoUrl || "";
+            guardadoDrill = parsedSugg.drill || "";
+            guardadoMensaje = parsedSugg.mensaje || "";
+          } catch {}
+        }
+
+        contadorPorTecnica[tecId] = (contadorPorTecnica[tecId] || 0) + 1;
+        const intentoNumero = contadorPorTecnica[tecId];
+
+        // Determinar video final adaptativo
+        let videoFinal = guardadoVideoUrl;
+        if (!videoFinal) {
+          const tecLower = tecId.toLowerCase();
+          const matches = fuentesYouTube.filter((f: any) => {
+            const t = (f.titulo || "").toLowerCase();
+            return (t.includes("armbar") || t.includes("llave de brazo") || t.includes("montada")) &&
+                   (tecLower.includes("armbar") || tecLower.includes("montada") || tecLower.includes("brazo"));
+          });
+
+          if (matches.length > 0) {
+            const index = (intentoNumero - 1) % matches.length;
+            videoFinal = matches[index].url;
+          } else {
+            if (intentoNumero === 1) {
+              videoFinal = `https://www.youtube.com/results?search_query=Tutorial+BJJ+${encodeURIComponent(tecId)}+ejecucion+paso+a+paso`;
+            } else if (intentoNumero === 2) {
+              videoFinal = `https://www.youtube.com/results?search_query=Tutorial+BJJ+${encodeURIComponent(tecId)}+correccion+de+${encodeURIComponent(desvArt.replace(/_/g, "+"))}`;
+            } else if (intentoNumero === 3) {
+              videoFinal = `https://www.youtube.com/results?search_query=Drills+BJJ+${encodeURIComponent(tecId)}+ejercicios+repeticion+y+memoria+muscular`;
+            } else {
+              videoFinal = `https://www.youtube.com/results?search_query=BJJ+errores+comunes+${encodeURIComponent(tecId)}+variantes+y+contraataques`;
+            }
+          }
+        }
 
         return {
           id: s.id,
@@ -474,17 +542,20 @@ export class PersistenceFacade implements IPersistenceService {
           reporte: {
             tecnicaId: tecId,
             severidad: sev,
-            sugerenciaPedagogica: sug,
+            sugerenciaPedagogica: sugerenciaTexto,
             desviacionArticular: desvArt,
             desviacionGrados: desvGr
           },
           planAdaptativo: {
-            drillRecomendado: sug ? `Drill: ${sug}` : `Practica repeticiones técnicas de ${tecId} cerrando los espacios.`,
-            mensajeAdaptativo: `Consejo del Sensei: Mantén tu base sólida y protege tu ${desvArt.replace(/_/g, " ")}.`,
-            videoYouTubeUrl: `https://www.youtube.com/results?search_query=Tutorial+BJJ+${encodeURIComponent(tecId.replace(/_/g, " "))}`
+            drillRecomendado: guardadoDrill || (sugerenciaTexto ? `Drill: ${sugerenciaTexto}` : `Practica repeticiones técnicas de ${tecId} cerrando los espacios.`),
+            mensajeAdaptativo: guardadoMensaje || `Consejo del Sensei: En tu intento #${intentoNumero}, mantén tu base sólida y protege tu ${desvArt.replace(/_/g, " ")}.`,
+            videoYouTubeUrl: videoFinal
           }
         };
       });
+
+      // Devolver ordenado de más reciente a más antiguo para la vista del Historial
+      return sesionesMapeadas.reverse();
     } catch (error: any) {
       console.warn("[PersistenceFacade] Error al consultar historial en Prisma: " + error.message);
       return [];

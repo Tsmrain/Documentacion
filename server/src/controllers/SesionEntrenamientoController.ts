@@ -130,10 +130,10 @@ export class SesionEntrenamientoController {
     // 5. Evaluar adaptabilidad pedagogica orientada al rol del practicante
     const planTutoriasYYouTubeUrl = await this.adaptationController.evaluarAdaptabilidad(usuarioId, JSON.stringify(reporteParsed), rolPracticante);
 
-    // Guardar analisis en persistencia relacional y registrar telemetria
+    // Guardar analisis en persistencia relacional con el plan adaptativo generado
     try {
       if (this.persistence) {
-        await this.persistence.guardarAnalisis(usuarioId, reporteParsed);
+        await this.persistence.guardarAnalisis(usuarioId, reporteParsed, planTutoriasYYouTubeUrl);
       }
       await this.telemetryController.registrarEvento(usuarioId, TipoEvento.ANALISIS_EJECUTADO, 45, { tecnicaId });
     } catch (e) {
