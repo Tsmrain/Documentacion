@@ -18,6 +18,17 @@ export function createSesionRouter(sessionController: SesionEntrenamientoControl
     }
   });
 
+  router.post("/corregir-tecnica", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { tecnicaCorregida } = req.body;
+      const usuarioId = (req as any).usuario?.usuarioId || "user-default";
+      const result = await sessionController.corregirTecnica(usuarioId, tecnicaCorregida);
+      return res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.get("/progreso", async (req: Request, res: Response, next: NextFunction) => {
     try {
       const usuarioId = req.query.usuarioId as string || "user-default";

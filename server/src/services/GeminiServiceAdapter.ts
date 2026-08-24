@@ -125,27 +125,36 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
           }));
 
           const textPart = {
-            text: `INSTRUCCIONES DE ALINEACIÓN BIOMECÁNICA DE JIU-JITSU:
-1. Analiza los fotogramas clave. Determina cuál de las técnicas del CATÁLOGO CERRADO se está ejecutando.
-2. REGLA DE DISCRIMINACIÓN VOLADORA: Si un atleta salta envolviendo el brazo o cuello del rival para someter en el aire, es obligatoriamente una sumisión voladora ("Llave de Brazo Voladora", "Triángulo Volador" o "Guillotina"). No lo catalogues como proyecciones de judo o derribos comunes.
-3. Si el movimiento NO se ajusta a ninguna técnica del catálogo, debes clasificarlo estrictamente como "TECNICA_DESCONOCIDA_D".
-4. Asegúrate de mapear de manera idéntica la consulta de YouTube ("youtube_query") con el nombre canónico de la técnica detectada para evitar desalineaciones en el motor RAG.
-
-CATÁLOGO CERRADO DE TÉCNICAS ADMITIDAS (Usa exactamente uno de estos strings en 'tecnicaId'):
-${JSON.stringify(listaTecnicasValidas)}
+            text: `INSTRUCCIONES DE ALINEACIÓN Y DIAGNÓSTICO BIOMECÁNICO DE JIU-JITSU:
+1. Analiza minuciosamente los fotogramas clave del combate de Brazilian Jiu-Jitsu.
+2. IDENTIFICACIÓN DE LA TÉCNICA PRINCIPAL:
+   ${tecnicaObjetivo 
+     ? `- El practicante ha declarado que está practicando: "${tecnicaObjetivo}". Audita específicamente esta técnica.`
+     : `- Clasifica con precisión el nombre canónico y descriptivo en español de la técnica, sumisión, escape o pasaje principal observado (ej: "Llave de Brazo Voladora", "Armbar / Llave de Brazo", "Triángulo", "Kimura", "Pasaje Knee Cut", "Raspado de Mariposa", "Escape de Montada", "Guillotina", "De la Riva", etc.).`}
+3. SECUENCIA MULTI-POSICIÓN (FASES DEL COMBATE): Como en el video ocurren varias posiciones, desglosa cronológicamente en 'fasesSecuencia' las fases observadas (ej: ["1. Búsqueda de agarres de pie", "2. Salto envolviendo el brazo del rival", "3. Control de muñeca e hiperextensión en el tatami"]).
+4. REGLA DE DISCRIMINACIÓN VOLADORA: Si un practicante salta envolviendo el brazo, cuello o torso del rival para someter en el aire o buscar una palanca antes de tocar el suelo, clasifícalo inequívocamente como sumisión voladora ("Llave de Brazo Voladora", "Triángulo Volador" o "Guillotina de pie").
+5. YOUTUBE QUERY: Genera la consulta de búsqueda en YouTube óptima en español para ver el tutorial canónico de la técnica detectada (ej: "Tutorial BJJ Llave de Brazo Voladora detalles tecnicos").
 
 DATOS CINEMÁTICOS LOCALES (3KB):
 ${promptJSON}`
           };
 
-          // Definición del Schema Estricto para forzar a Gemini a no inventar campos ni strings libres en tecnicaId
+          // Definición del Schema para formato JSON estricto
           const responseSchema = {
             type: "OBJECT",
             properties: {
               tecnicaId: {
                 type: "STRING",
-                enum: listaTecnicasValidas,
-                description: "Debe ser exactamente uno de los valores del catálogo cerrado proporcionado."
+                description: "Nombre canónico y descriptivo en español de la técnica o sumisión principal detectada (ej: 'Llave de Brazo Voladora', 'Kimura', 'Pasaje Knee Cut')."
+              },
+              posicionBase: {
+                type: "STRING",
+                description: "Posición corporal base (ej: 'De pie / Transición aérea', 'Guardia Cerrada', 'Montada', 'Control Lateral')."
+              },
+              fasesSecuencia: {
+                type: "ARRAY",
+                items: { type: "STRING" },
+                description: "Secuencia cronológica de las fases observadas en el combate."
               },
               cinturon: { type: "STRING", enum: ["BLANCO", "AZUL", "MORADO", "MARRON", "NEGRO"] },
               evaluacion: { type: "STRING", description: "Diagnóstico biomecánico en español, máx 80 palabras." },

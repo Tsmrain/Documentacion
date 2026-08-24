@@ -1,15 +1,27 @@
 
+import { useState, useEffect } from "react";
+
 interface AnalysisReportViewProps {
   report: any;
   onClear: () => void;
 }
 
-
-
 export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps) {
-  if (!report) return null;
+  const [feedbackConfirmed, setFeedbackConfirmed] = useState<boolean>(false);
+  const [isEditingTechnique, setIsEditingTechnique] = useState<boolean>(false);
+  const [customTechnique, setCustomTechnique] = useState<string>("");
+  const [activeReport, setActiveReport] = useState<any>(report);
 
-  const { success, reporte, planAdaptativo, error } = report;
+  useEffect(() => {
+    setActiveReport(report);
+    setFeedbackConfirmed(false);
+    setIsEditingTechnique(false);
+    setCustomTechnique("");
+  }, [report]);
+
+  if (!activeReport) return null;
+
+  const { success, reporte, planAdaptativo, error } = activeReport;
 
   if (!success && error) {
     return (
@@ -21,7 +33,7 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
     );
   }
 
-  const desviacion = reporte.desviacionGrados || 0;
+  const desviacion = reporte?.desviacionGrados || 0;
   const puntuacion = Math.max(0, Math.min(100, 100 - Math.round(desviacion * 1.8)));
   const isApproved = puntuacion >= 80;
 
@@ -31,18 +43,56 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
   // RAG Content
   let evaluacionText = "No se detectaron problemas mayores en la técnica.";
   if (!isApproved) {
-    evaluacionText = reporte.sugerenciaPedagogica || "Estás perdiendo tu base y postura. Corrige tus frames y distribución de peso para evitar ser raspado o finalizado.";
-  } else if (reporte.sugerenciaPedagogica) {
+    evaluacionText = reporte?.sugerenciaPedagogica || "Estás perdiendo tu base y postura. Corrige tus frames y distribución de peso para evitar ser raspado o finalizado.";
+  } else if (reporte?.sugerenciaPedagogica) {
     evaluacionText = reporte.sugerenciaPedagogica;
   }
 
-  const tecnicaName = (reporte.tecnicaId || "SPARRING GENERAL").replace(/-/g, " ").toUpperCase();
+  const tecnicaRaw = reporte?.tecnicaId || "SPARRING GENERAL";
+  const tecnicaName = (tecnicaRaw === "TECNICA_DESCONOCIDA_D" ? "Técnica Libre / Sparring Dinámico" : tecnicaRaw).replace(/-/g, " ").toUpperCase();
 
   const handleResourceClick = (type: string) => {
     if (type === "video" && planAdaptativo?.videoYouTubeUrl) {
       window.open(planAdaptativo.videoYouTubeUrl, "_blank");
     } else {
       alert("Alineación con el motor RAG. El conocimiento base ha sido actualizado.");
+    }
+  };
+
+  const handleCorregirTecnica = async () => {
+    if (!customTechnique.trim()) return;
+    const nuevaTecnica = customTechnique.trim();
+    
+    // Actualizar localmente el reporte
+    setActiveReport((prev: any) => ({
+      ...prev,
+      reporte: {
+        ...prev.reporte,
+        tecnicaId: nuevaTecnica
+      },
+      planAdaptativo: {
+        ...prev.planAdaptativo,
+        drillRecomendado: `Practica repeticiones específicas (drills) de ${nuevaTecnica}`,
+        videoYouTubeUrl: `https://www.youtube.com/results?search_query=Tutorial+BJJ+${encodeURIComponent(nuevaTecnica)}`
+      }
+    }));
+    setFeedbackConfirmed(true);
+    setIsEditingTechnique(false);
+
+    try {
+      const token = localStorage.getItem("openbjj_jwt");
+      await fetch("/api/sesion/corregir-tecnica", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          tecnicaCorregida: nuevaTecnica
+        })
+      });
+    } catch (e) {
+      console.warn("[Reporte] Error al persistir corrección de técnica:", e);
     }
   };
 
@@ -80,11 +130,83 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
           </div>
           <div style={{ padding: '16px 20px' }}>
             <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '8px' }}>
-              TÉCNICAS DETECTADAS
+              TÉCNICA PRINCIPAL DETECTADA
             </span>
-            <div style={{ display: 'inline-block', background: '#f1f5f9', color: '#475569', padding: '6px 12px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'inline-block', background: '#f1f5f9', color: '#1e293b', padding: '6px 14px', borderRadius: '100px', fontSize: '0.82rem', fontWeight: 700, border: '1px solid #cbd5e1' }}>
               {tecnicaName}
             </div>
+
+            {/* Secuencia Multi-Posición si está disponible */}
+            {reporte?.fasesSecuencia && Array.isArray(reporte.fasesSecuencia) && reporte.fasesSecuencia.length > 0 && (
+              <div style={{ marginTop: "14px", padding: "12px", background: "rgba(241,245,249,0.7)", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: "8px" }}>
+                  Secuencia de Posiciones en el Combate
+                </span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  {reporte.fasesSecuencia.map((fase: string, idx: number) => (
+                    <span key={idx} style={{ background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "6px", padding: "4px 10px", fontSize: "0.75rem", color: "#334155", fontWeight: 600 }}>
+                      {fase}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Active Learning: Feedback Human-in-the-Loop */}
+            <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
+              {!isEditingTechnique ? (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
+                  <span style={{ fontSize: "0.74rem", color: "#64748b" }}>
+                    ¿La técnica detectada fue correcta?
+                  </span>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button
+                      onClick={() => setFeedbackConfirmed(true)}
+                      disabled={feedbackConfirmed}
+                      style={{ padding: "5px 12px", fontSize: "0.72rem", fontWeight: 600, background: feedbackConfirmed ? "#dcfce7" : "#f1f5f9", color: feedbackConfirmed ? "#16a34a" : "#475569", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer" }}
+                    >
+                      {feedbackConfirmed ? "✓ Técnica Confirmada" : "✓ Sí, es correcta"}
+                    </button>
+                    {!feedbackConfirmed && (
+                      <button
+                        onClick={() => setIsEditingTechnique(true)}
+                        style={{ padding: "5px 12px", fontSize: "0.72rem", fontWeight: 600, background: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer" }}
+                      >
+                        ✏️ Ajustar nombre
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ background: "#f8fafc", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                  <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "#475569", display: "block", marginBottom: "6px" }}>
+                    Escribe el nombre real de la técnica ejecutada:
+                  </span>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <input
+                      type="text"
+                      value={customTechnique}
+                      onChange={(e) => setCustomTechnique(e.target.value)}
+                      placeholder="Ej: Llave de Brazo Voladora, Kimura..."
+                      style={{ flex: 1, padding: "6px 10px", fontSize: "0.8rem", borderRadius: "6px", border: "1px solid #cbd5e1", outline: "none" }}
+                    />
+                    <button
+                      onClick={handleCorregirTecnica}
+                      style={{ padding: "6px 12px", fontSize: "0.75rem", fontWeight: 600, background: "#6366f1", color: "#ffffff", border: "none", borderRadius: "6px", cursor: "pointer" }}
+                    >
+                      Guardar
+                    </button>
+                    <button
+                      onClick={() => setIsEditingTechnique(false)}
+                      style={{ padding: "6px 10px", fontSize: "0.75rem", fontWeight: 600, background: "#e2e8f0", color: "#475569", border: "none", borderRadius: "6px", cursor: "pointer" }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
 

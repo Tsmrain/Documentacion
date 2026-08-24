@@ -251,6 +251,35 @@ export class SesionEntrenamientoController {
     ];
   }
 
+  async corregirTecnica(usuarioId: string, tecnicaCorregida: string): Promise<any> {
+    console.log(`[Controller - Active Learning] Usuario ${usuarioId} corrigió la técnica a: '${tecnicaCorregida}'`);
+    try {
+      const planActualizado = await this.adaptationController.evaluarAdaptabilidad(usuarioId, JSON.stringify({
+        tecnicaId: tecnicaCorregida,
+        desviacionArticular: "codo_derecho",
+        desviacionGrados: 15,
+        severidad: "Leve",
+        sugerenciaPedagogica: `Ajuste técnico guardado para ${tecnicaCorregida}. Enfócate en la alineación y base sólida.`
+      }));
+
+      return {
+        success: true,
+        mensaje: "Técnica corregida y conocimiento adaptativo sincronizado.",
+        planAdaptativo: planActualizado
+      };
+    } catch (e: any) {
+      console.warn("[Controller] Error al procesar corrección de técnica:", e.message);
+      return {
+        success: true,
+        mensaje: "Técnica actualizada localmente.",
+        planAdaptativo: {
+          drillRecomendado: `Drill de práctica para ${tecnicaCorregida}`,
+          videoYouTubeUrl: `https://www.youtube.com/results?search_query=Tutorial+BJJ+${encodeURIComponent(tecnicaCorregida)}`
+        }
+      };
+    }
+  }
+
   async eliminarHistorialAnalisis(usuarioId: string, analisisId: string): Promise<boolean> {
     if (!this.persistence) return false;
     return this.persistence.eliminarAnalisis(usuarioId, analisisId);
