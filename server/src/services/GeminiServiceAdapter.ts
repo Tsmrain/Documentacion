@@ -124,22 +124,21 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
           }));
 
           const textPart = {
-            text: `INSTRUCCIONES DE TUTORÍA Y COACHING DIRECTO DE JIU-JITSU:
+            text: `INSTRUCCIONES DE TUTORÍA Y COACHING DUAL (ATAQUE Y DEFENSA) DE JIU-JITSU:
 1. Analiza minuciosamente los fotogramas clave de la acción de Brazilian Jiu-Jitsu.
-2. PERSPECTIVA DE TUTORÍA DIRECTA (SEGUNDA PERSONA "TÚ"):
-   - Evalúa DIRECTAMENTE al practicante que ejecuta la técnica (el usuario que subió el video).
-   - HABLA SIEMPRE EN SEGUNDA PERSONA ("Tú / Tus"): "Lograste una excelente entrada...", "Al caer al tatami abriste tus rodillas...", "Mantén su muñeca pegada a tu pecho...".
-   - ESTÁ TERMINANTEMENTE PROHIBIDO hablar en tercera persona ("El atacante ejecutó...", "El defensor hizo..."). Eres su Sensei hablándole a él.
+2. ENFOQUE DUAL (HABLA EN SEGUNDA PERSONA "TÚ" PARA AMBOS ROLES):
+   - 'evaluacion' y 'sugerenciaPedagogica': Consejos directos para el practicante si estuviera ATACANDO / ejecutando la técnica ("Lograste una buena entrada...", "Al caer al suelo pellizca tus rodillas...").
+   - 'diagnosticoDefensa': Consejos directos para el practicante si estuviera DEFENDIENDO / escapando de la técnica ("Si tú eres quien recibe el ataque: Mantén tu postura erguida, no permitas que extienda tu codo y conecta tus manos en agarre defensivo...").
+   - NUNCA hables en tercera persona como "El atacante ejecutó...". Habla siempre como un Sensei directo.
 3. IDENTIFICACIÓN DE LA TÉCNICA PRINCIPAL:
    ${tecnicaObjetivo 
      ? `- El practicante está entrenando: "${tecnicaObjetivo}". Evalúa cómo la ejecutó.`
      : `- Clasifica con precisión el nombre canónico y descriptivo en español de la técnica, sumisión, escape o pasaje principal observado (ej: "Llave de Brazo Voladora", "Kimura", "Triángulo", "Pasaje Knee Cut", "Raspado de Mariposa", "Escape de Montada", "Guillotina", "De la Riva", etc.).`}
 4. SECUENCIA MULTI-POSICIÓN (FASES DEL COMBATE): Desglosa cronológicamente en 'fasesSecuencia' las fases observadas (ej: ["1. Búsqueda de agarres de pie", "2. Salto envolviendo el brazo", "3. Control y palanca en el tatami"]).
-5. EVALUACIÓN Y CONSEJO ACCIONABLE DE TATAMI:
-   - 'evaluacion': Explica en 2 frases claras qué hizo bien y exactamente qué detalle le faltó ajustar.
-   - 'sugerenciaPedagogica': Da 3 pasos sencillos y directos para el próximo intento (ej: "1. Junta y pellizca con fuerza tus rodillas. 2. Pega su muñeca a tu pecho con el pulgar hacia arriba. 3. Eleva la cadera hacia el techo para finalizar.").
-   - 'severidad': Usa "Leve" (si la técnica funcionó bien con pequeños detalles de pulido), "Moderado" (si la posición se comprometió por un detalle técnico), "Critico" (si hubo error grave de postura o riesgo).
-6. YOUTUBE QUERY: Genera la consulta de búsqueda óptima en español para ver el tutorial de esta técnica exacta.
+5. EVALUACIÓN ACCIONABLE:
+   - 'sugerenciaPedagogica': 3 pasos directos para finalizar la técnica.
+   - 'diagnosticoDefensa.sugerenciaPedagogica': 3 pasos directos para defender, escapar o sobrevivir a la sumisión/posición.
+6. YOUTUBE QUERY: Búsqueda del tutorial canónico en español.
 
 DATOS CINEMÁTICOS LOCALES (3KB):
 ${promptJSON}`
@@ -163,11 +162,21 @@ ${promptJSON}`
                 description: "Secuencia cronológica de las fases observadas en el combate."
               },
               cinturon: { type: "STRING", enum: ["BLANCO", "AZUL", "MORADO", "MARRON", "NEGRO"] },
-              evaluacion: { type: "STRING", description: "Diagnóstico biomecánico en español, máx 80 palabras." },
+              evaluacion: { type: "STRING", description: "Consejo para el atacante en español en segunda persona, máx 80 palabras." },
               desviacionArticular: { type: "STRING" },
               desviacionGrados: { type: "INTEGER" },
               severidad: { type: "STRING", enum: ["Leve", "Moderado", "Critico"] },
-              sugerenciaPedagogica: { type: "STRING", description: "Consejo de tatami en español, máx 50 palabras." },
+              sugerenciaPedagogica: { type: "STRING", description: "3 pasos para el atacante en español, máx 50 palabras." },
+              diagnosticoDefensa: {
+                type: "OBJECT",
+                properties: {
+                  evaluacion: { type: "STRING", description: "Consejo para el defensor en español en segunda persona (Tú), máx 80 palabras." },
+                  sugerenciaPedagogica: { type: "STRING", description: "3 pasos directos para defender y escapar en español, máx 50 palabras." },
+                  detalleClaveDefensa: { type: "STRING", description: "Detalle biomecánico crítico de defensa (ej: 'Cerrar el codo', 'Conectar agarre S-Grip', 'Postura erguida')." },
+                  youtubeQueryDefensa: { type: "STRING", description: "Búsqueda en YouTube para aprender a defender y escapar de esta técnica exacta." }
+                },
+                required: ["evaluacion", "sugerenciaPedagogica"]
+              },
               youtube_query: { type: "STRING", description: "Término en español optimizado para buscar la técnica exacta detectada." },
               fighters: {
                 type: "ARRAY",

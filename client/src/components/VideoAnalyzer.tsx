@@ -153,6 +153,30 @@ export function VideoAnalyzer({
             <span style={{ fontSize: "0.74rem", color: "#94a3b8", marginTop: "4px", display: "block" }}>
               Si especificas la técnica, la IA auditará los ángulos y detalles biomecánicos de esa lección exacta.
             </span>
+
+            {/* Selector de Rol en el Combate */}
+            <div style={{ marginTop: "14px", padding: "12px", background: "rgba(255,255,255,0.03)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#cbd5e1", display: "block", marginBottom: "8px" }}>
+                ¿Cuál era tu rol en este video?
+              </span>
+              <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.82rem", color: "#e2e8f0", cursor: "pointer" }}>
+                  <input
+                    type="radio"
+                    name="rolPracticante"
+                    defaultChecked
+                  />
+                  🥋 Estaba Atacando (Tori)
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.82rem", color: "#e2e8f0", cursor: "pointer" }}>
+                  <input
+                    type="radio"
+                    name="rolPracticante"
+                  />
+                  🛡️ Estaba Defendiendo (Uke)
+                </label>
+              </div>
+            </div>
           </div>
 
           {/* Previsualizacion de video local con reproductor HTML5 nativo */}

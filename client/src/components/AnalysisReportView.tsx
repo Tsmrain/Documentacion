@@ -11,12 +11,14 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
   const [isEditingTechnique, setIsEditingTechnique] = useState<boolean>(false);
   const [customTechnique, setCustomTechnique] = useState<string>("");
   const [activeReport, setActiveReport] = useState<any>(report);
+  const [perspectiva, setPerspectiva] = useState<"ATACANTE" | "DEFENSOR">("ATACANTE");
 
   useEffect(() => {
     setActiveReport(report);
     setFeedbackConfirmed(false);
     setIsEditingTechnique(false);
     setCustomTechnique("");
+    setPerspectiva("ATACANTE");
   }, [report]);
 
   if (!activeReport) return null;
@@ -37,25 +39,35 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
   const isApproved = severidad === "leve";
   const isCritical = severidad === "critico";
 
-  const cardBg = isApproved ? "#16a34a" : isCritical ? "#dc2626" : "#ea580c";
-  const titleText = isApproved ? "TÉCNICA APROBADA (BUENA EJECUCIÓN)" : isCritical ? "CORRECCIÓN CRÍTICA" : "AJUSTE RECOMENDADO";
+  const isDefending = perspectiva === "DEFENSOR";
+
+  const cardBg = isDefending ? "#2563eb" : (isApproved ? "#16a34a" : isCritical ? "#dc2626" : "#ea580c");
+  const titleText = isDefending 
+    ? "TUTORÍA DEL SENSEI: CÓMO DEFENDER Y ESCAPAR" 
+    : (isApproved ? "TÉCNICA APROBADA (BUENA EJECUCIÓN)" : isCritical ? "CORRECCIÓN CRÍTICA" : "AJUSTE RECOMENDADO");
   
-  // RAG Content
+  // RAG / Dynamic Content
   let evaluacionText = "No se detectaron problemas mayores en la técnica.";
-  if (reporte?.sugerenciaPedagogica) {
+  if (isDefending) {
+    evaluacionText = reporte?.diagnosticoDefensa?.evaluacion || 
+      "Si tú estabas defendiendo: Mantén tu postura erguida, conecta inmediatamente tus manos para proteger el brazo y apila tu peso hacia el pecho de tu oponente para neutralizar la palanca.";
+  } else if (reporte?.sugerenciaPedagogica) {
     evaluacionText = reporte.sugerenciaPedagogica;
   } else if (reporte?.evaluacion) {
     evaluacionText = reporte.evaluacion;
-  } else if (!isApproved) {
-    evaluacionText = "Estás perdiendo tu base y postura. Corrige tus frames y distribución de peso para evitar ser raspado o finalizado.";
   }
 
   const tecnicaRaw = reporte?.tecnicaId || "SPARRING GENERAL";
   const tecnicaName = (tecnicaRaw === "TECNICA_DESCONOCIDA_D" ? "Técnica Libre / Sparring Dinámico" : tecnicaRaw).replace(/-/g, " ").toUpperCase();
 
   const handleResourceClick = (type: string) => {
-    if (type === "video" && planAdaptativo?.videoYouTubeUrl) {
-      window.open(planAdaptativo.videoYouTubeUrl, "_blank");
+    if (type === "video") {
+      if (isDefending) {
+        const queryDefensa = reporte?.diagnosticoDefensa?.youtubeQueryDefensa || `Tutorial BJJ defensa y escape ${tecnicaName}`;
+        window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(queryDefensa)}`, "_blank");
+      } else if (planAdaptativo?.videoYouTubeUrl) {
+        window.open(planAdaptativo.videoYouTubeUrl, "_blank");
+      }
     } else {
       alert("Alineación con el motor RAG. El conocimiento base ha sido actualizado.");
     }
@@ -101,11 +113,51 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
   return (
     <div className="animate-fade-in" style={{ background: "#f8fafc", minHeight: "100%", paddingBottom: "20px", borderRadius: "16px", color: "#1e293b" }}>
       {/* Header */}
-      <header style={{ display: 'flex', alignItems: 'center', padding: '20px', background: '#ffffff', borderTopLeftRadius: "16px", borderTopRightRadius: "16px", borderBottom: '1px solid #e2e8f0' }}>
-        <div style={{ background: '#000', color: '#fff', borderRadius: '4px', padding: '2px 6px', fontSize: '10px', fontWeight: 'bold', marginRight: '10px' }}>
-          IA
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', background: '#ffffff', borderTopLeftRadius: "16px", borderTopRightRadius: "16px", borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{ background: '#000', color: '#fff', borderRadius: '4px', padding: '2px 6px', fontSize: '10px', fontWeight: 'bold', marginRight: '10px' }}>
+            IA
+          </div>
+          <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>Diagnóstico y Tutoría del Sensei</h2>
         </div>
-        <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>Diagnóstico y Tutoría del Sensei</h2>
+
+        {/* Perspective Switcher */}
+        <div style={{ display: 'flex', background: '#f1f5f9', padding: '4px', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
+          <button
+            onClick={() => setPerspectiva("ATACANTE")}
+            style={{
+              padding: '6px 14px',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              borderRadius: '7px',
+              border: 'none',
+              cursor: 'pointer',
+              background: !isDefending ? '#ffffff' : 'transparent',
+              color: !isDefending ? '#0f172a' : '#64748b',
+              boxShadow: !isDefending ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              transition: 'all 0.2s'
+            }}
+          >
+            🥋 Estaba Atacando
+          </button>
+          <button
+            onClick={() => setPerspectiva("DEFENSOR")}
+            style={{
+              padding: '6px 14px',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              borderRadius: '7px',
+              border: 'none',
+              cursor: 'pointer',
+              background: isDefending ? '#2563eb' : 'transparent',
+              color: isDefending ? '#ffffff' : '#64748b',
+              boxShadow: isDefending ? '0 1px 3px rgba(0,0,0,0.15)' : 'none',
+              transition: 'all 0.2s'
+            }}
+          >
+            🛡️ Estaba Defendiendo
+          </button>
+        </div>
       </header>
 
       <div style={{ padding: '20px' }}>
@@ -243,33 +295,81 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
         )}
 
         {/* Critical Mistakes / Coaching Points */}
-        <div style={{ background: '#fff0f2', border: '1px solid #ffe4e6', borderLeft: '4px solid #ef4444', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#b91c1c', marginBottom: '12px' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>Puntos Clave del Sensei para tu Próximo Intento</h4>
+        <div style={{ 
+          background: isDefending ? '#eff6ff' : '#fff0f2', 
+          border: isDefending ? '1px solid #dbeafe' : '1px solid #ffe4e6', 
+          borderLeft: isDefending ? '4px solid #3b82f6' : '4px solid #ef4444', 
+          borderRadius: '12px', 
+          padding: '16px', 
+          marginBottom: '20px' 
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: isDefending ? '#1d4ed8' : '#b91c1c', marginBottom: '12px' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {isDefending ? (
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              ) : (
+                <>
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </>
+              )}
+            </svg>
+            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>
+              {isDefending ? "Puntos Críticos de Defensa y Supervivencia" : "Puntos Clave del Sensei para tu Próximo Intento"}
+            </h4>
           </div>
           <ul style={{ margin: 0, paddingLeft: '20px', color: '#475569', fontSize: '0.85rem', lineHeight: '1.6' }}>
-            {reporte?.evaluacion && <li>{reporte.evaluacion}</li>}
-            {reporte?.desviacionArticular && (
-              <li>Detalle postural: Mantén tu {reporte.desviacionArticular.replace(/_/g, " ")} bien protegido y cerrado contra el cuerpo para no regalar espacio.</li>
+            {isDefending ? (
+              <>
+                <li>{reporte?.diagnosticoDefensa?.evaluacion || "Mantén tu postura erguida y no permitas que tu compañero aísle completamente tu brazo o cuello."}</li>
+                {reporte?.diagnosticoDefensa?.detalleClaveDefensa && (
+                  <li>Detalle de escape: {reporte.diagnosticoDefensa.detalleClaveDefensa}</li>
+                )}
+              </>
+            ) : (
+              <>
+                {reporte?.evaluacion && <li>{reporte.evaluacion}</li>}
+                {reporte?.desviacionArticular && (
+                  <li>Detalle postural: Mantén tu {reporte.desviacionArticular.replace(/_/g, " ")} bien protegido y cerrado contra el cuerpo para no regalar espacio.</li>
+                )}
+              </>
             )}
           </ul>
         </div>
 
         {/* Improvement Plan */}
-        <div style={{ background: '#f0fdf4', border: '1px solid #dcfce3', borderLeft: '4px solid #22c55e', borderRadius: '12px', padding: '16px', marginBottom: '30px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#15803d', marginBottom: '12px' }}>
+        <div style={{ 
+          background: isDefending ? '#f0fdfa' : '#f0fdf4', 
+          border: isDefending ? '1px solid #ccfbf1' : '1px solid #dcfce3', 
+          borderLeft: isDefending ? '4px solid #0d9488' : '4px solid #22c55e', 
+          borderRadius: '12px', 
+          padding: '16px', 
+          marginBottom: '30px' 
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: isDefending ? '#0f766e' : '#15803d', marginBottom: '12px' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>Plan de Práctica Recomendado</h4>
+            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>
+              {isDefending ? "Plan de Escape y Contraataque" : "Plan de Práctica Recomendado"}
+            </h4>
           </div>
           <ul style={{ margin: 0, paddingLeft: '20px', color: '#475569', fontSize: '0.85rem', lineHeight: '1.6' }}>
-            {planAdaptativo?.drillRecomendado ? (
-              <li>{planAdaptativo.drillRecomendado}</li>
+            {isDefending ? (
+              <>
+                <li>{reporte?.diagnosticoDefensa?.sugerenciaPedagogica || "Drill de Escape: 1. Conecta tus manos en agarre S-Grip. 2. Apila tu peso hacia el pecho del rival. 3. Gira el pulgar hacia el tatami."}</li>
+                <li>Consejo del Sensei: Nunca esperes a que la sumisión esté cerrada al 100%. Defiende en el momento de la transición.</li>
+              </>
             ) : (
-              <li>Practica repeticiones suaves enfocándote en cerrar los espacios y mantener una base sólida.</li>
-            )}
-            {planAdaptativo?.mensajeAdaptativo && !planAdaptativo.esFalloRecurrente && (
-              <li>{planAdaptativo.mensajeAdaptativo}</li>
+              <>
+                {planAdaptativo?.drillRecomendado ? (
+                  <li>{planAdaptativo.drillRecomendado}</li>
+                ) : (
+                  <li>Practica repeticiones suaves enfocándote en cerrar los espacios y mantener una base sólida.</li>
+                )}
+                {planAdaptativo?.mensajeAdaptativo && !planAdaptativo.esFalloRecurrente && (
+                  <li>{planAdaptativo.mensajeAdaptativo}</li>
+                )}
+              </>
             )}
           </ul>
         </div>
@@ -277,7 +377,7 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
         {/* Learning Resources */}
         <div style={{ marginBottom: '30px' }}>
           <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '12px' }}>
-            RECURSOS DE APRENDIZAJE
+            RECURSOS DE APRENDIZAJE {isDefending ? "DE DEFENSA Y ESCAPE" : "DEL DOJO"}
           </span>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button 
@@ -287,17 +387,21 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
               onMouseOut={e => e.currentTarget.style.background = '#ffffff'}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33 2.78 2.78 0 0 0 1.94 2c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg>
-              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1e293b' }}>Video de Referencia del Dojo</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1e293b' }}>
+                {isDefending ? "Tutorial de Defensa y Escape" : "Video de Referencia del Dojo"}
+              </span>
             </button>
             {planAdaptativo?.videoYouTubeAlternativo && (
               <button 
-                onClick={() => window.open(planAdaptativo.videoYouTubeAlternativo, "_blank")}
+                onClick={() => window.open(isDefending ? `https://www.youtube.com/results?search_query=Tutorial+BJJ+defensa+y+escape+${encodeURIComponent(tecnicaName)}` : planAdaptativo.videoYouTubeAlternativo, "_blank")}
                 style={{ flex: 1, minWidth: '200px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 12px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
                 onMouseOver={e => e.currentTarget.style.background = '#f8fafc'}
                 onMouseOut={e => e.currentTarget.style.background = '#ffffff'}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1e293b' }}>Ver Más Tutoriales en YouTube</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1e293b' }}>
+                  {isDefending ? "Buscar Más Escapes en YouTube" : "Ver Más Tutoriales en YouTube"}
+                </span>
               </button>
             )}
           </div>
