@@ -41,9 +41,10 @@ export class SesionEntrenamientoController {
     const videoBlob = typeof videoPayload === "object" ? (videoPayload.videoBlob || videoPayload.fileName || "video-sparring.mp4") : videoPayload;
     const usuarioId = (typeof videoPayload === "object" && videoPayload.usuarioId) ? videoPayload.usuarioId : usuarioIdParam;
     const frames = (typeof videoPayload === "object" && Array.isArray(videoPayload.frames)) ? videoPayload.frames : [];
+    const tecnicaObjetivo = (typeof videoPayload === "object" && videoPayload.tecnicaObjetivo) ? String(videoPayload.tecnicaObjetivo).trim() : undefined;
 
     console.log(`--------------------------------------------------------------------------------`);
-    console.log(`[Dojo Debug] Solicitud de Analisis recibida para usuarioId: ${usuarioId} (${frames.length} keyframes adjuntos)`);
+    console.log(`[Dojo Debug] Solicitud de Analisis recibida para usuarioId: ${usuarioId} (${frames.length} keyframes adjuntos)${tecnicaObjetivo ? ` | Técnica Objetivo: '${tecnicaObjetivo}'` : ''}`);
     console.log("[Controller] Iniciando analisis cinematico...");
 
     // Moderacion de pertinencia de contenido de video
@@ -76,11 +77,17 @@ export class SesionEntrenamientoController {
     const metricas = this.calcularMetricasLocales(landmarks, videoText);
     console.log("[Dojo Debug] Metricas angulares 3D locales procesadas en cliente (3KB de metadatos)");
 
-    // 3. Ingestar grounding (RAG Vivo / Fallback Baseline)
-    const promptCompilado = await this.ragController.obtenerGrounding("general-bjj", metricas);
+    // 3. Ingestar grounding (RAG Vivo / Fallback Baseline) con técnica objetivo si fue indicada
+    const promptCompilado = await this.ragController.obtenerGrounding(tecnicaObjetivo || "general-bjj", metricas, tecnicaObjetivo);
 
-    // 4. Inferencia LLM Single-Pass Multimodal (1 SOLA llamada a Gemini con maximo 4 keyframes)
-    const reporteEvaluacionJSON = await (this.llmProvider as any).evaluarMovimiento(promptCompilado, frames);
+    // 4. Inferencia LLM Single-Pass Multimodal (1 SOLA llamada a Gemini con keyframes de alta fidelidad)
+    const reporteEvaluacionJSON = await (this.llmProvider as any).evaluarMovimiento(
+      promptCompilado,
+      frames,
+      undefined,
+      undefined,
+      tecnicaObjetivo
+    );
     console.log(`[Dojo Debug] Single-Pass Gemini JSON respuesta recibida.`);
 
     // Parseo seguro: Gemini puede devolver JSON dentro de bloques markdown (```json ... ```)

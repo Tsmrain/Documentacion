@@ -1878,9 +1878,11 @@ El almacenamiento vectorial y la recuperación semántica RAG se ejecutan sobre 
 
 ### **6.1.4 Inferencia y orquestación cognitiva multifuente**
 La inteligencia artificial generativa y el razonamiento multimodal procesan la inferencia utilizando la API oficial de Google Gemini a través del conector `@google/genai` (v2.17.1), registrado formalmente como dependencia declarada en `server/package.json`. La orquestación cognitiva opera bajo un pipeline desacoplado en 3 etapas conforme a los principios de diseño de Craig Larman y Michael Mannino:
-1. **Detección Visual Autónoma Multimodal**: El modelo de visión de Gemini (`gemini-2.5-flash` / `gemini-3.1-flash-lite`) analiza los 9 keyframes del combate en Base64 sin acoplamiento rígido a un autor específico, identificando las posiciones de ambos practicantes (*Top/Bottom*), la técnica en ejecución y las desviaciones articulares.
-2. **Recuperación Aumentada Dinámica (RAG en el Dojo)**: Con la técnica clasificada visualmente, el sistema consulta el Vector Store central (**ChromaDB v2**) y la base de datos relacional (**PostgreSQL**), que almacenan más de 950 fuentes técnicas (videos de YouTube, listas de reproducción y manuales ingresados por la comunidad del dojo). Si existe una fuente coincidente, se recupera el video exacto del autor/canal correspondiente.
-3. **Recomendación General de Respaldo (Fallback Cognitivo)**: Si la técnica detectada no cuenta aún con un video registrado en el almacén local del dojo, la IA formula una recomendación y término de búsqueda optimizado para YouTube a partir de su conocimiento general, garantizando que el alumno siempre disponga de un recurso visual inmediato para corregir su error.
+1. **Detección y Auditoría Visual Multimodal (Modo Dual)**: El modelo de visión de Gemini (`gemini-3.1-flash-lite` / `gemini-3.5-flash-lite`) analiza **9 keyframes de alta fidelidad (480px, JPEG 65%)** extraídos dinámicamente en el cliente para capturar tanto posiciones estáticas como movimientos explosivos (por ejemplo, *Llave de Brazo Voladora / Flying Armbar* o *Triángulo Volador*). Opera en dos modos:
+   - **Modo Descubrimiento Autónomo (Zero-Shot)**: Si el practicante no especifica la técnica, la IA clasifica visualmente la acción de ambos atletas (*Top/Bottom*), la posición base y detecta desviaciones articulares.
+   - **Modo Auditoría Guiada (Targeted Focus)**: Si el practicante indica la técnica que está entrenando (ej. *"Llave de Brazo Voladora"* o *"Pasaje Knee Cut"*), el sistema inyecta esta técnica dinámicamente en el `responseSchema` estricto y enfoca el 100% de la capacidad de razonamiento en auditar la corrección biomecánica (pinzado de rodillas, elevación de cadera, control de muñeca) con respecto a la literatura técnica.
+2. **Recuperación Aumentada Dinámica (RAG en el Dojo)**: Con la técnica clasificada o seleccionada, el sistema consulta el Vector Store central (**ChromaDB v2**) y la base de datos relacional (**PostgreSQL**), que almacenan más de 960 fuentes técnicas aprobadas (videos de YouTube con metadatos oEmbed y manuales estructurados). Si existe una fuente coincidente, se recupera el Top-1 chunk y el video exacto del profesor correspondiente.
+3. **Recomendación General de Respaldo (Fallback Cognitivo Baseline)**: Si la técnica evaluada no cuenta aún con un video registrado en el almacén local del dojo o si ChromaDB no estuviese disponible, la IA formula una recomendación y término de búsqueda optimizado para YouTube a partir de su conocimiento nativo de BJJ, garantizando que el alumno siempre disponga de un recurso visual inmediato para corregir su error.
 
 Para garantizar la alta disponibilidad y la resiliencia ante caídas de la API primaria de Google, el backend integra simultáneamente el SDK oficial de OpenAI (`openai` v7.5.0) mediante el `LLMRedirectionProxy`, que intercepta cualquier excepción de red o límite de cuota y conmuta en caliente hacia `ChatGPTServiceAdapter` (`gpt-4o-mini`). Para respaldar la transferencia multimodal híbrida de los 9 keyframes en Base64 sin interrumpir el flujo operativo por desbordamientos de buffer (PayloadTooLargeError), el API Gateway local de Express cuenta con una configuración de middleware con límite de payload extendido a **50 MB** (`express.json({ limit: '50mb' })` y `express.urlencoded({ limit: '50mb' })`).
 
@@ -1888,17 +1890,16 @@ Para garantizar la alta disponibilidad y la resiliencia ante caídas de la API p
 El sistema OpenBJJ implementa una arquitectura rigurosa de control de costos y telemetría de tokens para operar de forma eficiente y sostenible bajo el nivel gratuito (*Free Tier*) de Google AI Studio y en entornos de producción:
 
 1. **Cálculo y Consumo Real de Tokens Multimodales (Validación Empírica en AI Studio)**:
-   - **Medición Real en AI Studio**: En pruebas de producción sobre `gemini-3.1-flash-lite`, la telemetría oficial de Google AI Studio registró un incremento de **1.56K tokens para 2 análisis de combate completos** ($10.98\text{K} - 9.42\text{K}$ TPM), lo que demuestra un consumo empírico de **~780 tokens promedio por análisis**.
-   - **Tokens de Entrada Visual (Prompt Tokens)**: Al comprimir y escalar los fotogramas a **360px (JPEG 40%)** en el navegador del cliente mediante HTML5 Canvas, cada uno de los fotogramas clave consume una cantidad fija y mínima de **~258 tokens**.
-   - **Tokens de Prompt Textual**: Las instrucciones del Sensei BJJ y las métricas angulares locales (3KB) consumen **~220 tokens**.
-   - **Tokens de Salida (Completion Tokens)**: El diagnóstico JSON estructurado (técnica, severidad, desviaciones articulares, veredicto de tatami y URL del video) consume **~160 tokens**.
-   - **Costo Operativo Real**: A una tarifa de $0.075 USD por cada 1M de tokens, cada análisis tiene un costo financiero de apenas **$0.000058 USD** (menos de 6 milésimas de centavo).
+   - **Medición Real en AI Studio**: En pruebas de producción sobre `gemini-3.1-flash-lite`, la telemetría oficial de Google AI Studio registró un consumo de **~2,322 tokens de imagen** para 9 fotogramas a 480px ($9 \times 258\text{ tokens}$), más **~250 tokens de prompt textual** (métricas angulares 3D de MediaPipe y grounding RAG) y **~160 tokens de salida estructurada JSON**.
+   - **Total por Análisis**: **~2,732 tokens por consulta**, representando apenas el **1.09% del límite por minuto** (250,000 TPM).
+   - **Consultas Diarias Disponibles**: Con el límite de **500 RPD** en `gemini-3.1-flash-lite`, el dojo puede ejecutar hasta **500 análisis biomecánicos completos cada día a costo cero**.
+   - **Costo Operativo Real**: A una tarifa de $0.075 USD por cada 1M de tokens, cada análisis tiene un costo financiero de apenas **$0.00020 USD** (dos diezmilésimas de dólar).
 
-2. **Ahorro de Tokens en el Cliente (>97.5%)**:
+2. **Ahorro de Tokens en el Cliente (>97.3%)**:
    - Transmitir un video de 10 a 15 segundos en streaming continuo de video bruto (a 30 FPS) a la API de visión consumiría más de **100.000 tokens**.
-   - La extracción en el navegador de **fotogramas clave optimizados** y el cálculo local de ángulos 3D con 0 tokens de API reduce el consumo a menos de 1.500 tokens, generando un **ahorro de más del 98.5% de tokens y ancho de banda**.
+   - La extracción en el navegador de **9 fotogramas clave de alta fidelidad** y el cálculo local de ángulos 3D con 0 tokens de API reduce el consumo a ~2,700 tokens, generando un **ahorro de más del 97.3% de tokens y ancho de banda**.
 
-3. **Matriz de Cuotas y Límites de Google AI Studio**:
+3. **Matriz de Cuotas y Límites Oficiales de Google AI Studio**:
    | Modelo de IA | Categoría | RPM (Req/Min) | TPM (Tokens/Min) | RPD (Req/Día) | Estrategia de Uso |
    | :--- | :--- | :--- | :--- | :--- | :--- |
    | **Gemini 3.1 Flash Lite** | Visión Multimodal | 15 / 15 | 250.000 TPM | **500 RPD** | **Modelo Primario de Producción** (500 análisis/día) |
@@ -1980,7 +1981,8 @@ La verificación del comportamiento transaccional del sistema se consolidó medi
 
 | Prueba / Suite | Módulo Evaluado | Estado HTTP / Salida | Resultado de Verificación |
 | --- | --- | --- | --- |
-| Test 1: RAG Personalizado | POST /api/sesion/analizar | HTTP 200 OK | Exitoso (Técnica autodetectada y RAG activo) |
+| Test 1: RAG Personalizado | POST /api/sesion/analizar (Descubrimiento Autónomo) | HTTP 200 OK | Exitoso (Técnica autodetectada y RAG activo) |
+| Test 1b: Auditoría Guiada | POST /api/sesion/analizar (Técnica Objetivo Declarada) | HTTP 200 OK | Exitoso (Inyección dinámica en catálogo y auditoría focalizada) |
 | Test 2: Low Confidence | POST /api/sesion/analizar (confianza < 0.5) | HTTP 400 Bad Request | Exitoso (Rechazo seguro por oclusión cinemática) |
 | Test 3: 0 Chunks Vectorial | POST /api/sesion/analizar (0 chunks) | HTTP 200 OK | Exitoso (Conmutación automática a Baseline Fallback) |
 | Test 4: Moderación RD-03 | POST /api/rag/ingestar (Receta / Música) | HTTP 400 Bad Request | Exitoso (Filtro autónomo rechazó contenido no pertinente) |

@@ -10,7 +10,8 @@ export interface ILLMProvider {
     promptJSON: string,
     frames?: string[],
     modelName?: string,
-    catalogoTecnicas?: string[]
+    catalogoTecnicas?: string[],
+    tecnicaObjetivo?: string
   ): Promise<string>;
 }
 
@@ -87,18 +88,25 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
     promptJSON: string,
     frames: string[] = [],
     modelName?: string,
-    catalogoTecnicas: string[] = CATALOGO_TECNICAS_DEFAULT
+    catalogoTecnicas: string[] = CATALOGO_TECNICAS_DEFAULT,
+    tecnicaObjetivo?: string
   ): Promise<string> {
     const activeKey = this.getApiKey();
     const primaryModel = modelName || this.defaultModel;
     const selectedFrames = frames && frames.length > 0 ? frames.slice(0, 9) : [];
 
+    // Combinar catálogo base con la técnica objetivo si fue especificada
+    const catalogoCombinado = [...(catalogoTecnicas && catalogoTecnicas.length > 0 ? catalogoTecnicas : CATALOGO_TECNICAS_DEFAULT)];
+    if (tecnicaObjetivo && !catalogoCombinado.includes(tecnicaObjetivo)) {
+      catalogoCombinado.unshift(tecnicaObjetivo);
+    }
+
     // Asegurar que "TECNICA_DESCONOCIDA_D" exista en el enum para habilitar Zero-Shot Discovery
     const listaTecnicasValidas = Array.from(
-      new Set([...(catalogoTecnicas && catalogoTecnicas.length > 0 ? catalogoTecnicas : CATALOGO_TECNICAS_DEFAULT), "TECNICA_DESCONOCIDA_D"])
+      new Set([...catalogoCombinado, "TECNICA_DESCONOCIDA_D"])
     );
 
-    console.log(`[Gemini Service] Inferencia estricta (${selectedFrames.length} keyframes). Catálogo: ${listaTecnicasValidas.length} técnicas.`);
+    console.log(`[Gemini Service] Inferencia estricta (${selectedFrames.length} keyframes). Catálogo: ${listaTecnicasValidas.length} técnicas.${tecnicaObjetivo ? ` Objetivo: '${tecnicaObjetivo}'` : ''}`);
 
     if (activeKey) {
       const modelsToTry = [

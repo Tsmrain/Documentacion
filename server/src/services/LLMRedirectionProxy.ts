@@ -13,16 +13,17 @@ export class LLMRedirectionProxy implements ILLMProvider {
     promptJSON: string,
     frames: string[] = [],
     modelName?: string,
-    catalogoTecnicas?: string[]
+    catalogoTecnicas?: string[],
+    tecnicaObjetivo?: string
   ): Promise<string> {
     try {
       console.log("[LLM Proxy] Intentando evaluación con proveedor primario (Gemini)...");
-      const result = await this.primary.evaluarMovimiento(promptJSON, frames, modelName, catalogoTecnicas);
+      const result = await this.primary.evaluarMovimiento(promptJSON, frames, modelName, catalogoTecnicas, tecnicaObjetivo);
       return result;
     } catch (primaryError: any) {
       console.warn(`[LLM Proxy Fallback] Proveedor primario falló: ${primaryError.message}. Conmutando en caliente al secundario (ChatGPT)...`);
       try {
-        const result = await this.secondary.evaluarMovimiento(promptJSON, frames, modelName, catalogoTecnicas);
+        const result = await this.secondary.evaluarMovimiento(promptJSON, frames, modelName, catalogoTecnicas, tecnicaObjetivo);
         return result;
       } catch (secondaryError: any) {
         console.error(`[LLM Proxy Error] Ambos proveedores fallaron. Generando respuesta determinista de emergencia local.`);

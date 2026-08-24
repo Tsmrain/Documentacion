@@ -12,8 +12,8 @@ import { AdminDojoView } from "./components/AdminDojoView";
 // Union de tabs validos. "reporte" es un tab dedicado para el resultado del analisis biomecanico.
 type TabId = "analizador" | "reporte" | "progreso" | "historial" | "perfil" | "administracion" | "rag";
 
-// Extrae 9 keyframes del video en formato JPEG Base64.
-// Escala a 360px maximo para optimizar consumo de tokens de Gemini.
+// Extrae 9 keyframes de alta fidelidad del video en formato JPEG Base64.
+// Escala a 480px a calidad 65% para máxima nitidez de extremidades y kimonos.
 const extractFramesFromVideo = async (videoBlob: Blob, numFrames: number = 9): Promise<string[]> => {
   return new Promise((resolve, reject) => {
     const video = document.createElement("video");
@@ -27,13 +27,13 @@ const extractFramesFromVideo = async (videoBlob: Blob, numFrames: number = 9): P
       const duration = video.duration || 1;
       const frames: string[] = [];
       let processed = 0;
-      const scale = Math.min(360 / (video.videoWidth || 640), 1);
+      const scale = Math.min(480 / (video.videoWidth || 640), 1);
       canvas.width = (video.videoWidth || 640) * scale;
       canvas.height = (video.videoHeight || 480) * scale;
 
       video.onseeked = () => {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.4);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.65);
         const base64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
         frames.push(base64);
         processed++;
@@ -212,12 +212,12 @@ function App() {
 
   // Iniciado desde VideoAnalyzer pero ejecutado en App.tsx para que el fetch
   // sobreviva la desmontada de VideoAnalyzer al cambiar de pestana.
-  const startAnalysis = useCallback(async (file: File) => {
+  const startAnalysis = useCallback(async (file: File, tecnicaObjetivo?: string) => {
     if (analyzingRef.current) return;
     analyzingRef.current = true;
     setIsAnalyzing(true);
     setAnalysisError(null);
-    setAnalysisProgress("Extrayendo 9 keyframes del combate (360px, JPEG 40%)...");
+    setAnalysisProgress("Extrayendo 9 keyframes de alta fidelidad del combate (480px, JPEG 65%)...");
 
     try {
       let frames: string[] = [];
@@ -227,7 +227,7 @@ function App() {
         console.warn("[App] No se pudieron extraer frames del video HTML5:", frameErr);
       }
 
-      setAnalysisProgress("Fase 1: Clasificacion visual de posicion (gemini-2.5-flash)...");
+      setAnalysisProgress("Fase 1: Clasificación y alineación visual biomecánica...");
 
       const token = localStorage.getItem("openbjj_jwt");
       const response = await fetch("/api/sesion/analizar", {
@@ -240,11 +240,12 @@ function App() {
           videoBlob: file.name,
           fileName: file.name,
           frames,
-          usuarioId
+          usuarioId,
+          tecnicaObjetivo
         })
       });
 
-      setAnalysisProgress("Fase 2: Evaluacion biomecanica focalizada (grounding RAG)...");
+      setAnalysisProgress("Fase 2: Evaluación biomecánica adaptativa y grounding en RAG...");
 
       const rawText = await response.text();
       const data = safeJsonParse(rawText);

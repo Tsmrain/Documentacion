@@ -7,7 +7,7 @@ interface VideoAnalyzerProps {
   analysisError: string | null;
   selectedFile: File | null;
   onFileSelected: (file: File | null) => void;
-  onStartAnalysis: (file: File) => void;
+  onStartAnalysis: (file: File, tecnicaObjetivo?: string) => void;
 }
 
 export function VideoAnalyzer({
@@ -19,14 +19,13 @@ export function VideoAnalyzer({
   onStartAnalysis
 }: VideoAnalyzerProps) {
   // URL de objeto local para previsualizacion de video en el navegador.
-  // Se genera en cuanto el usuario selecciona un archivo y se revoca al desmontarse.
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [tecnicaObjetivo, setTecnicaObjetivo] = useState<string>("");
 
   useEffect(() => {
     if (selectedFile) {
       const url = URL.createObjectURL(selectedFile);
       setPreviewUrl(url);
-      // Libera la URL de objeto cuando el archivo cambia o el componente se desmonta
       return () => URL.revokeObjectURL(url);
     } else {
       setPreviewUrl(null);
@@ -41,14 +40,14 @@ export function VideoAnalyzer({
 
   const handleStartClick = () => {
     if (!selectedFile) return;
-    onStartAnalysis(selectedFile);
+    onStartAnalysis(selectedFile, tecnicaObjetivo.trim() || undefined);
   };
 
   return (
     <div className="glass-panel p-6 animate-fade-in mb-6" style={{ padding: "24px" }}>
       <h2 style={{ marginTop: 0, color: "#818cf8" }}>Analizar Mi Video de Lucha o Técnica</h2>
       <p style={{ color: "#94a3b8", marginBottom: "20px" }}>
-        Sube o graba un video corto de tu lucha o práctica técnica. La inteligencia artificial analizará tu postura y te dará consejos sencillos para mejorar.
+        Sube o graba un video corto de tu lucha o práctica técnica. La inteligencia artificial analizará tu postura y te dará consejos biomecánicos precisos.
       </p>
 
       {analysisError && (
@@ -111,6 +110,51 @@ export function VideoAnalyzer({
             )}
           </div>
 
+          {/* Campo Opcional de Técnica Objetivo */}
+          <div style={{ marginBottom: "16px" }}>
+            <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#cbd5e1", marginBottom: "6px" }}>
+              Técnica o Posición que estás practicando (Opcional):
+            </label>
+            <input
+              type="text"
+              list="sugerencias-tecnicas"
+              value={tecnicaObjetivo}
+              onChange={(e) => setTecnicaObjetivo(e.target.value)}
+              placeholder="Ej: Llave de Brazo Voladora, Kimura, Pasaje Knee Cut... (En blanco para auto-detección)"
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                background: "rgba(18, 18, 20, 0.8)",
+                border: "1px solid rgba(220, 38, 38, 0.25)",
+                borderRadius: "8px",
+                color: "#f8fafc",
+                fontSize: "0.85rem",
+                outline: "none",
+                boxSizing: "border-box"
+              }}
+            />
+            <datalist id="sugerencias-tecnicas">
+              <option value="Llave de Brazo Voladora" />
+              <option value="Armbar / Llave de Brazo" />
+              <option value="Triángulo Volador" />
+              <option value="Triángulo" />
+              <option value="Kimura" />
+              <option value="Guillotina" />
+              <option value="Guardia Cerrada" />
+              <option value="Media Guardia" />
+              <option value="Pasaje de Guardia Knee Cut" />
+              <option value="Control Lateral" />
+              <option value="Montada" />
+              <option value="Control de Espalda" />
+              <option value="Raspado de Gancho" />
+              <option value="Derribo Double Leg" />
+              <option value="Omoplata" />
+            </datalist>
+            <span style={{ fontSize: "0.74rem", color: "#94a3b8", marginTop: "4px", display: "block" }}>
+              Si especificas la técnica, la IA auditará los ángulos y detalles biomecánicos de esa lección exacta.
+            </span>
+          </div>
+
           {/* Previsualizacion de video local con reproductor HTML5 nativo */}
           {previewUrl && (
             <div style={{ marginBottom: "16px", borderRadius: "8px", overflow: "hidden", background: "#000", border: "1px solid rgba(255,255,255,0.06)" }}>
@@ -133,7 +177,10 @@ export function VideoAnalyzer({
             <button
               className="btn-secondary"
               style={{ flex: 1, padding: "14px", fontSize: "1rem", opacity: selectedFile ? 1 : 0.5, border: "1px solid rgba(255,255,255,0.1)" }}
-              onClick={() => onFileSelected(null)}
+              onClick={() => {
+                onFileSelected(null);
+                setTecnicaObjetivo("");
+              }}
               disabled={!selectedFile}
             >
               Cambiar Video

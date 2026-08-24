@@ -105,8 +105,8 @@ async function runIntegrationTests() {
   };
 
   try {
-    // 1. HAPPY PATH: POST /api/sesion/analizar
-    console.log("\n[Test 1] POST /api/sesion/analizar (RAG Personalizado):");
+    // 1. HAPPY PATH: POST /api/sesion/analizar (Descubrimiento Autónomo)
+    console.log("\n[Test 1] POST /api/sesion/analizar (RAG Personalizado - Descubrimiento Autónomo):");
     const res1 = await fetch(`http://localhost:${PORT}/api/sesion/analizar`, {
       method: "POST",
       headers: authHeaders,
@@ -116,6 +116,23 @@ async function runIntegrationTests() {
     const data1 = await res1.json() as any;
     console.log("Reporte:", data1.reporte);
     console.log("Plan Adaptativo:", data1.planAdaptativo.mensajeAdaptativo);
+
+    // 1b. AUDITORÍA GUIADA: POST /api/sesion/analizar con técnica objetivo ("Llave de Brazo Voladora")
+    console.log("\n[Test 1b] POST /api/sesion/analizar (Auditoría Guiada - Llave de Brazo Voladora):");
+    const res1b = await fetch(`http://localhost:${PORT}/api/sesion/analizar`, {
+      method: "POST",
+      headers: authHeaders,
+      body: JSON.stringify({
+        videoBlob: "dummy-blob",
+        usuarioId: "user-default",
+        tecnicaObjetivo: "Llave de Brazo Voladora",
+        frames: ["frame1_base64", "frame2_base64", "frame3_base64", "frame4_base64", "frame5_base64", "frame6_base64"]
+      })
+    });
+    console.log("Status HTTP Test 1b:", res1b.status);
+    const data1b = await res1b.json() as any;
+    console.log("Reporte Test 1b:", data1b.reporte);
+    console.log("Técnica Auditada Test 1b:", data1b.reporte?.tecnicaId);
 
     // 2. EXCEPCIÓN 1: Confianza < 0.5 -> HTTP 400 Bad Request
     console.log("\n[Test 2] POST /api/sesion/analizar conlandmarks de baja confianza:");

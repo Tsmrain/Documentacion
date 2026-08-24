@@ -28,18 +28,19 @@ export class RetrievalAugmentedController {
     this.persistence = new PersistenceFacade();
   }
 
-  async obtenerGrounding(tecnicaId: string, metricas: MetricaCinematica[]): Promise<string> {
+  async obtenerGrounding(tecnicaId: string, metricas: MetricaCinematica[], tecnicaObjetivo?: string): Promise<string> {
     try {
-      const chunks = await this.vectorStore.buscarSimilitud(tecnicaId, []);
+      const terminoBusqueda = tecnicaObjetivo || tecnicaId || "general-bjj";
+      const chunks = await this.vectorStore.buscarSimilitud(terminoBusqueda, []);
       
       if (chunks && chunks.length > 0) {
         // Optimización RAG: Inyectar únicamente el Top-1 chunk más relevante (máx 150 palabras)
         const topChunk = chunks.slice(0, 1);
-        console.log(`[RAG Single-Pass] Top-1 Chunk recuperado para técnica ${tecnicaId}. Aplicando RAG Vivo Compacto.`);
-        return this.promptBuilder.compilarPromptRAG(metricas, topChunk);
+        console.log(`[RAG Single-Pass] Top-1 Chunk recuperado para técnica '${terminoBusqueda}'. Aplicando RAG Vivo Compacto.`);
+        return this.promptBuilder.compilarPromptRAG(metricas, topChunk, tecnicaObjetivo);
       } else {
-        console.log(`[RAG] 0 chunks recuperados. Conmutando a Modo Baseline Fallback.`);
-        return this.promptBuilder.compilarPromptBaseline(metricas);
+        console.log(`[RAG] 0 chunks recuperados para '${terminoBusqueda}'. Conmutando a Modo Baseline Fallback.`);
+        return this.promptBuilder.compilarPromptBaseline(metricas, tecnicaObjetivo);
       }
     } catch (error: any) {
       const isVectorDBOffline = error instanceof VectorDBUnavailableException || 
@@ -48,7 +49,7 @@ export class RetrievalAugmentedController {
       
       if (isVectorDBOffline) {
         console.warn(`[Dojo Fallback] ChromaDB no disponible, activando prompt Baseline. Detalle: ${error.message}`);
-        return this.promptBuilder.compilarPromptBaseline(metricas);
+        return this.promptBuilder.compilarPromptBaseline(metricas, tecnicaObjetivo);
       }
       throw error;
     }
