@@ -13,7 +13,12 @@ export class ChatGPTServiceAdapter implements ILLMProvider {
     this.model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   }
 
-  async evaluarMovimiento(promptJSON: string, frames: string[] = [], modelName?: string): Promise<string> {
+  async evaluarMovimiento(
+    promptJSON: string,
+    frames: string[] = [],
+    modelName?: string,
+    catalogoTecnicas?: string[]
+  ): Promise<string> {
     console.log(`[ChatGPT Adapter] Evaluando movimiento con modelo ${this.model}...`);
     try {
       const messages: any[] = [

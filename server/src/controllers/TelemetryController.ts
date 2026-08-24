@@ -41,6 +41,14 @@ export interface EVIResult {
  */
 export class TelemetryController {
   private readonly EVI_UMBRAL_BAJO_COMPROMISO = 0.5;
+  private readonly DEFAULT_UUID = "00000000-0000-0000-0000-000000000001";
+
+  private normalizarUsuarioId(usuarioId: string): string {
+    if (!usuarioId || usuarioId === "user-default") {
+      return this.DEFAULT_UUID;
+    }
+    return usuarioId;
+  }
 
   /**
    * Registra un evento de actividad del practicante en la
@@ -58,9 +66,10 @@ export class TelemetryController {
     detalles?: Record<string, unknown>
   ): Promise<void> {
     try {
+      const normalizedId = this.normalizarUsuarioId(usuarioId);
       await prisma.registroActividad.create({
         data: {
-          usuarioId,
+          usuarioId: normalizedId,
           tipoEvento,
           duracionSesionSegundos: duracionSegundos ?? null,
           detalles: detalles ? (detalles as any) : undefined
@@ -94,6 +103,7 @@ export class TelemetryController {
    * @returns Objeto EVIResult con el valor EVI y el estado de alerta.
    */
   async calcularEVI(usuarioId: string): Promise<EVIResult> {
+    const normalizedId = this.normalizarUsuarioId(usuarioId);
     const ahora = new Date();
 
     // Limite inferior de la semana actual: hace 7 dias
@@ -111,7 +121,7 @@ export class TelemetryController {
     //     AND fechaEvento >= :inicioSemanaActual
     const periodoActualAnalisis = await prisma.registroActividad.count({
       where: {
-        usuarioId,
+        usuarioId: normalizedId,
         tipoEvento: TipoEvento.ANALISIS_EJECUTADO,
         fechaEvento: {
           gte: inicioSemanaActual
@@ -127,7 +137,7 @@ export class TelemetryController {
     //     AND fechaEvento < :inicioSemanaActual
     const periodoAnteriorAnalisis = await prisma.registroActividad.count({
       where: {
-        usuarioId,
+        usuarioId: normalizedId,
         tipoEvento: TipoEvento.ANALISIS_EJECUTADO,
         fechaEvento: {
           gte: inicioSemanaAnterior,
