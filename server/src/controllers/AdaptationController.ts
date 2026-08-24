@@ -134,22 +134,32 @@ export class AdaptationController {
     tecnicaNombre?: string,
     articulacionError?: string,
     hayFalloRecurrente: boolean = false,
-    videosVistos: string[] = []
+    videosVistos: string[] = [],
+    intentoNumero: number = 1
   ): Promise<string> {
     const terminoLimpio = (terminoBusqueda || "bjj tutorial").replace(/_/g, " ").replace(/-/g, " ").toLowerCase();
     const tecnicaFormato = tecnicaNombre || (terminoBusqueda ? terminoBusqueda.replace(/_/g, " ").replace(/-/g, " ") : "BJJ");
     const articulacionFormato = articulacionError || "postura";
 
-    // Fallback determinista estructurado de YouTube Search adaptativo
+    // Progresión pedagógica dinámica según el número de intento del practicante
     let fallbackSearchQuery = "";
-    if (hayFalloRecurrente) {
+    if (intentoNumero === 1) {
       fallbackSearchQuery = esDefensa
-        ? `Tutorial BJJ errores comunes defensa y escape de ${tecnicaFormato} ${articulacionFormato} drills`
-        : `Tutorial BJJ correccion de errores comunes y drills ${tecnicaFormato} ${articulacionFormato}`;
+        ? `Tutorial BJJ defensa y escape paso a paso de ${tecnicaFormato}`
+        : `Tutorial BJJ ${tecnicaFormato} ejecucion correcta y detalles tecnicos`;
+    } else if (intentoNumero === 2) {
+      fallbackSearchQuery = esDefensa
+        ? `Tutorial BJJ como defender ${tecnicaFormato} protegiendo ${articulacionFormato}`
+        : `Tutorial BJJ ${tecnicaFormato} correccion de postura y ${articulacionFormato}`;
+    } else if (intentoNumero === 3) {
+      fallbackSearchQuery = esDefensa
+        ? `Drills de escape BJJ defensa de ${tecnicaFormato} repeticiones`
+        : `Drills BJJ ${tecnicaFormato} ejercicios de repeticion y aislamiento ${articulacionFormato}`;
     } else {
+      // Intento 4 o más (Fallo Recurrente avanzado): Variantes y errores comunes profundos
       fallbackSearchQuery = esDefensa
-        ? `Tutorial BJJ defensa y escape de ${tecnicaFormato} ${articulacionFormato}`
-        : `Tutorial BJJ ${tecnicaFormato} ${articulacionFormato} correccion drill`;
+        ? `BJJ errores comunes al defender ${tecnicaFormato} contraataques y salidas profundas`
+        : `BJJ errores comunes ${tecnicaFormato} que no debes cometer y variantes avanzadas`;
     }
     const fallbackUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(fallbackSearchQuery.trim())}`;
 
@@ -357,6 +367,12 @@ export class AdaptationController {
 
     tecnicaBusqueda = tecnicaBusqueda.replace(/-/g, " ").toLowerCase();
     const videosVistosIds = (perfil.historialVisualizaciones || []).map((v: any) => v.videoId || v.url || "");
+    const intentosPreviosTecnica = historial.filter(h => {
+      const t = (h.tecnicaId || h.reporte?.tecnicaId || "").toLowerCase();
+      return t.includes(tecnicaActual) || tecnicaActual.includes(t);
+    }).length;
+    const intentoNumero = intentosPreviosTecnica + 1;
+
     const videoRecomendado = await this.obtenerVideoYouTubeRelacionado(
       usuarioId,
       tecnicaBusqueda,
@@ -364,7 +380,8 @@ export class AdaptationController {
       evaluacion.tecnicaId,
       articulacionLimpia,
       hayFalloRecurrente,
-      videosVistosIds
+      videosVistosIds,
+      intentoNumero
     );
 
     if (hayFalloRecurrente) {
@@ -398,7 +415,7 @@ export class AdaptationController {
 
   evaluarRecurrenciaErrores(perfil: PerfilCompetencia, errorKey: string): boolean {
     const fallosConsecutivos = perfil.erroresHistoricos[errorKey] || 0;
-    return fallosConsecutivos > 3;
+    return fallosConsecutivos >= 2;
   }
 
   async registrarVisualizacion(usuarioId: string, videoId: string): Promise<boolean> {
