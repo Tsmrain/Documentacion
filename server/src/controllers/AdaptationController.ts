@@ -127,7 +127,7 @@ export class AdaptationController {
     return resultados;
   }
 
-  private async obtenerVideoYouTubeRelacionado(usuarioId: string, terminoBusqueda: string): Promise<string> {
+  private async obtenerVideoYouTubeRelacionado(usuarioId: string, terminoBusqueda: string, esDefensa: boolean = false): Promise<string> {
     const terminoLimpio = (terminoBusqueda || "bjj tutorial").replace(/_/g, " ").replace(/-/g, " ").toLowerCase();
 
     try {
@@ -161,7 +161,7 @@ export class AdaptationController {
           { tag: "guillotina", terms: ["guillotina", "guillotine"] },
           { tag: "mataleon", terms: ["mataleon", "mata leon", "rear naked", "rnc"] },
           { tag: "pasaje", terms: ["pasaje", "pass", "passing", "knee cut", "torreando", "smash pass"] },
-          { tag: "escape", terms: ["escape", "salida", "defensa", "escapar"] }
+          { tag: "escape", terms: ["escape", "salida", "defensa", "escapar", "defend", "defensas"] }
         ];
 
         const familiasPresentesEnQuery = FAMILIAS_BJJ.filter(fam =>
@@ -169,11 +169,42 @@ export class AdaptationController {
         );
 
         let mejorMatch: any = null;
-        let maxScore = -1;
+        let maxScore = -999;
 
         for (const fuente of fuentesYouTube) {
           const tit = (fuente.titulo || "").toLowerCase();
           let score = 0;
+
+          const tieneTerminosDefensa = ["defensa", "escape", "salida", "escapar", "defend", "defensas"].some(t => tit.includes(t));
+
+          if (esDefensa) {
+            if (tieneTerminosDefensa) score += 100;
+            else score -= 150; // Penalizar videos de solo ataque cuando el alumno busca defensa
+          } else {
+            // Si el usuario está atacando, priorizar videos de ejecución sobre videos de escape
+            if (!tieneTerminosDefensa) score += 30;
+            else score -= 50; // Penalizar videos de defensa cuando el usuario quiere aprender a atacar
+          }
+
+          // Coincidencia exacta de frases compuestas clave
+          const FRASES_CLAVE = [
+            "defensa de llave de brazo",
+            "defensa de armbar",
+            "escape de llave de brazo",
+            "salida de llave de brazo",
+            "llave de brazo voladora",
+            "flying armbar",
+            "escape de montada",
+            "salida de montada",
+            "defensa de triangulo",
+            "escape de control lateral",
+            "salida de 100 kilos"
+          ];
+          for (const frase of FRASES_CLAVE) {
+            if (terminoLimpio.includes(frase) && tit.includes(frase)) {
+              score += 80;
+            }
+          }
 
           let familiasCoincidentes = 0;
           for (const fam of familiasPresentesEnQuery) {
@@ -191,7 +222,7 @@ export class AdaptationController {
           const palabras = terminoLimpio.split(/\s+/).filter(w => w.length > 2);
           for (const palabra of palabras) {
             if (tit.includes(palabra)) {
-              score += 5;
+              score += 8;
             }
           }
 
@@ -252,6 +283,7 @@ export class AdaptationController {
       perfil.erroresHistoricos[errorArticular] = 0;
     }
 
+    // Recalcular posicionesMaestria y tecnicasEvaluadas agregando el reporte actual
     const tecnicaActual = (evaluacion.tecnicaId || "").toLowerCase();
     const historialConActual = [{
       tecnicaId: evaluacion.tecnicaId || tecnicaActual,
@@ -286,8 +318,18 @@ export class AdaptationController {
     const drillAtaque = drillsPorArticulacion[errorArticular] || `Ejercicio: Repite 10 veces la entrada de ${evaluacion.tecnicaId || "la técnica"} enfocándote en cerrar los espacios y mantener una base sólida.`;
     const drillSugerido = esDefensa ? drillDefensa : drillAtaque;
 
-    const tecnicaBusqueda = (evaluacion.youtube_query || (esDefensa ? `defensa escape ${evaluacion.tecnicaId || "bjj"}` : (evaluacion.tecnicaId || "bjj"))).replace(/-/g, " ").toLowerCase();
-    const videoRecomendado = await this.obtenerVideoYouTubeRelacionado(usuarioId, tecnicaBusqueda);
+    let tecnicaBusqueda = "";
+    if (esDefensa) {
+      tecnicaBusqueda = `defensa de llave de brazo escape salida ${evaluacion.tecnicaId || "bjj"}`;
+      if (evaluacion.youtube_query && (evaluacion.youtube_query.toLowerCase().includes("defensa") || evaluacion.youtube_query.toLowerCase().includes("escape"))) {
+        tecnicaBusqueda = evaluacion.youtube_query;
+      }
+    } else {
+      tecnicaBusqueda = evaluacion.youtube_query || evaluacion.tecnicaId || errorArticular || "bjj";
+    }
+
+    tecnicaBusqueda = tecnicaBusqueda.replace(/-/g, " ").toLowerCase();
+    const videoRecomendado = await this.obtenerVideoYouTubeRelacionado(usuarioId, tecnicaBusqueda, esDefensa);
 
     if (hayFalloRecurrente) {
       return {
