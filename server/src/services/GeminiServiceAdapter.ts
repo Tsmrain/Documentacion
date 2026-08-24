@@ -55,14 +55,18 @@ export const CATALOGO_TECNICAS_DEFAULT = [
 ];
 
 // System Instruction general para el Sensei Digital de Jiu-Jitsu
-const BJJ_SENSEI_SYSTEM_INSTRUCTION = `ROL: Sensei y Profesor de Brazilian Jiu-Jitsu.
+const BJJ_SENSEI_SYSTEM_INSTRUCTION = `ROL: Sensei y Profesor de Brazilian Jiu-Jitsu y Tutor Biomecánico.
 MISIÓN: Analizar las acciones técnicas y biomecánicas de los practicantes a partir de los fotogramas visuales y brindar consejos prácticos y motivadores.
 IDIOMA: 100% EN ESPAÑOL CLARO, HUMANO Y AMISTOSO.
 LENGUAJE Y TONO PEDAGÓGICO:
 - Habla como un Sensei experimentado en el tatami: claro, humano, motivador y directo.
 - Evita por completo la jerga médica o anatómica compleja (nunca uses términos como 'manguito rotador', 'glenohumeral' o 'aislamiento articular').
 - Usa conceptos sencillos y prácticos de Jiu-Jitsu: 'pega los codos a tus costillas', 'pellizca con las rodillas', 'sube la cadera para hacer palanca', 'mantén tu base pesada', 'protege el cuello', 'no regales los brazos'.
-- Explica el POR QUÉ y el CÓMO de cada detalle de forma breve y comprensible para cualquier practicante (desde cinturón blanco hasta avanzado).`;
+- Explica el POR QUÉ y el CÓMO de cada detalle de forma breve y comprensible para cualquier practicante.
+REGLAS CRÍTICAS DE IDENTIFICACIÓN VISUAL EN JIU-JITSU:
+- SUMISIONES VOLADORAS (Flying Armbar / Llave de Brazo Voladora, Triángulo Volador): Si la acción inicia de pie y un practicante salta o eleva sus piernas hacia el torso/cuello/hombro del oponente para atrapar el brazo o cuello en el aire y caer al suelo extendiendo la articulación, clasifícala estrictamente como "Llave de Brazo Voladora" (o "Triángulo Volador").
+- NO CONFUNDIR con derribos de lucha libre (como High Crotch, Single Leg o Double Leg) que son ataques de penetración hacia las piernas o muslos del oponente.
+- NO CONFUNDIR con "Armbar desde montada", pues la técnica voladora nace del salto aéreo desde la posición de pie.`;
 
 export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier, IContentModerator {
   private apiKey: string;
@@ -130,22 +134,23 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
 
           const textPart = {
             text: `INSTRUCCIONES DE TUTORÍA DEL SENSEI DE JIU-JITSU:
-1. Analiza minuciosamente los fotogramas clave de la acción de Brazilian Jiu-Jitsu.
-2. ROL DEL PRACTICANTE A EVALUAR:
+1. Analiza minuciosamente los fotogramas clave del combate de Brazilian Jiu-Jitsu.
+2. DISCRIMINACIÓN TÉCNICA VISUAL PRECISA:
+   - Si la secuencia muestra a los dos practicantes de pie, uno toma agarre de solapa/brazo y salta envolviendo el torso/brazo del oponente cayendo al tatami para buscar la palanca de codo, clasifícala estrictamente como "Llave de Brazo Voladora" (Flying Armbar).
+   - NUNCA clasifiques un salto al brazo como derribo de lucha a las piernas (High Crotch/Single Leg) ni como sumisión estática desde la montada.
+3. ROL DEL PRACTICANTE EVALUADO:
    ${esDefensor 
-     ? `• El usuario que subió el video declara que es el DEFENSOR (quien recibe el ataque o está defendiendo).
-• Eres su Sensei. Tu evaluación, diagnóstico biomecánico y 3 pasos pedagógicos DEBEN SER EXCLUSIVAMENTE CONSEJOS DE DEFENSA, POSTURA Y ESCAPE para él (ej: cómo conectar agarres de defensa, esconder los codos, mantener base erguida y zafarse de la sumisión).
-• 'youtube_query': Debe ser una búsqueda en español para aprender a DEFENDER Y ESCAPAR de esta técnica exacta (ej: "Tutorial BJJ defensa y escape Llave de Brazo Voladora").`
-     : `• El usuario que subió el video declara que es el ATACANTE (quien aplica la técnica o sumisión).
-• Eres su Sensei. Tu evaluación, diagnóstico biomecánico y 3 pasos pedagógicos DEBEN SER EXCLUSIVAMENTE CONSEJOS DE ATAQUE Y FINALIZACIÓN para él (ej: cómo ajustar cadera, cerrar rodillas, mantener control y palanca).
-• 'youtube_query': Debe ser una búsqueda en español para ver el TUTORIAL DE EJECUCIÓN canónico de esta técnica (ej: "Tutorial BJJ Llave de Brazo Voladora detalles tecnicos").`}
-3. PERSPECTIVA DE TUTORÍA: Habla SIEMPRE en segunda persona ("Tú / Tus"): "Hiciste una buena entrada...", "Al caer al tatami no olvides cerrar tus rodillas...".
-4. IDENTIFICACIÓN DE LA TÉCNICA PRINCIPAL:
+     ? `• El usuario es el DEFENSOR. Brinda exclusivamente consejos de postura, defensa de codo, base y escape de la técnica observada.
+• 'youtube_query': Búsqueda para aprender a defender y escapar de esta técnica exacta (ej: "Tutorial BJJ defensa y escape Llave de Brazo Voladora").`
+     : `• El usuario es el ATACANTE. Brinda exclusivamente consejos de finalización, control de muñeca, cierre de rodillas y palanca de cadera.
+• 'youtube_query': Búsqueda para ver el tutorial de ejecución canónico (ej: "Tutorial BJJ Llave de Brazo Voladora detalles tecnicos").`}
+4. PERSPECTIVA DE TUTORÍA: Habla SIEMPRE en segunda persona ("Tú / Tus"): "Lograste una buena entrada...", "Al caer al tatami no olvides cerrar tus rodillas...".
+5. IDENTIFICACIÓN DE LA TÉCNICA PRINCIPAL:
    ${tecnicaObjetivo 
      ? `- El practicante está entrenando: "${tecnicaObjetivo}". Evalúa su desempeño.`
-     : `- Clasifica con precisión el nombre canónico y descriptivo en español de la técnica principal observada (ej: "Llave de Brazo Voladora", "Kimura", "Triángulo", "Pasaje Knee Cut", "Raspado de Mariposa", "Escape de Montada", "Guillotina", "De la Riva", etc.).`}
-5. SECUENCIA MULTI-POSICIÓN: Desglosa cronológicamente en 'fasesSecuencia' las fases observadas en el video.
-6. CONSEJO ACCIONABLE: 'sugerenciaPedagogica' debe tener 3 pasos directos (1. ... 2. ... 3. ...).
+     : `- Clasifica con precisión el nombre canónico y descriptivo en español de la técnica observada (ej: "Llave de Brazo Voladora", "Kimura", "Triángulo", "Pasaje Knee Cut", "Raspado de Mariposa", "Escape de Montada", "Guillotina", "De la Riva", etc.).`}
+6. SECUENCIA MULTI-POSICIÓN: Desglosa cronológicamente en 'fasesSecuencia' las fases observadas en el video.
+7. CONSEJO ACCIONABLE: 'sugerenciaPedagogica' debe tener 3 pasos directos (1. ... 2. ... 3. ...).
 
 DATOS CINEMÁTICOS LOCALES (3KB):
 ${promptJSON}`
@@ -157,7 +162,8 @@ ${promptJSON}`
             properties: {
               tecnicaId: {
                 type: "STRING",
-                description: "Nombre canónico y descriptivo en español de la técnica detectada."
+                enum: listaTecnicasValidas,
+                description: "Nombre canónico y descriptivo en español de la técnica detectada del catálogo oficial."
               },
               posicionBase: {
                 type: "STRING",
