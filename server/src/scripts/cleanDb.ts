@@ -24,42 +24,38 @@ async function cleanDatabase() {
       console.log("[DB Clean] Eliminando registros de RutaAprendizaje...");
       await prisma.rutaAprendizaje.deleteMany({});
 
-      console.log("[DB Clean] Eliminando registros de FuenteConocimiento...");
+      console.log("[DB Clean] Eliminando registros de RegistroActividad...");
+      await prisma.registroActividad.deleteMany({});
+
+      console.log("[DB Clean] Eliminando TODAS las fuentes de conocimiento (FuenteConocimiento)...");
       await prisma.fuenteConocimiento.deleteMany({});
 
-      // 2. Restablecer usuario por defecto mediante upsert
-      console.log(`[DB Clean] Restableciendo usuario por defecto (${DEFAULT_USER_ID})...`);
-      await prisma.usuario.upsert({
-        where: { id: DEFAULT_USER_ID },
-        update: {
-          nombre: "Practicante",
-          email: "practicante@openbjj.org",
-          cinturon: Cinturon.BLANCO,
-          altura: 1.75,
-          peso: 75.0,
-        },
-        create: {
-          id: DEFAULT_USER_ID,
-          nombre: "Practicante",
-          email: "practicante@openbjj.org",
-          cinturon: Cinturon.BLANCO,
-          altura: 1.75,
-          peso: 75.0,
-        },
+      // 2. Restablecer erroresHistoricos de todos los perfiles de usuarios existentes
+      console.log("[DB Clean] Restableciendo perfiles de competencia de todos los usuarios...");
+      await prisma.perfilCompetencia.updateMany({
+        data: { erroresHistoricos: {} }
       });
 
-      // 3. Restablecer PerfilCompetencia para usuario por defecto
-      console.log(`[DB Clean] Restableciendo PerfilCompetencia para usuario por defecto...`);
-      await prisma.perfilCompetencia.upsert({
-        where: { usuarioId: DEFAULT_USER_ID },
-        update: {
-          erroresHistoricos: {},
-        },
-        create: {
-          usuarioId: DEFAULT_USER_ID,
-          erroresHistoricos: {},
-        },
-      });
+      // 3. Purgar colección de ChromaDB si está activa
+      try {
+        const chromaUrl = process.env.CHROMA_URL || "http://localhost:8000";
+        console.log("[DB Clean] Intentando purgar colecciones de ChromaDB...");
+        const resCol = await fetch(`${chromaUrl}/api/v2/tenants/default_tenant/databases/default_database/collections`, {
+          signal: AbortSignal.timeout(3000)
+        });
+        if (resCol.ok) {
+          const cols = await resCol.json();
+          for (const c of cols) {
+            await fetch(`${chromaUrl}/api/v2/tenants/default_tenant/databases/default_database/collections/${c.id}`, {
+              method: "DELETE",
+              signal: AbortSignal.timeout(3000)
+            });
+            console.log(`[DB Clean] Coleccion de ChromaDB ${c.name} (${c.id}) eliminada.`);
+          }
+        }
+      } catch (chromaErr: any) {
+        console.log("[DB Clean] ChromaDB no accesible o ya purgada:", chromaErr.message);
+      }
 
       console.log("[DB Clean] Purga de base de datos relacional Prisma completada con exito.");
       await prisma.$disconnect();
