@@ -71,7 +71,7 @@ export function AdminDojoView({ onOpenRag: _onOpenRag }: AdminDojoViewProps = {}
     return true;
   });
 
-  const totalFuentes = fuentesAdmin.length || adminStats?.totalFuentes || 967;
+  const totalFuentes = fuentesAdmin?.length ?? (adminStats?.totalFuentes ?? 0);
   const totalAlumnos = adminStats?.totalPracticantes ?? 0;
 
   return (

@@ -739,7 +739,7 @@ export class PersistenceFacade implements IPersistenceService {
       return {
         totalPracticantes: 0,
         totalAdministradores: 1,
-        totalFuentes: 957,
+        totalFuentes: 0,
         totalAnalisis: 0,
         distribucionCinturones: { BLANCO: 0, AZUL: 0, MORADO: 0, MARRON: 0, NEGRO: 0 },
         ultimosPracticantes: [],

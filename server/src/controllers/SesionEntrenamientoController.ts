@@ -309,7 +309,7 @@ export class SesionEntrenamientoController {
         success: true,
         evi: { evi: 1.0, periodoActualAnalisis: 0, periodoAnteriorAnalisis: 0, alerta: "NORMAL" },
         metricasGlobales: { dau: 1, wau: 1, mau: 1 },
-        adminStats: { totalPracticantes: 1, totalFuentes: 957, totalAnalisis: 0, distribucionCinturones: { BLANCO: 1, AZUL: 0, MORADO: 0, MARRON: 0, NEGRO: 0 }, ultimosPracticantes: [] }
+        adminStats: { totalPracticantes: 1, totalFuentes: 0, totalAnalisis: 0, distribucionCinturones: { BLANCO: 1, AZUL: 0, MORADO: 0, MARRON: 0, NEGRO: 0 }, ultimosPracticantes: [] }
       };
     }
   }
