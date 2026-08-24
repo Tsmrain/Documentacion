@@ -8,9 +8,12 @@ import { LLMRedirectionProxy } from "./services/LLMRedirectionProxy";
 import { AdaptationController, PerfilCompetencia } from "./controllers/AdaptationController";
 import { SesionEntrenamientoController, IPoseEstimator } from "./controllers/SesionEntrenamientoController";
 import { PersistenceFacade } from "./persistence/PersistenceFacade";
+import { PrismaClient } from "@prisma/client";
 import { createApp } from "./app";
 import { Server } from "http";
 import jwt from "jsonwebtoken";
+
+const prisma = new PrismaClient();
 
 // Mocks y Drivers
 class MockPoseEstimator implements IPoseEstimator {
@@ -252,6 +255,11 @@ async function runIntegrationTests() {
     console.log("Status HTTP Ingesta BJJ Enriquecida:", res4d.status);
     const data4d = await res4d.json() as any;
     console.log("Respuesta Ingesta BJJ:", data4d.message || data4d.error);
+
+    // Limpieza de la fuente de prueba para mantener la base de datos de producción limpia
+    await prisma.fuenteConocimiento.deleteMany({
+      where: { url: { contains: "kani_basami_bjj_test" } }
+    });
 
     // 5. EXCEPCIÓN 4: ChromaDB caída sin atrapar -> HTTP 207 Multi-Status (Graceful Degradation en Express Middleware)
     console.log("\n[Test 5] POST /api/sesion/analizar con ChromaDB caída (Express Error Middleware):");

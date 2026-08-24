@@ -181,7 +181,7 @@ export class RetrievalAugmentedController {
 
   async obtenerFuentes(usuarioId: string): Promise<any[]> {
     const targetUserId = usuarioId || "user-default";
-    return this.persistence.obtenerFuentesConocimiento(targetUserId);
+    return this.persistence.obtenerFuentesConocimiento(targetUserId, true);
   }
 
   async eliminarFuente(usuarioId: string, fuenteId: string): Promise<boolean> {

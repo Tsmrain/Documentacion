@@ -600,17 +600,21 @@ export class PersistenceFacade implements IPersistenceService {
     }
   }
 
-  async obtenerFuentesConocimiento(usuarioId?: string): Promise<any[]> {
+  async obtenerFuentesConocimiento(usuarioId?: string, soloUsuario: boolean = false): Promise<any[]> {
     try {
       const normalizedId = usuarioId ? this.normalizarUsuarioId(usuarioId) : DEFAULT_UUID;
+      const whereCondition = soloUsuario
+        ? { usuarioId: normalizedId }
+        : {
+            OR: [
+              { usuarioId: normalizedId },
+              { usuarioId: DEFAULT_UUID },
+              { estadoValidacion: EstadoValidacion.ACEPTADO }
+            ]
+          };
+
       const fuentes = await prisma.fuenteConocimiento.findMany({
-        where: {
-          OR: [
-            { usuarioId: normalizedId },
-            { usuarioId: DEFAULT_UUID },
-            { estadoValidacion: EstadoValidacion.ACEPTADO }
-          ]
-        },
+        where: whereCondition,
         orderBy: {
           createdAt: 'desc'
         }
