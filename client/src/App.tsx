@@ -8,51 +8,10 @@ import { HistoryView } from "./components/HistoryView";
 import { PerfilView } from "./components/PerfilView";
 import { WelcomeScreen } from "./components/WelcomeScreen";
 import { AdminDojoView } from "./components/AdminDojoView";
+import { extractKineticAdaptiveKeyframes } from "./services/AdaptiveKeyframeExtractor";
 
 // Union de tabs validos. "reporte" es un tab dedicado para el resultado del analisis biomecanico.
 type TabId = "analizador" | "reporte" | "progreso" | "historial" | "perfil" | "administracion" | "rag";
-
-// Extrae 9 keyframes de alta fidelidad del video en formato JPEG Base64.
-// Escala a 480px a calidad 65% para máxima nitidez de extremidades y kimonos.
-const extractFramesFromVideo = async (videoBlob: Blob, numFrames: number = 9): Promise<string[]> => {
-  return new Promise((resolve, reject) => {
-    const video = document.createElement("video");
-    video.src = URL.createObjectURL(videoBlob);
-    video.muted = true;
-    video.playsInline = true;
-    video.onloadedmetadata = () => {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return reject("No 2D context disponible");
-      const duration = video.duration || 1;
-      const frames: string[] = [];
-      let processed = 0;
-      const scale = Math.min(480 / (video.videoWidth || 640), 1);
-      canvas.width = (video.videoWidth || 640) * scale;
-      canvas.height = (video.videoHeight || 480) * scale;
-
-      video.onseeked = () => {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.65);
-        const base64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
-        frames.push(base64);
-        processed++;
-        if (processed === numFrames) {
-          URL.revokeObjectURL(video.src);
-          resolve(frames);
-        } else {
-          seekNext();
-        }
-      };
-      const seekNext = () => {
-        const time = (duration / (numFrames + 1)) * (processed + 1);
-        video.currentTime = time;
-      };
-      seekNext();
-    };
-    video.onerror = (e) => reject(e);
-  });
-};
 
 // Parseo seguro de JSON. Devuelve null en lugar de lanzar excepcion.
 // Protege contra respuestas malformadas de Gemini (markdown wrappers, texto parcial, etc.).
@@ -217,14 +176,14 @@ function App() {
     analyzingRef.current = true;
     setIsAnalyzing(true);
     setAnalysisError(null);
-    setAnalysisProgress("Extrayendo 9 keyframes de alta fidelidad del combate (480px, JPEG 65%)...");
+    setAnalysisProgress("Analizando aceleración cinemática (dx, dy) y extrayendo 9 keyframes adaptativos (4 vuelo / 5 suelo)...");
 
     try {
-      let frames: string[] = [];
+      let frames: any[] = [];
       try {
-        frames = await extractFramesFromVideo(file, 9);
+        frames = await extractKineticAdaptiveKeyframes(file, 9);
       } catch (frameErr) {
-        console.warn("[App] No se pudieron extraer frames del video HTML5:", frameErr);
+        console.warn("[App] No se pudieron extraer keyframes cinéticos del video HTML5:", frameErr);
       }
 
       setAnalysisProgress("Fase 1: Clasificación y alineación visual biomecánica...");
@@ -262,6 +221,7 @@ function App() {
       setAnalysisProgress("Analisis completado.");
       // Incrementa version para que HistoryView recargue datos (CU05)
       setHistorialVersion(v => v + 1);
+      data.rolPracticante = rolPracticante;
       setReport(data);
       setActiveTab("reporte");
 

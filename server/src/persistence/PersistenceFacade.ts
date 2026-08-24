@@ -460,17 +460,28 @@ export class PersistenceFacade implements IPersistenceService {
       return sesiones.map(s => {
         const a = s.analisis;
         const err = a?.erroresDetectados?.[0];
+        const tecId = a?.tecnicaId || "guardia-cerrada";
+        const sev = a?.severidad ? (a.severidad === SeveridadError.CRITICO ? "Critico" : a.severidad === SeveridadError.LEVE ? "Leve" : "Moderado") : "Moderado";
+        const desvGr = err ? Number(err.desviacionGrados) : 0;
+        const desvArt = err?.desviacionArticular || "codo_derecho";
+        const sug = a?.sugerenciaPedagogica || "";
+
         return {
           id: s.id,
           fecha: s.fecha,
-          tecnicaId: a?.tecnicaId || "guardia-cerrada",
-          desviacionGrados: err ? Number(err.desviacionGrados) : 0,
+          tecnicaId: tecId,
+          desviacionGrados: desvGr,
           reporte: {
-            tecnicaId: a?.tecnicaId || "guardia-cerrada",
-            severidad: a?.severidad || "Moderado",
-            sugerenciaPedagogica: a?.sugerenciaPedagogica || "",
-            desviacionArticular: err?.desviacionArticular || "",
-            desviacionGrados: err ? Number(err.desviacionGrados) : 0
+            tecnicaId: tecId,
+            severidad: sev,
+            sugerenciaPedagogica: sug,
+            desviacionArticular: desvArt,
+            desviacionGrados: desvGr
+          },
+          planAdaptativo: {
+            drillRecomendado: sug ? `Drill: ${sug}` : `Practica repeticiones técnicas de ${tecId} cerrando los espacios.`,
+            mensajeAdaptativo: `Consejo del Sensei: Mantén tu base sólida y protege tu ${desvArt.replace(/_/g, " ")}.`,
+            videoYouTubeUrl: `https://www.youtube.com/results?search_query=Tutorial+BJJ+${encodeURIComponent(tecId.replace(/_/g, " "))}`
           }
         };
       });
@@ -518,11 +529,17 @@ export class PersistenceFacade implements IPersistenceService {
     }
   }
 
-  async obtenerFuentesConocimiento(usuarioId: string): Promise<any[]> {
+  async obtenerFuentesConocimiento(usuarioId?: string): Promise<any[]> {
     try {
-      const normalizedId = this.normalizarUsuarioId(usuarioId);
+      const normalizedId = usuarioId ? this.normalizarUsuarioId(usuarioId) : DEFAULT_UUID;
       const fuentes = await prisma.fuenteConocimiento.findMany({
-        where: { usuarioId: normalizedId },
+        where: {
+          OR: [
+            { usuarioId: normalizedId },
+            { usuarioId: DEFAULT_UUID },
+            { estadoValidacion: EstadoValidacion.ACEPTADA }
+          ]
+        },
         orderBy: {
           createdAt: 'desc'
         }

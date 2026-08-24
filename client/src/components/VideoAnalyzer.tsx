@@ -135,21 +135,124 @@ export function VideoAnalyzer({
               }}
             />
             <datalist id="sugerencias-tecnicas">
-              <option value="Llave de Brazo Voladora" />
+              {/* 1. Supervivencia y Control Postural */}
+              <option value="Supervivencia en la Espalda (The Back Survival)" />
+              <option value="Supervivencia en Cuatro Puntos / Tortuga (All-Fours Survival)" />
+              <option value="Supervivencia en Montada (The Mount Survival)" />
+              <option value="Supervivencia en Control Lateral (Side Control Survival)" />
+              <option value="Supervivencia en Kesa Gatame" />
+              <option value="Supervivencia en Kesa Gatame Inverso" />
+              <option value="Supervivencia en Rodilla al Pecho (Knee-on-Belly Survival)" />
+              <option value="Postura de Supervivencia en Carrera (Running Survival Posture)" />
+
+              {/* 2. Escapes y Recuperación */}
+              <option value="Escape de Espalda (Back Escape)" />
+              <option value="Escape de Candado de Cuerpo (Body Lock Escape)" />
+              <option value="Escape de Montada por Codo-Rodilla / Upa (Mount Elbow Escape)" />
+              <option value="Escape de Montada Sentada (Seated Mount Escape)" />
+              <option value="Escape de Control Lateral a Guardia (Side Control Guard Recovery)" />
+              <option value="Escape de Control Lateral a las Rodillas / Tortuga" />
+              <option value="Escape en Carrera de Control Lateral (Side Control Running Escape)" />
+              <option value="Escape de Kesa Gatame" />
+              <option value="Escape de Kesa Gatame Inverso" />
+              <option value="Escape de Rodilla al Pecho (Knee-on-Belly Running Escape)" />
+              <option value="Escape de Armbar / Llave de Brazo (Armbar Escape)" />
+              <option value="Escape de Triángulo a Pasaje (Triangle Escape to Pass)" />
+              <option value="Escape de Guillotina Clásica (Classic Guillotine Escape)" />
+              <option value="Escape de Guillotina con Brazo (Arm-In Guillotine Escape)" />
+              <option value="Escape de Llave de Pie (Footlock Escape)" />
+              <option value="Escape de Kimura desde Media Guardia" />
+
+              {/* 3. Defensas de Pasajes */}
+              <option value="Defensa contra Pasaje Single / Double Underhook" />
+              <option value="Defensa contra Pasaje Over-Under Smash" />
+              <option value="Defensa contra Pasaje Torreando (Collar Drag / Ankle Pick)" />
+              <option value="Defensa contra Pasaje Knee Slide / Knee Cut" />
+
+              {/* 4. Guardias y Raspados */}
+              <option value="Guardia Cerrada (Closed Guard)" />
+              <option value="Raspado de Empuje de Cadera (Hip Bump Sweep)" />
+              <option value="Raspado Flower Sweep / Péndulo" />
+              <option value="Raspado de Gancho (Underhook Sweep)" />
+              <option value="Guardia Mariposa (Butterfly Guard)" />
+              <option value="Raspado de Mariposa Clásico (Butterfly Sweep)" />
+              <option value="Raspado Wing Sweep" />
+              <option value="Guardia Araña (Spider Guard)" />
+              <option value="Raspado de Guardia Araña (Spider Guard Sweep)" />
+              <option value="Guardia de Agarre Cruzado (Cross-Grip Guard)" />
+              <option value="Raspado Trípode Clásico (Tripod Sweep)" />
+              <option value="Raspado Backroll de Agarre Cruzado" />
+              <option value="Guardia De La Riva (De La Riva Guard)" />
+              <option value="Raspado De La Riva Rollover Sweep" />
+              <option value="Raspado De La Riva a Tomoe Nage" />
+              <option value="Guardia Sentada (Sit-Up Guard)" />
+              <option value="Raspado de Guardia Sentada (Sit-Up Guard Sweep)" />
+              <option value="Guardia De La Riva Inversa (Reverse De La Riva)" />
+              <option value="Raspado Knee Push desde De La Riva Inversa" />
+              <option value="Media Guardia (Half Guard)" />
+              <option value="Media Guardia Profunda (Deep Half Guard)" />
+              <option value="Guardia Invertida (Inverted Guard)" />
+              <option value="Guardia X (X-Guard)" />
+              <option value="Guardia Abierta General" />
+
+              {/* 5. Pasajes de Guardia */}
+              <option value="Pasaje de Guardia Cerrada desde Rodillas (Classic Kneeling Pass)" />
+              <option value="Pasaje Single Underhook Pass" />
+              <option value="Pasaje Double Underhook Pass" />
+              <option value="Pasaje de Guardia Cerrada de Pie (Standing Guard Opening & Pass)" />
+              <option value="Pasaje de Guardia Knee Cut / Knee Cross" />
+              <option value="Pasaje de Guardia Torreando (Bullfighter Pass)" />
+              <option value="Pasaje Leg Rope / Two-on-One Leg Pass" />
+              <option value="Pasaje de Guardia Mariposa Walk-Around" />
+              <option value="Pasaje de Guardia Mariposa Floating Hip-Switch" />
+              <option value="Pasaje Star Pass de Mariposa" />
+              <option value="Pasaje X-Pass de Mariposa" />
+              <option value="Pasaje de Guardia Araña (Spider Guard Break & Pass)" />
+              <option value="Pasaje Leg Lasso de Guardia Araña" />
+              <option value="Pasaje de Guardia De La Riva (Unlock & Pass)" />
+              <option value="Pasaje de Deep De La Riva" />
+              <option value="Pasaje de Guardia Sentada (Step-Around / Underhook to Mount)" />
+              <option value="Pasaje de De La Riva Inversa (Hip Smash / Floating Pass)" />
+              <option value="Pasaje de Media Guardia (Flattening / Shin Slide Pass)" />
+              <option value="Pasaje de Media Guardia Esgrima Pass" />
+              <option value="Pasaje de Media Guardia Half Mount Pass" />
+              <option value="Pasaje de Media Guardia Profunda (Deep Half Leg Pullout)" />
+              <option value="Pasaje de Guardia Invertida (Inverted Guard Hip Pass)" />
+              <option value="Pasaje de Guardia X (X-Guard Break & Pass)" />
+
+              {/* 6. Sumisiones y Finalizaciones */}
+              <option value="Estrangulamiento Arco y Flecha (Bow & Arrow Choke)" />
               <option value="Armbar / Llave de Brazo" />
-              <option value="Triángulo Volador" />
-              <option value="Triángulo" />
+              <option value="Estrangulamiento de Solapa Cruzada (Cross Choke)" />
+              <option value="Estrangulamiento Ezequiel (Ezequiel Choke)" />
+              <option value="Americana (Keylock de Brazo)" />
+              <option value="Armbar desde la Montada (Mounted Armbar)" />
+              <option value="Armbar desde S-Mount" />
+              <option value="Kata Gatame / Triángulo de Brazo (Arm Triangle)" />
+              <option value="Triángulo (Triangle Choke)" />
               <option value="Kimura" />
-              <option value="Guillotina" />
-              <option value="Guardia Cerrada" />
-              <option value="Media Guardia" />
-              <option value="Pasaje de Guardia Knee Cut" />
+              <option value="Omoplata" />
+              <option value="Guillotina (Guillotine Choke)" />
+              <option value="Armbar Giratorio (Spinning Armbar)" />
+              <option value="Estrangulamiento Paper Cutter / Bread Cutter Choke" />
+              <option value="Estrangulamiento de Bate de Béisbol (Baseball Choke)" />
+              <option value="Estrangulamiento de Reloj (Clock Choke)" />
+              <option value="Estrangulamiento Brabo / Darce Choke" />
+              <option value="Palanca Recta de Brazo (Straight Armlock)" />
+              <option value="Llave Recta de Tobillo (Straight Ankle Lock)" />
               <option value="Control Lateral" />
               <option value="Montada" />
               <option value="Control de Espalda" />
-              <option value="Raspado de Gancho" />
-              <option value="Derribo Double Leg" />
-              <option value="Omoplata" />
+
+              {/* 7. Derribos y Entradas Voladoras */}
+              <option value="Derribo Double Leg (Lucha Libre)" />
+              <option value="Derribo Single Leg (Lucha Libre)" />
+              <option value="Derribo de Sacrificio Tomoe Nage" />
+              <option value="Llave de Brazo Voladora / Flying Armbar" />
+              <option value="Triángulo Volador / Flying Triangle" />
+              <option value="Entrada Voladora a Llave de Pierna / Flying Leg Lock" />
+              <option value="Tijera Voladora / Kani Basami" />
+              <option value="Flying Submissions (Sumisiones Voladoras Generales)" />
             </datalist>
             <span style={{ fontSize: "0.74rem", color: "#94a3b8", marginTop: "4px", display: "block" }}>
               Si especificas la técnica, la IA auditará los ángulos y detalles biomecánicos de esa lección exacta.

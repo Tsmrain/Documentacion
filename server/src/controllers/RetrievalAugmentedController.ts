@@ -127,9 +127,20 @@ export class RetrievalAugmentedController {
 
     const targetUserId = metadata.usuarioId || usuarioIdParam || "user-default";
     const fuenteId = `fuente-${Date.now()}`;
+
+    // Enriquecimiento semántico estructurado antes de la vectorización (Principio Mannino)
+    let textoVectorizar = textoExtraido;
+    if (this.contentModerator && typeof (this.contentModerator as any).enriquecerMetadatosTecnicos === "function") {
+      try {
+        textoVectorizar = await (this.contentModerator as any).enriquecerMetadatosTecnicos(textoExtraido);
+      } catch (enrErr: any) {
+        console.warn(`[RAG Controller] Error al enriquecer metadatos: ${enrErr.message}. Usando texto base.`);
+      }
+    }
+
     const chunk: ChunkText = {
       id: fuenteId,
-      text: textoExtraido
+      text: textoVectorizar
     };
 
     let exitoVectorStore = false;
@@ -143,7 +154,7 @@ export class RetrievalAugmentedController {
 
     const nuevaFuente = {
       id: fuenteId,
-      titulo: metadata.url ? textoExtraido : (metadata.titulo || "Fuente de Conocimiento"),
+      titulo: metadata.titulo || textoExtraido,
       tipo: metadata.url ? "youtube" : "archivo",
       url: metadata.url,
       fecha: new Date().toISOString(),

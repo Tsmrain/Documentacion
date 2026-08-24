@@ -127,22 +127,6 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
               {tecnicaName}
             </div>
 
-            {/* Secuencia Multi-Posición */}
-            {reporte?.fasesSecuencia && Array.isArray(reporte.fasesSecuencia) && reporte.fasesSecuencia.length > 0 && (
-              <div style={{ marginTop: "14px", padding: "12px", background: "rgba(241,245,249,0.7)", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-                <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: "8px" }}>
-                  Secuencia de Posiciones en el Combate
-                </span>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                  {reporte.fasesSecuencia.map((fase: string, idx: number) => (
-                    <span key={idx} style={{ background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "6px", padding: "4px 10px", fontSize: "0.75rem", color: "#334155", fontWeight: 600 }}>
-                      {fase}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Active Learning: Feedback Human-in-the-Loop */}
             <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
               {!isEditingTechnique ? (
@@ -234,30 +218,37 @@ export function AnalysisReportView({ report, onClear }: AnalysisReportViewProps)
         </div>
 
         {/* Learning Resources - ÚNICO BOTÓN ESPECÍFICO */}
-        <div style={{ marginBottom: '30px' }}>
-          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '12px' }}>
-            VIDEO DE REFERENCIA TÉCNICA
-          </span>
-          <button 
-            onClick={handleOpenVideo}
-            style={{ width: '100%', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px 16px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '14px', textAlign: 'left' }}
-            onMouseOver={e => e.currentTarget.style.background = '#f8fafc'}
-            onMouseOut={e => e.currentTarget.style.background = '#ffffff'}
-          >
-            <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" strokeWidth="1"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            </div>
-            <div style={{ flex: 1 }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a', display: 'block', marginBottom: '2px' }}>
-                Ver Video Tutorial de Referencia ({tecnicaName})
+        {(() => {
+          const rol = activeReport?.rolPracticante || report?.rolPracticante || "ATACANTE";
+          const esDefensor = rol === "DEFENSOR";
+
+          return (
+            <div style={{ marginBottom: '30px' }}>
+              <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '12px' }}>
+                {esDefensor ? "🛡️ VIDEO DE REFERENCIA PARA DEFENSA Y ESCAPE" : "🥋 VIDEO DE REFERENCIA TÉCNICA"}
               </span>
-              <span style={{ fontSize: '0.74rem', color: '#64748b', display: 'block' }}>
-                Abrir la clase técnica oficial recomendada por el Dojo
-              </span>
+              <button 
+                onClick={handleOpenVideo}
+                style={{ width: '100%', background: '#ffffff', border: esDefensor ? '1px solid #bfdbfe' : '1px solid #e2e8f0', borderRadius: '12px', padding: '18px 16px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '14px', textAlign: 'left' }}
+                onMouseOver={e => e.currentTarget.style.background = esDefensor ? '#eff6ff' : '#f8fafc'}
+                onMouseOut={e => e.currentTarget.style.background = '#ffffff'}
+              >
+                <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: esDefensor ? '#dbeafe' : '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill={esDefensor ? "#2563eb" : "#ef4444"} stroke={esDefensor ? "#2563eb" : "#ef4444"} strokeWidth="1"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: esDefensor ? '#1e40af' : '#0f172a', display: 'block', marginBottom: '2px' }}>
+                    {esDefensor ? `Ver Video de Defensa y Escape (${tecnicaName})` : `Ver Video Tutorial de Ejecución (${tecnicaName})`}
+                  </span>
+                  <span style={{ fontSize: '0.74rem', color: '#64748b', display: 'block' }}>
+                    {esDefensor ? `Aprender cómo defender y escapar de esta técnica según el Sensei` : `Abrir la clase técnica oficial recomendada por el Dojo`}
+                  </span>
+                </div>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={esDefensor ? "#3b82f6" : "#94a3b8"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
             </div>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-          </button>
-        </div>
+          );
+        })()}
 
         {/* Back Button */}
         <button 

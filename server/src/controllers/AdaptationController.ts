@@ -127,8 +127,22 @@ export class AdaptationController {
     return resultados;
   }
 
-  private async obtenerVideoYouTubeRelacionado(usuarioId: string, terminoBusqueda: string, esDefensa: boolean = false): Promise<string> {
+  private async obtenerVideoYouTubeRelacionado(
+    usuarioId: string,
+    terminoBusqueda: string,
+    esDefensa: boolean = false,
+    tecnicaNombre?: string,
+    articulacionError?: string
+  ): Promise<string> {
     const terminoLimpio = (terminoBusqueda || "bjj tutorial").replace(/_/g, " ").replace(/-/g, " ").toLowerCase();
+    const tecnicaFormato = tecnicaNombre || (terminoBusqueda ? terminoBusqueda.replace(/_/g, " ").replace(/-/g, " ") : "BJJ");
+    const articulacionFormato = articulacionError || "postura";
+
+    // Fallback determinista estructurado de YouTube Search (Patrón Information Expert)
+    const fallbackSearchQuery = esDefensa
+      ? `Tutorial BJJ defensa y escape de ${tecnicaFormato} ${articulacionFormato}`
+      : `Tutorial BJJ ${tecnicaFormato} ${articulacionFormato} correccion drill`;
+    const fallbackUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(fallbackSearchQuery.trim())}`;
 
     try {
       let fuentes: any[] = [];
@@ -161,7 +175,7 @@ export class AdaptationController {
           { tag: "guillotina", terms: ["guillotina", "guillotine"] },
           { tag: "mataleon", terms: ["mataleon", "mata leon", "rear naked", "rnc"] },
           { tag: "pasaje", terms: ["pasaje", "pass", "passing", "knee cut", "torreando", "smash pass"] },
-          { tag: "escape", terms: ["escape", "salida", "defensa", "escapar", "defend", "defensas"] }
+          { tag: "escape", terms: ["escape", "salida", "defensa", "escapar", "defend", "defensas", "survival", "sobrevivir", "counter"] }
         ];
 
         const familiasPresentesEnQuery = FAMILIAS_BJJ.filter(fam =>
@@ -175,15 +189,18 @@ export class AdaptationController {
           const tit = (fuente.titulo || "").toLowerCase();
           let score = 0;
 
-          const tieneTerminosDefensa = ["defensa", "escape", "salida", "escapar", "defend", "defensas"].some(t => tit.includes(t));
+          const tieneTerminosDefensa = ["defensa", "escape", "salida", "escapar", "defend", "defensas", "survival", "sobrevivir", "counter"].some(t => tit.includes(t));
 
           if (esDefensa) {
-            if (tieneTerminosDefensa) score += 100;
-            else score -= 150; // Penalizar videos de solo ataque cuando el alumno busca defensa
+            if (!tieneTerminosDefensa) {
+              // Si el usuario es DEFENSOR y el video solo enseña ataque, descartar inmediatamente
+              continue;
+            }
+            score += 150;
           } else {
             // Si el usuario está atacando, priorizar videos de ejecución sobre videos de escape
-            if (!tieneTerminosDefensa) score += 30;
-            else score -= 50; // Penalizar videos de defensa cuando el usuario quiere aprender a atacar
+            if (!tieneTerminosDefensa) score += 50;
+            else score -= 150;
           }
 
           // Coincidencia exacta de frases compuestas clave
@@ -192,8 +209,6 @@ export class AdaptationController {
             "defensa de armbar",
             "escape de llave de brazo",
             "salida de llave de brazo",
-            "llave de brazo voladora",
-            "flying armbar",
             "escape de montada",
             "salida de montada",
             "defensa de triangulo",
@@ -235,14 +250,12 @@ export class AdaptationController {
         if (mejorMatch && maxScore > 0) {
           return mejorMatch.url;
         }
-
-        return fuentesYouTube[0].url;
       }
     } catch (e: any) {
       console.warn("[Adaptación RAG] Error al consultar fuentes guardadas de YouTube:", e.message);
     }
 
-    return "https://www.youtube.com/watch?v=BPEXBXJpLEw";
+    return fallbackUrl;
   }
 
   async evaluarAdaptabilidad(usuarioId: string, reporte: string | null, rolPracticante: string = "ATACANTE"): Promise<RutaAprendizaje> {
@@ -258,7 +271,7 @@ export class AdaptationController {
     const tecnicasEvaluadas = this.calcularTecnicasEvaluadas(historial);
 
     if (!reporte) {
-      const videoInicial = await this.obtenerVideoYouTubeRelacionado(usuarioId, "shrimp bjj drill");
+      const videoInicial = await this.obtenerVideoYouTubeRelacionado(usuarioId, "shrimp bjj drill", false, "Shrimping", "cadera");
       return {
         nivelCompetenciaActual: "Principiante",
         drillRecomendado: "Movimiento de cadera (Shrimping) básico",
@@ -329,7 +342,7 @@ export class AdaptationController {
     }
 
     tecnicaBusqueda = tecnicaBusqueda.replace(/-/g, " ").toLowerCase();
-    const videoRecomendado = await this.obtenerVideoYouTubeRelacionado(usuarioId, tecnicaBusqueda, esDefensa);
+    const videoRecomendado = await this.obtenerVideoYouTubeRelacionado(usuarioId, tecnicaBusqueda, esDefensa, evaluacion.tecnicaId, articulacionLimpia);
 
     if (hayFalloRecurrente) {
       return {

@@ -117,16 +117,16 @@ async function runIntegrationTests() {
     console.log("Reporte:", data1.reporte);
     console.log("Plan Adaptativo:", data1.planAdaptativo.mensajeAdaptativo);
 
-    // 1b. AUDITORÍA GUIADA: POST /api/sesion/analizar con técnica objetivo ("Llave de Brazo Voladora")
-    console.log("\n[Test 1b] POST /api/sesion/analizar (Auditoría Guiada - Llave de Brazo Voladora):");
+    // 1b. AUDITORÍA GUIADA: POST /api/sesion/analizar con técnica objetivo ("Llave de Brazo Voladora / Flying Armbar")
+    console.log("\n[Test 1b] POST /api/sesion/analizar (Auditoría Guiada - Llave de Brazo Voladora / Flying Armbar):");
     const res1b = await fetch(`http://localhost:${PORT}/api/sesion/analizar`, {
       method: "POST",
       headers: authHeaders,
       body: JSON.stringify({
         videoBlob: "dummy-blob",
         usuarioId: "user-default",
-        tecnicaObjetivo: "Llave de Brazo Voladora",
-        frames: ["frame1_base64", "frame2_base64", "frame3_base64", "frame4_base64", "frame5_base64", "frame6_base64"]
+        tecnicaObjetivo: "Llave de Brazo Voladora / Flying Armbar",
+        frames: Array(6).fill("/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=")
       })
     });
     console.log("Status HTTP Test 1b:", res1b.status);
@@ -147,8 +147,8 @@ async function runIntegrationTests() {
     console.log("Mensaje de Error:", data2.error);
     poseEstimator.setConfidence(0.95); // Restablecer
 
-    // 3. EXCEPCIÓN 2: Fallback Baseline cuando ChromaDB devuelve 0 chunks
-    console.log("\n[Test 3] POST /api/sesion/analizar con 0 chunks vectoriales:");
+    // 3. EXCEPCIÓN 2: Fallback Baseline cuando ChromaDB devuelve 0 chunks (Fallback Determinista YouTube Search)
+    console.log("\n[Test 3] POST /api/sesion/analizar con 0 chunks vectoriales (Fallback YouTube Search):");
     vectorStore.setEmpty(true);
     const res3 = await fetch(`http://localhost:${PORT}/api/sesion/analizar`, {
       method: "POST",
@@ -158,7 +158,38 @@ async function runIntegrationTests() {
     console.log("Status HTTP:", res3.status);
     const data3 = await res3.json() as any;
     console.log("Mensaje del Plan Adaptativo:", data3.planAdaptativo.mensajeAdaptativo);
+    console.log("URL de Video YouTube:", data3.planAdaptativo.videoYouTubeUrl);
     vectorStore.setEmpty(false); // Restablecer
+
+    // 3b. FALLBACK DETERMINISTA DE YOUTUBE SEARCH (Patrón Information Expert):
+    console.log("\n[Test 3b] Fallback Determinista Structured YouTube Search (0 chunks / score <= 0):");
+    const rutaFallback = await adaptationController.evaluarAdaptabilidad(
+      "user-sin-fuentes",
+      JSON.stringify({
+        tecnicaId: "Kani Basami / Tijera Voladora",
+        desviacionArticular: "rodilla_derecha",
+        desviacionGrados: 25,
+        severidad: "Critico",
+        sugerenciaPedagogica: "Cierra la tijera a la altura de la cadera y no expongas tu rodilla.",
+        youtube_query: "Kani Basami Tijera Voladora drill BJJ"
+      }),
+      "ATACANTE"
+    );
+    console.log("URL de Video Fallback (Atacante):", rutaFallback.videoYouTubeUrl);
+
+    const rutaFallbackDefensa = await adaptationController.evaluarAdaptabilidad(
+      "user-sin-fuentes",
+      JSON.stringify({
+        tecnicaId: "Flying Leg Lock",
+        desviacionArticular: "tobillo",
+        desviacionGrados: 30,
+        severidad: "Critico",
+        sugerenciaPedagogica: "Oculta el talón inmediatamente y gira la cadera.",
+        youtube_query: "defensa Flying Leg Lock escape BJJ"
+      }),
+      "DEFENSOR"
+    );
+    console.log("URL de Video Fallback (Defensor):", rutaFallbackDefensa.videoYouTubeUrl);
 
     // 4. EXCEPCIÓN 3: Ingesta no pertinente (Filtro Autónomo RD-03) -> HTTP 400 Bad Request
     console.log("\n[Test 4] POST /api/rag/ingestar de archivo no pertinente (Receta de cocina):");
@@ -204,6 +235,23 @@ async function runIntegrationTests() {
     const data4c = await res4c.json() as any;
     console.log("Respuesta de rechazo Enlace Musical 2:", data4c.error);
     console.log("Detalle de Razón Enlace Musical 2:", data4c.razon);
+
+    // 4d. INGESTA PERTINENTE ENRIQUECIDA (Principio de Integridad Semántica de Mannino)
+    console.log("\n[Test 4d] POST /api/rag/ingestar de fuente pertinente de BJJ con enriquecimiento semántico (Mannino):");
+    const res4d = await fetch(`http://localhost:${PORT}/api/rag/ingestar`, {
+      method: "POST",
+      headers: authHeaders,
+      body: JSON.stringify({
+        archivoBlob: "dummy",
+        metadata: {
+          titulo: "Flying Kani Basami Leg Lock Entry Tutorial by Craig Jones",
+          url: "https://www.youtube.com/watch?v=kani_basami_bjj_test"
+        }
+      })
+    });
+    console.log("Status HTTP Ingesta BJJ Enriquecida:", res4d.status);
+    const data4d = await res4d.json() as any;
+    console.log("Respuesta Ingesta BJJ:", data4d.message || data4d.error);
 
     // 5. EXCEPCIÓN 4: ChromaDB caída sin atrapar -> HTTP 207 Multi-Status (Graceful Degradation en Express Middleware)
     console.log("\n[Test 5] POST /api/sesion/analizar con ChromaDB caída (Express Error Middleware):");
