@@ -752,10 +752,10 @@ flowchart TD
 * Acceso a cámara o almacenamiento local concedido y funcional.
 * El video grabado o subido para su análisis debe tener un tiempo máximo de duración de 45 segundos.
 
-**Garantía de Éxito / Postcondiciones:**
+**Garantías de Éxito o Postcondiciones (Success Guarantees):**
 * Los landmarks 3D son extraídos de forma local en el cliente web, la técnica es clasificada automáticamente, la base de datos vectorial de grounding (RAG) en el Servidor Local es consultada, el prompt dinámico es estructurado por el backend y la evaluación cinemática en JSON es devuelta y persistida localmente.
 
-**Escenario Principal de Éxito (Flujo Básico):**
+**Escenario de Éxito Principal (o Flujo Básico):**
 1. El Practicante graba o carga un video (máximo de 45 segundos de duración) de su sparring o lucha contra un oponente.
 2. El Sistema valida el límite de duración local y procesa el video mediante submuestreo de fotogramas clave.
 3. El `MediaPipePoseAdapter` de visión computacional extrae los landmarks 3D $(x,y,z)$ locales en el cliente.
@@ -768,38 +768,38 @@ flowchart TD
 10. El Servidor responde con el reporte de evaluación interactiva en formato JSON estructurado.
 11. El Sistema en la PWA despliega el diagnóstico biomecánico y las recomendaciones pedagógicas adaptativas al Practicante, inyectando exactamente 1 única tarjeta de recomendación de video de YouTube guiada de forma determinista a corregir la desviación articular de mayor severidad.
 
-**Extensiones (Flujos Alternativos):**
-* **3.a. Fallo en estimación de landmarks (oclusión severa):**
+**Extensiones (o Flujos Alternativos):**
+* **3a. Fallo en estimación de landmarks (oclusión severa):**
   1. MediaPipe reporta una confianza media inferior a 0.5.
   2. El sistema alerta al Practicante y detiene el análisis sugiriendo mejor iluminación o encuadre.
-* **6.a. Gemini no identifica la técnica:**
+* **6a. Gemini no identifica la técnica:**
   1. Gemini devuelve "Técnica Desconocida / Estilo Libre".
   2. El sistema conmuta a un prompt de evaluación basado en principios universales de balance, postura y palanca.
-* **6.b. Técnica Desconocida (Zero-Shot Discovery / Técnica D):**
+* **6b. Técnica Desconocida (Zero-Shot Discovery / Técnica D):**
   1. El sistema identifica que la técnica analizada no está registrada en el sistema (ej. "Técnica D").
   2. El Servidor Local (vía Gemini Vision) analiza detalladamente el video para generar una descripción semántica y biomecánica formal (ángulos, fases y posturas de la técnica).
   3. El Servidor Local crea automáticamente una nueva entidad `Tecnica` en la base de datos relacional y genera los embeddings vectoriales de su descripción para indexarla de inmediato en el Vector DB.
   4. Gracias a este aprendizaje colectivo, si mañana el Practicante G (o cualquier otro usuario) carga un video ejecutando la "Técnica D", el sistema la reconocerá en el paso 6 y podrá evaluarla con el RAG utilizando el registro recién creado.
-* **7.a. No existen fuentes vectorizadas en el sistema (Modo Baseline Fallback):**
+* **7a. No existen fuentes vectorizadas en el sistema (Modo Baseline Fallback):**
   1. El Servidor Local (vía CentralVectorDBAdapter) reporta que la consulta vectorial de ChromaDB retornó 0 chunks.
   2. El DynamicPromptBuilder conmuta automáticamente a la plantilla Baseline sin inyección RAG.
   3. El sistema continúa con la inferencia de Jiu-Jitsu directa basada en el conocimiento nativo de la API de Gemini.
-* **9.a. Error de conexión de red:**
+* **9a. Error de conexión de red:**
   1. El envío del prompt al Servidor Local falla.
   2. El sistema almacena localmente el resumen biomecánico numérico y programa la inferencia diferida para cuando se restablezca la conexión.
 
-**Requisitos Especiales:**
+**Requisitos Especiales (Special Requirements):**
 * El video cargado o grabado debe tener un límite estricto de duración máxima de 45 segundos.
 * El cálculo biomecánico y la renderización en el reproductor 3D deben ser fluidos (tasa de refresco superior a 15 FPS en WebGL).
 
-**Lista de Variaciones de Tecnología y Datos:**
+**Variaciones de Tecnología y Datos (Technology and Data Variations List):**
 * Entrada de video en formato MP4, WebM o MOV.
 * Inferencia de landmarks usando modelos MediaPipe Pose en WebAssembly (WASM).
 
-**Frecuencia de Ocurrencia:**
+**Frecuencia de Ocurrencia (Frequency of Occurrence):**
 * Alta - Múltiples veces al día por practicante activo para evaluar sus combates o drills técnicos.
 
-**Problemas Abiertos:**
+**Problemas Abiertos (Open Issues):**
 * Optimizar la precisión de estimación z de landmarks bajo kimonos holgados.
 
 
@@ -818,10 +818,10 @@ flowchart TD
 * El usuario se encuentra conectado a internet y tiene acceso activo por red local/API al Servidor Local.
 * El archivo PDF o la URL de YouTube están en un formato legible.
 
-**Garantía de Éxito / Postcondiciones:**
+**Garantías de Éxito o Postcondiciones (Success Guarantees):**
 * Si la IA clasifica positivamente la pertinencia, se crea una instancia de `FuenteConocimiento` con el estado "Aceptado", persistiendo sus chunks y embeddings en la base de datos centralizada del Servidor Local. Si es inválido, es rechazado y eliminado sin persistir ningún dato.
 
-**Escenario Principal de Éxito (Flujo Básico):**
+**Escenario de Éxito Principal (o Flujo Básico):**
 1. El Practicante selecciona la opción "Ingestar Fuente de Conocimiento" en el panel.
 2. El Sistema presenta las opciones de carga: archivo PDF técnico o enlace de YouTube.
 3. El Practicante carga un archivo PDF desde su dispositivo o pega una URL de YouTube.
@@ -832,31 +832,31 @@ flowchart TD
 8. El Servidor Local persiste los fragmentos y vectores en la base de datos vectorial centralizada ChromaDB con el estado "Aceptado", quedando disponible de forma inmediata para el motor RAG de todos los usuarios.
 9. El Sistema en la PWA confirma al Practicante que el contenido fue validado y aceptado automáticamente.
 
-**Extensiones (Flujos Alternativos):**
-* **4.a. El archivo no es un PDF válido o la URL de YouTube es inaccesible:**
+**Extensiones (o Flujos Alternativos):**
+* **4a. El archivo no es un PDF válido o la URL de YouTube es inaccesible:**
   1. El Sistema detecta la anomalía de formato.
   2. El Sistema muestra un mensaje de error y retorna al paso 3.
-* **6.a. El motor de IA (Gemini) clasifica el contenido como Fuera de Dominio (ej. Boxeo, Cocina, etc.):**
+* **6a. El motor de IA (Gemini) clasifica el contenido como Fuera de Dominio (ej. Boxeo, Cocina, etc.):**
   1. Al ingestar un enlace de YouTube, `RetrievalAugmentedController` realiza la extracción previa de metadatos y análisis multimodal del video antes de moderar.
   2. `GeminiServiceAdapter` evalúa semánticamente el contenido hablado y visual. Si pertenece a dominios afines (técnicas de Jiu-Jitsu, sparrings, guardias, raspados o artes marciales), la IA valida la pertinencia.
   3. Si la clasificación es negativa, el Servidor Local rechaza la ingesta y notifica al Practicante: "Contenido rechazado: El material no está relacionado con el Jiu-Jitsu".
-* **7.a. Fallo de red en la comunicación con el Servidor Local:**
+* **7a. Fallo de red en la comunicación con el Servidor Local:**
   1. El envío de chunks o embeddings al Servidor Local falla.
   2. El Sistema notifica al Practicante que la base de datos central no está disponible y sugiere reintentar.
 
-**Requisitos Especiales:**
+**Requisitos Especiales (Special Requirements):**
 * El filtro autónomo de pertinencia de la IA debe responder en menos de 5 segundos.
 * El Servidor Local debe indexar los embeddings en tiempo real para disponibilidad inmediata.
 
-**Lista de Variaciones de Tecnología y Datos:**
+**Variaciones de Tecnología y Datos (Technology and Data Variations List):**
 * Carga de PDF a través de API multipart/form-data.
 * Subtítulos de YouTube recuperados mediante API de transcripción externa.
 * Protocolo HTTPS para la transferencia segura de documentos y metadatos.
 
-**Frecuencia de Ocurrencia:**
+**Frecuencia de Ocurrencia (Frequency of Occurrence):**
 * Baja a Media - Depende del dinamismo y aportes de la comunidad de la academia para enriquecer la base de conocimiento.
 
-**Problemas Abiertos:**
+**Problemas Abiertos (Open Issues):**
 * Manejo de transcripciones en idiomas diferentes al del dojo (requiere traducción o soporte multilingüe en tiempo real).
 
 
@@ -873,10 +873,10 @@ flowchart TD
 * El Practicante ha realizado al menos una sesión de análisis biomecánico (CU01) cuyos resultados están persistidos en la base de datos centralizada del Servidor Local.
 * Existe una instancia de `PerfilCompetencia` inicializada para el usuario.
 
-**Garantía de Éxito / Postcondiciones:**
+**Garantías de Éxito o Postcondiciones (Success Guarantees):**
 * Se calcula la evolución cinemática histórica del Practicante, se evalúa la recurrencia de desviaciones y se actualiza el plan pedagógico en `RutaAprendizaje`, sugiriendo un único video de YouTube recomendado o alternativo si no se detectó mejoría cinemática.
 
-**Escenario Principal de Éxito (Flujo Básico):**
+**Escenario de Éxito Principal (o Flujo Básico):**
 1. El Practicante navega a la sección "Progreso y Ruta de Aprendizaje" en la PWA.
 2. El Sistema carga el `PerfilCompetencia` del usuario desde la base de datos centralizada del Servidor Local.
 3. El `AdaptationController` consulta el historial de `ErrorBiomecanico` y la efectividad de las tutorías pasadas asociadas al Practicante.
@@ -886,26 +886,26 @@ flowchart TD
 7. El Sistema actualiza la entidad `RutaAprendizaje` y genera los reportes cinemáticos gráficos.
 8. El Sistema despliega la ruta de aprendizaje personalizada, incluyendo la tarjeta con 1 único enlace de YouTube actualizado y los drills anatómicos recomendados.
 
-**Extensiones (Flujos Alternativos):**
-* **3.a. No existe historial de análisis previo:**
+**Extensiones (o Flujos Alternativos):**
+* **3a. No existe historial de análisis previo:**
   1. El Sistema detecta que `PerfilCompetencia` no contiene entradas de `ErrorBiomecanico`.
   2. El Sistema muestra un mensaje indicando que aún no hay datos de progreso e invita al Practicante a realizar su primer análisis (CU01).
-* **5.a. El usuario ha mostrado mejoría cinemática en las últimas tres sesiones:**
+* **5a. El usuario ha mostrado mejoría cinemática en las últimas tres sesiones:**
   1. El Sistema determina que las desviaciones se han reducido por debajo del umbral de $15^{\circ}$.
   2. El Sistema mantiene la estrategia pedagógica y felicita al Practicante.
   3. El flujo continúa al paso 7.
 
-**Requisitos Especiales:**
+**Requisitos Especiales (Special Requirements):**
 * La comparación cinemática de recurrencia de errores debe aplicarse estrictamente a la misma técnica para evitar falsos positivos.
 
-**Lista de Variaciones de Tecnología y Datos:**
+**Variaciones de Tecnología y Datos (Technology and Data Variations List):**
 * Visualización de datos usando SVG responsivos o gráficos dinámicos basados en Chart.js.
 * Formatos de salida JSON para persistir las estrategias recomendadas en el perfil local.
 
-**Frecuencia de Ocurrencia:**
+**Frecuencia de Ocurrencia (Frequency of Occurrence):**
 * Alta - Cada vez que el Practicante consulta su perfil en la PWA para comprobar su avance y ajustar sus entrenamientos.
 
-**Problemas Abiertos:**
+**Problemas Abiertos (Open Issues):**
 * Definir umbrales dinámicos de normalización para personas de complexión asimétrica y optimizar el cálculo adaptativo en el cliente móvil.
 
 
@@ -921,10 +921,10 @@ flowchart TD
 **Precondiciones:**
 * El usuario ha creado un perfil de Practicante en la aplicación y su instancia de `Usuario` existe en la base de datos centralizada del Servidor Local.
 
-**Garantía de Éxito / Postcondiciones:**
+**Garantías de Éxito o Postcondiciones (Success Guarantees):**
 * Se modificó la instancia de `Usuario` asociada al Practicante, actualizando los atributos `altura` y `peso` con los nuevos valores numéricos validados, quedando disponibles de inmediato para el siguiente análisis biomecánico (CU01).
 
-**Escenario Principal de Éxito (Flujo Básico):**
+**Escenario de Éxito Principal (o Flujo Básico):**
 1. El Practicante navega a la sección "Ajustes de Perfil" desde el menú principal.
 2. El Sistema carga los datos antropométricos actuales del objeto `Usuario` desde la base de datos centralizada del Servidor Local y los presenta en un formulario editable.
 3. El Practicante ingresa o modifica su altura (en cm) y peso (en kg).
@@ -932,27 +932,27 @@ flowchart TD
 5. El Sistema persiste el valor traducido en metros (`altura: Decimal [0.50, 2.50] m`) y el peso en kilogramos (`peso: Decimal [30.00, 250.00] kg`) en la instancia de `Usuario` en PostgreSQL, garantizando la integridad relacional del esquema (Tabla 5) y evitando excepciones de desbordamiento numérico.
 6. El Sistema confirma al Practicante que sus datos fueron actualizados correctamente.
 
-**Extensiones (Flujos Alternativos):**
-* **4.a. Los valores ingresados están fuera de rango:**
+**Extensiones (o Flujos Alternativos):**
+* **4a. Los valores ingresados están fuera de rango:**
   1. El Sistema detecta que la altura o el peso no se encuentran dentro de los rangos aceptables.
   2. El Sistema resalta el campo inválido con un mensaje de error específico.
   3. El flujo retorna al paso 3.
-* **5.a. Error de escritura en la base de datos centralizada:**
+* **5a. Error de escritura en la base de datos centralizada:**
   1. El Sistema no puede persistir los datos por un fallo de red o almacenamiento en el Servidor Local.
   2. El Sistema notifica al Practicante que no se pudieron guardar los cambios y sugiere reintentar.
 
-**Requisitos Especiales:**
+**Requisitos Especiales (Special Requirements):**
 * Los datos antropométricos se almacenan de forma segura en la base de datos centralizada del Servidor Local y no se transmiten a nubes comerciales de terceros.
 * El formulario debe incluir indicadores de unidad de medida (cm, kg) claros para evitar confusión del usuario.
 
-**Lista de Variaciones de Tecnología y Datos:**
+**Variaciones de Tecnología y Datos (Technology and Data Variations List):**
 * Ingreso de datos antropométricos manuales por el usuario.
 * Soporte para selección de unidades imperiales (pulgadas/libras) con conversión automática.
 
-**Frecuencia de Ocurrencia:**
+**Frecuencia de Ocurrencia (Frequency of Occurrence):**
 * Baja - Ocasionalmente ante cambios físicos significativos o durante el registro inicial del practicante.
 
-**Problemas Abiertos:**
+**Problemas Abiertos (Open Issues):**
 * Manejar la conversión dinámica si el usuario cambia el sistema de unidades del perfil (métrico/imperial) sin introducir ruido en el historial biomecánico acumulado.
 
 
@@ -968,10 +968,10 @@ flowchart TD
 **Precondiciones:**
 * El Practicante ha realizado al menos una sesión de entrenamiento (CU01) que está almacenada como instancia de `SesionEntrenamiento` en la base de datos centralizada del Servidor Local.
 
-**Garantía de Éxito / Postcondiciones:**
+**Garantías de Éxito o Postcondiciones (Success Guarantees):**
 * Se modificó, eliminó o reclasificó al menos una instancia de `SesionEntrenamiento` en el historial de la base de datos centralizada del Servidor Local.
 
-**Escenario Principal de Éxito (Flujo Básico):**
+**Escenario de Éxito Principal (o Flujo Básico):**
 1. El Practicante navega a la sección "Historial de Entrenamientos" desde el panel principal.
 2. El Sistema carga todas las instancias de `SesionEntrenamiento` asociadas al perfil del Practicante desde la base de datos centralizada del Servidor Local.
 3. El Sistema despliega la lista de sesiones ordenadas cronológicamente, mostrando metadatos resumidos (fecha, técnica detectada, puntuación táctica).
@@ -981,30 +981,30 @@ flowchart TD
 7. El Sistema ejecuta la operación CRUD correspondiente sobre la instancia de `SesionEntrenamiento` en la base de datos centralizada del Servidor Local.
 8. El Sistema confirma al Practicante que la operación se completó exitosamente y actualiza la vista del historial.
 
-**Extensiones (Flujos Alternativos):**
-* **3.a. No existen sesiones de entrenamiento registradas:**
+**Extensiones (o Flujos Alternativos):**
+* **3a. No existen sesiones de entrenamiento registradas:**
   1. El Sistema detecta que la base de datos no contiene instancias de SesionEntrenamiento para este usuario.
   2. El Servidor Local responde HTTP 200 con un arreglo vacío [] y la interfaz PWA (`HistoryView`) muestra la tarjeta limpia de bienvenida invitando al Practicante a realizar su primer análisis sin lanzar errores.
-* **6.a. El Practicante selecciona eliminar una sesión:**
+* **6a. El Practicante selecciona eliminar una sesión:**
   1. El Sistema muestra un diálogo de confirmación advirtiendo que la acción es irreversible.
   2. Si el Practicante confirma, el Sistema elimina la instancia de `SesionEntrenamiento` y sus entidades asociadas (`AnalisisBiomecanico`, `MetricaCinematica`) de la base de datos centralizada del Servidor Local.
   3. Si el Practicante cancela, el flujo retorna al paso 5.
-* **7.a. Error de escritura en la base de datos centralizada durante la operación:**
+* **7a. Error de escritura en la base de datos centralizada durante la operación:**
   1. El Sistema falla al persistir la operación CRUD.
   2. El Sistema notifica al Practicante que no se pudo completar la acción y sugiere reintentar.
 
-**Requisitos Especiales:**
+**Requisitos Especiales (Special Requirements):**
 * La lista de sesiones debe soportar filtrado por rango de fechas, técnica y etiqueta para facilitar la navegación en historiales extensos.
 * La eliminación de sesiones debe ser lógica (marcado como eliminado) o física en la base de datos centralizada, garantizando que los datos eliminados no sean recuperables por consultas semánticas futuras.
 
-**Lista de Variaciones de Tecnología y Datos:**
+**Variaciones de Tecnología y Datos (Technology and Data Variations List):**
 * Visualización móvil optimizada para interacción táctil rápida.
 * Exportación de metadatos de sesión en formato CSV o JSON.
 
-**Frecuencia de Ocurrencia:**
+**Frecuencia de Ocurrencia (Frequency of Occurrence):**
 * Media - Al final de cada semana o mes de entrenamiento para depurar videos y organizar la base de datos local.
 
-**Problemas Abiertos:**
+**Problemas Abiertos (Open Issues):**
 * Optimizar la velocidad de carga de miniaturas de esqueleto 3D para dispositivos de baja gama.
 
 
@@ -1020,31 +1020,31 @@ flowchart TD
 **Precondiciones:**
 * El usuario se encuentra navegando en la PWA y accede a la sección de configuración.
 
-**Garantía de Éxito / Postcondiciones:**
+**Garantías de Éxito o Postcondiciones (Success Guarantees):**
 * Las preferencias del sistema fueron actualizadas y persistidas localmente en `localStorage`.
 
-**Escenario Principal de Éxito (Flujo Básico):**
+**Escenario de Éxito Principal (o Flujo Básico):**
 1. El Practicante accede a la vista de Preferencias del Sistema.
 2. El Sistema muestra las opciones configurables (Idioma de retroalimentación, escala métrica, nivel de renderizado 3D).
 3. El Practicante modifica los parámetros deseados.
 4. El Practicante guarda los cambios.
 5. El Sistema persiste las nuevas preferencias en el cliente y actualiza dinámicamente los componentes visuales.
 
-**Extensiones (Flujos Alternativos):**
-* **4.a. Restablecer valores predeterminados:**
+**Extensiones (o Flujos Alternativos):**
+* **4a. Restablecer valores predeterminados:**
   1. El Practicante selecciona la opción "Restablecer Ajustes de Fábrica".
   2. El Sistema restaura la configuración por defecto y actualiza la vista.
 
-**Requisitos Especiales:**
+**Requisitos Especiales (Special Requirements):**
 * Las preferencias deben cargarse instantáneamente al iniciar la aplicación sin latencia perceptible.
 
-**Lista de Variaciones de Tecnología y Datos:**
+**Variaciones de Tecnología y Datos (Technology and Data Variations List):**
 * Idioma (Español / Inglés), Sistema Métrico (Internacional / Imperial).
 
-**Frecuencia de Ocurrencia:**
+**Frecuencia de Ocurrencia (Frequency of Occurrence):**
 * Baja - Generalmente configurado durante la primera instalación o cambios esporádicos.
 
-**Problemas Abiertos:**
+**Problemas Abiertos (Open Issues):**
 * Ninguno.
 
 
@@ -1059,10 +1059,10 @@ flowchart TD
 **Precondiciones:**
 * El dispositivo cuenta con una cámara funcional con permisos de acceso concedidos.
 
-**Garantía de Éxito / Postcondiciones:**
+**Garantías de Éxito o Postcondiciones (Success Guarantees):**
 * El entorno de captura fue calibrado con éxito y el sistema confirma que la visibilidad y confianza de landmarks es óptima.
 
-**Escenario Principal de Éxito (Flujo Básico):**
+**Escenario de Éxito Principal (o Flujo Básico):**
 1. El Practicante activa la vista de Calibración de Captura.
 2. El Sistema inicializa el pipeline de MediaPipe Pose en tiempo real sobre el stream de la cámara.
 3. El Sistema superpone guías visuales en pantalla indicando la posición corporal deseada.
@@ -1070,21 +1070,21 @@ flowchart TD
 5. El Sistema evalúa la visibilidad media de los 33 landmarks.
 6. El Sistema confirma visualmente mediante un indicador verde que la calibración es óptima (Confianza > 0.5).
 
-**Extensiones (Flujos Alternativos):**
-* **5.a. Oclusión o baja iluminación (Confianza < 0.5):**
+**Extensiones (o Flujos Alternativos):**
+* **5a. Oclusión o baja iluminación (Confianza < 0.5):**
   1. El Sistema detecta que la visibilidad media es insuficiente.
   2. El Sistema muestra una alerta sugiriendo mejorar la iluminación o ajustar la distancia de la cámara.
 
-**Requisitos Especiales:**
+**Requisitos Especiales (Special Requirements):**
 * La evaluación de visibilidad debe ejecutarse en tiempo real a 30 FPS en el cliente web.
 
-**Lista de Variaciones de Tecnología y Datos:**
+**Variaciones de Tecnología y Datos (Technology and Data Variations List):**
 * Cámara frontal o trasera de dispositivos móviles o webcams de escritorio.
 
-**Frecuencia de Ocurrencia:**
+**Frecuencia de Ocurrencia (Frequency of Occurrence):**
 * Media - Al iniciar una sesión de sparring en un nuevo espacio físico.
 
-**Problemas Abiertos:**
+**Problemas Abiertos (Open Issues):**
 * Ninguno.
 
 
@@ -1099,24 +1099,24 @@ flowchart TD
 **Precondiciones:**
 * Se ha completado un diagnóstico biomecánico (CU01).
 
-**Garantía de Éxito / Postcondiciones:**
+**Garantías de Éxito o Postcondiciones (Success Guarantees):**
 * Se presentó al Practicante un único video de YouTube recomendado para la corrección pedagógica de su articulación afectada.
 
-**Escenario Principal de Éxito (Flujo Básico):**
+**Escenario de Éxito Principal (o Flujo Básico):**
 1. El Sistema identifica la articulación con mayor desviación biomecánica en la evaluación.
 2. El Sistema consulta las fuentes de YouTube registradas en PostgreSQL/ChromaDB o aplica el fallback de búsqueda dirigida.
 3. El Sistema asigna el enlace del video recomendado en el reporte de evaluación.
 4. El Practicante selecciona la tarjeta del video y es redirigido a YouTube para visualizar el drill correctivo.
 
-**Extensiones (Flujos Alternativos):**
-* **2.a. Fallo recurrente en la misma articulación (> 3 intentos):**
+**Extensiones (o Flujos Alternativos):**
+* **2a. Fallo recurrente en la misma articulación (> 3 intentos):**
   1. El Sistema detecta que el Practicante insiste en el mismo error cinemático.
   2. El Sistema conmuta la estrategia pedagógica y selecciona un video alternativo enfocado en drills de aislamiento.
 
-**Requisitos Especiales:**
+**Requisitos Especiales (Special Requirements):**
 * Retornar exactamente un único video por sesión.
 
-**Frecuencia de Ocurrencia:**
+**Frecuencia de Ocurrencia (Frequency of Occurrence):**
 * Alta - Tras cada evaluación biomecánica.
 
 
@@ -1131,19 +1131,19 @@ flowchart TD
 **Precondiciones:**
 * El usuario ha recibido una recomendación de video de YouTube asociada a un error biomecánico detectado (CU08).
 
-**Garantía de Éxito / Postcondiciones:**
+**Garantías de Éxito o Postcondiciones (Success Guarantees):**
 * Se guardó la interacción de visualización mediante `POST /api/sesion/visualizacion` en PostgreSQL.
 
-**Escenario Principal de Éxito (Flujo Básico):**
+**Escenario de Éxito Principal (o Flujo Básico):**
 1. El Practicante hace clic en el enlace del video tutorial recomendado.
 2. El Sistema registra de forma asíncrona la visualización asociada a su `usuarioId`.
 3. El Sistema actualiza el estado de la lección en la base de datos relacional.
 
-**Extensiones (Flujos Alternativos):**
-* **2.a. Error de red al registrar visualización:**
+**Extensiones (o Flujos Alternativos):**
+* **2a. Error de red al registrar visualización:**
   1. El Sistema registra el evento localmente para reintentar la sincronización de forma asíncrona.
 
-**Frecuencia de Ocurrencia:**
+**Frecuencia de Ocurrencia (Frequency of Occurrence):**
 * Alta - Cada vez que el practicante abre un tutorial recomendado.
 
 
@@ -1158,34 +1158,34 @@ flowchart TD
 **Precondiciones:**
 * El API Gateway de Express se encuentra en ejecución con `LLMRedirectionProxy` y `RetrievalAugmentedController` inicializados.
 
-**Garantía de Éxito / Postcondiciones:**
+**Garantías de Éxito o Postcondiciones (Success Guarantees):**
 * El sistema entregó un diagnóstico biomecánico estructurado (`AnalisisReporte`) conforme al contrato establecido, garantizando la continuidad operativa sin lanzar excepciones no controladas al cliente.
 
-**Escenario Principal de Éxito (Flujo Básico):**
+**Escenario de Éxito Principal (o Flujo Básico):**
 1. El Sistema recibe una solicitud de análisis biomecánico (`analizarVideo`).
 2. El `RetrievalAugmentedController` consulta el Vector Store ChromaDB en `http://localhost:8000`.
 3. ChromaDB responde con los chunks semánticos más relevantes y el sistema compila el prompt con RAG Vivo.
 4. El `LLMRedirectionProxy` despacha la inferencia multimodal al proveedor primario (`GeminiServiceAdapter` con `gemini-3.5-flash-lite`).
 5. Google Gemini retorna el diagnóstico estructurado en formato JSON y el sistema completa la evaluación con éxito.
 
-**Extensiones (Flujos Alternativos):**
-* **2.a. Vector Store ChromaDB fuera de línea o inalcanzable:**
+**Extensiones (o Flujos Alternativos):**
+* **2a. Vector Store ChromaDB fuera de línea o inalcanzable:**
   1. El adaptador captura la excepción `VectorDBUnavailableException`.
   2. El Sistema conmuta automáticamente al **Modo Fallback Baseline**, compilando el prompt cinemático sin chunks externos.
   3. El API Gateway responde con estado HTTP 207 Multi-Status (Degradación Graciosa), informando que la base vectorial está temporalmente inactiva pero el análisis continúa.
-* **4.a. Proveedor primario (Google Gemini) falla por saturación de cuota (HTTP 429), timeout o error 503:**
+* **4a. Proveedor primario (Google Gemini) falla por saturación de cuota (HTTP 429), timeout o error 503:**
   1. El `LLMRedirectionProxy` captura el error del proveedor primario.
   2. El Proxy conmuta en caliente al proveedor secundario (`ChatGPTServiceAdapter` con OpenAI `gpt-4o-mini`).
   3. Si OpenAI responde con éxito, el sistema retorna el análisis sin que el practicante perciba la falla.
-* **4.b. Colapso total de conectividad (Gemini y OpenAI inalcanzables):**
+* **4b. Colapso total de conectividad (Gemini y OpenAI inalcanzables):**
   1. El `LLMRedirectionProxy` detecta que ambos proveedores en la nube fallaron.
   2. El Sistema activa la **Resiliencia de Capa 3 (Local Emergency JSON)**, generando un diagnóstico biomecánico determinista basado en los ángulos articulares locales de MediaPipe.
   3. El sistema entrega el feedback postural preservando el contrato estructurado, permitiendo la persistencia relacional en PostgreSQL.
 
-**Requisitos Especiales:**
+**Requisitos Especiales (Special Requirements):**
 * La conmutación de failover debe completarse en menos de 3 segundos sin bloquear la cola de peticiones de Express.
 
-**Frecuencia de Ocurrencia:**
+**Frecuencia de Ocurrencia (Frequency of Occurrence):**
 * Continua - Ejecutada como salvaguarda en cada ciclo de inferencia.
 
 
@@ -1200,23 +1200,23 @@ flowchart TD
 **Precondiciones:**
 * El Servidor Local se encuentra en ejecución con la base de datos relacional PostgreSQL activa.
 
-**Garantía de Éxito / Postcondiciones:**
+**Garantías de Éxito o Postcondiciones (Success Guarantees):**
 * Se persistió el registro en la tabla `RegistroActividad`. Si se detecta una caída de análisis superior al 50% en un intervalo de 7 días ($EVI < 0.50$), se genera la alerta autónoma `BAJO_COMPROMISO` para el dojo.
 
-**Escenario Principal de Éxito (Flujo Básico):**
+**Escenario de Éxito Principal (o Flujo Básico):**
 1. El usuario realiza una acción en la PWA (inicio de sesión, análisis de combate o visualización de lección).
 2. El cliente PWA o el API Gateway invoca a `TelemetryController.registrarEvento()` para insertar un nuevo registro en `RegistroActividad` con fecha, usuario y tipo de evento.
 3. El proceso cron o tarea en segundo plano invoca a `TelemetryController.calcularEVI(dojoId, 7)` ejecutando una consulta SQL no procedural de agregación temporal (`GROUP BY`) sobre los últimos 7 días.
 4. El Sistema compara el volumen de análisis del periodo actual contra el periodo anterior.
 5. Si el uso se mantiene o incrementa ($EVI \ge 0.50$), el estado del dojo permanece en `NORMAL`.
 
-**Extensiones (Flujos Alternativos):**
-* **5.a. Caída de análisis superior al 50% ($EVI < 0.50$):**
+**Extensiones (o Flujos Alternativos):**
+* **5a. Caída de análisis superior al 50% ($EVI < 0.50$):**
   1. El Sistema detecta una tasa decreciente o nula de análisis en los últimos 7 días.
   2. El `TelemetryController` conmuta el estado de telemetría del dojo a `BAJO_COMPROMISO`.
   3. El Sistema genera una notificación o alerta visible en el panel del instructor indicando riesgo de deserción en la academia.
 
-**Frecuencia de Ocurrencia:**
+**Frecuencia de Ocurrencia (Frequency of Occurrence):**
 * Alta (Registro de eventos) / Diaria (Cálculo no procedural de métricas EVI).
 
 
