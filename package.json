@@ -11,6 +11,7 @@
     "dojo": "npm run dev",
     "db:clean": "npm run db:clean --prefix server",
     "ingestar": "npm run ingestar --prefix server",
+    "test": "npm run test --prefix server",
     "build": "npm run build --prefix client"
   },
   "dependencies": {
