@@ -689,8 +689,7 @@ export class PersistenceFacade implements IPersistenceService {
       
       const todosUsuarios = await prisma.usuario.findMany({
         select: { cinturon: true, createdAt: true, nombre: true, email: true, id: true },
-        orderBy: { createdAt: 'desc' },
-        take: 50
+        orderBy: { nombre: 'asc' }
       });
 
       const practicantes = todosUsuarios.filter(u => !adminKeywords.includes((u.nombre || "").toLowerCase()));
