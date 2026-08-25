@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Practicante {
   usuarioId: string;
@@ -28,6 +28,20 @@ export function WelcomeScreen({ onPracticanteSeleccionado }: Props) {
   // Selector de Portal: Practicante vs Administración del Dojo
   const [portal, setPortal] = useState<"practicante" | "admin">("practicante");
   const [modo, setModo] = useState<"login" | "registro">("login");
+
+  // Lista de practicantes del dojo para autocompletado inteligente
+  const [listaPracticantes, setListaPracticantes] = useState<Practicante[]>([]);
+
+  useEffect(() => {
+    fetch("/api/usuario/listar")
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setListaPracticantes(data.filter(p => (p.nombre || "").toLowerCase() !== "sensei"));
+        }
+      })
+      .catch(e => console.warn("Error al cargar lista de practicantes:", e));
+  }, []);
 
   // Campos de Login Practicante
   const [loginUsuario, setLoginUsuario] = useState("");
@@ -475,13 +489,14 @@ export function WelcomeScreen({ onPracticanteSeleccionado }: Props) {
               <form onSubmit={handleLoginPracticante} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#e2e8f0", marginBottom: "6px" }}>
-                    Nombre de Usuario
+                    Nombre del Practicante o Número
                   </label>
                   <input
                     type="text"
+                    list="lista-alumnos"
                     value={loginUsuario}
                     onChange={e => setLoginUsuario(e.target.value)}
-                    placeholder="Ej. santiago o Practicante"
+                    placeholder="Escribe o selecciona tu nombre (Ej. Mike Baigorria)"
                     required
                     autoFocus
                     style={{
@@ -496,17 +511,29 @@ export function WelcomeScreen({ onPracticanteSeleccionado }: Props) {
                       outline: "none"
                     }}
                   />
+                  <datalist id="lista-alumnos">
+                    {listaPracticantes.map(p => (
+                      <option key={p.usuarioId} value={p.nombre}>
+                        {p.nombre} ({p.cinturon})
+                      </option>
+                    ))}
+                  </datalist>
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#e2e8f0", marginBottom: "6px" }}>
-                    Contraseña
-                  </label>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                    <label style={{ fontSize: "0.82rem", fontWeight: 700, color: "#e2e8f0" }}>
+                      Contraseña
+                    </label>
+                    <span style={{ fontSize: "0.75rem", color: "#f87171", fontWeight: 600 }}>
+                      Inicial: 1234
+                    </span>
+                  </div>
                   <input
                     type="password"
                     value={loginPassword}
                     onChange={e => setLoginPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="Contraseña (1234)"
                     required
                     style={{
                       width: "100%",
@@ -520,6 +547,9 @@ export function WelcomeScreen({ onPracticanteSeleccionado }: Props) {
                       outline: "none"
                     }}
                   />
+                  <p style={{ margin: "6px 0 0 0", fontSize: "0.75rem", color: "#94a3b8" }}>
+                    🥋 Todos los alumnos registrados tienen la contraseña temporal <strong>1234</strong>.
+                  </p>
                 </div>
 
                 <button
