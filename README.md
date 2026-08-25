@@ -197,13 +197,15 @@ En este trabajo se expone el diseño y modelado orientado a objetos de una plata
 - [**Figura 4** *DSS-CU02: Flujo de Ingesta y Vectorización RAG*](#figura-4)
 - [**Figura 5** *DSS-CU03: Flujo de Consulta de Progreso y Tutoría Adaptativa*](#figura-5)
 - [**Figura 6** *DSS-CU08: Flujo de Recomendación de Videos de YouTube*](#figura-6)
-- [**Figura 7** *Diagrama de Secuencia de Diseño (Realización de CU01)*](#figura-7)
-- [**Figura 8** *Máquina de Estados de SesionEntrenamientoController*](#figura-8)
-- [**Figura 9** *Diagrama de Clases de Diseño (DCD)*](#figura-9)
-- [**Figura 10** *Diagrama de Despliegue Físico de OpenBJJ*](#figura-10)
+- [**Figura 7** *DSS-CU09: Flujo de Registro de Visualización de YouTube*](#figura-7)
+- [**Figura 8** *DSS-CU10: Flujo de Calibración de Inferencia y Conmutación de Failover*](#figura-8)
+- [**Figura 9** *DSS-CU11: Flujo de Telemetría Analítica y Cálculo de EVI*](#figura-9)
+- [**Figura 10** *Diagrama de Secuencia de Diseño (Realización de CU01)*](#figura-10)
 - [**Figura 11** *Diagrama de Secuencia de Diseño (Realización de CU02)*](#figura-11)
 - [**Figura 12** *Diagrama de Secuencia de Diseño (Realización de CU03)*](#figura-12)
-- [**Figura 13** *DSS-CU09: Flujo de Registro de Visualización de YouTube*](#figura-13)
+- [**Figura 13** *Máquina de Estados de SesionEntrenamientoController*](#figura-13)
+- [**Figura 14** *Diagrama de Clases de Diseño (DCD)*](#figura-14)
+- [**Figura 15** *Diagrama de Despliegue Físico de OpenBJJ*](#figura-15)
 
 ---
 
@@ -1145,6 +1147,48 @@ flowchart TD
 * Alta - Cada vez que el practicante abre un tutorial recomendado.
 
 
+### Caso de Uso CU10: Calibrar Inferencia Local y Failover Proxy
+
+**Actor Principal:** Servidor Local / Sistema
+
+**Interesados y sus Intereses:**
+* **Practicante / Instructor:** Desea que las sesiones de análisis en el tatami nunca se interrumpan ni denieguen el servicio por caídas de internet, latencia de red o saturación de cuotas de proveedores de IA en la nube.
+* **Sistema / API Gateway:** Requiere monitorizar la disponibilidad del Vector Store (ChromaDB) y de las APIs de LLM (Google Gemini y OpenAI), conmutando en caliente y de forma transparente entre RAG Vivo, Baseline Fallback y Local Emergency JSON.
+
+**Precondiciones:**
+* El API Gateway de Express se encuentra en ejecución con `LLMRedirectionProxy` y `RetrievalAugmentedController` inicializados.
+
+**Garantía de Éxito / Postcondiciones:**
+* El sistema entregó un diagnóstico biomecánico estructurado (`AnalisisReporte`) conforme al contrato establecido, garantizando la continuidad operativa sin lanzar excepciones no controladas al cliente.
+
+**Escenario Principal de Éxito (Flujo Básico):**
+1. El Sistema recibe una solicitud de análisis biomecánico (`analizarVideo`).
+2. El `RetrievalAugmentedController` consulta el Vector Store ChromaDB en `http://localhost:8000`.
+3. ChromaDB responde con los chunks semánticos más relevantes y el sistema compila el prompt con RAG Vivo.
+4. El `LLMRedirectionProxy` despacha la inferencia multimodal al proveedor primario (`GeminiServiceAdapter` con `gemini-3.5-flash-lite`).
+5. Google Gemini retorna el diagnóstico estructurado en formato JSON y el sistema completa la evaluación con éxito.
+
+**Extensiones (Flujos Alternativos):**
+* **2.a. Vector Store ChromaDB fuera de línea o inalcanzable:**
+  1. El adaptador captura la excepción `VectorDBUnavailableException`.
+  2. El Sistema conmuta automáticamente al **Modo Fallback Baseline**, compilando el prompt cinemático sin chunks externos.
+  3. El API Gateway responde con estado HTTP 207 Multi-Status (Degradación Graciosa), informando que la base vectorial está temporalmente inactiva pero el análisis continúa.
+* **4.a. Proveedor primario (Google Gemini) falla por saturación de cuota (HTTP 429), timeout o error 503:**
+  1. El `LLMRedirectionProxy` captura el error del proveedor primario.
+  2. El Proxy conmuta en caliente al proveedor secundario (`ChatGPTServiceAdapter` con OpenAI `gpt-4o-mini`).
+  3. Si OpenAI responde con éxito, el sistema retorna el análisis sin que el practicante perciba la falla.
+* **4.b. Colapso total de conectividad (Gemini y OpenAI inalcanzables):**
+  1. El `LLMRedirectionProxy` detecta que ambos proveedores en la nube fallaron.
+  2. El Sistema activa la **Resiliencia de Capa 3 (Local Emergency JSON)**, generando un diagnóstico biomecánico determinista basado en los ángulos articulares locales de MediaPipe.
+  3. El sistema entrega el feedback postural preservando el contrato estructurado, permitiendo la persistencia relacional en PostgreSQL.
+
+**Requisitos Especiales:**
+* La conmutación de failover debe completarse en menos de 3 segundos sin bloquear la cola de peticiones de Express.
+
+**Frecuencia de Ocurrencia:**
+* Continua - Ejecutada como salvaguarda en cada ciclo de inferencia.
+
+
 ### Caso de Uso CU11: Generar Telemetría y Alertas de Deserción
 
 **Actor Principal:** Servidor Local / Instructor
@@ -1185,7 +1229,7 @@ Los diagramas describen el comportamiento del sistema como caja negra, capturand
 ### **DSS-CU01: Realizar Análisis Biomecánico y Autodetección**
 
 <a id="figura-3"></a>
-**Figura 3**  
+*Figura 3*  
 *DSS-CU01: Flujo Completo de Análisis Biomecánico y Autodetección*
 
 ```mermaid
@@ -1203,7 +1247,7 @@ sequenceDiagram
 ### **DSS-CU02: Ingestar Nueva Fuente de Conocimiento (RAG)**
 
 <a id="figura-4"></a>
-**Figura 4**  
+*Figura 4*  
 *DSS-CU02: Flujo de Ingesta y Vectorización RAG*
 
 ```mermaid
@@ -1220,7 +1264,7 @@ sequenceDiagram
 ### **DSS-CU03: Consultar Progreso y Tutoría Adaptativa**
 
 <a id="figura-5"></a>
-**Figura 5**  
+*Figura 5*  
 *DSS-CU03: Flujo de Consulta de Progreso y Tutoría Adaptativa*
 
 ```mermaid
@@ -1234,10 +1278,10 @@ sequenceDiagram
     Sistema-->>Practicante: mostrarRutaAprendizajePersonalizada(estrategiaActiva, drillsRecomendados)
 ```
 
-### **DSS-CU09: Recibir Recomendación de Video de YouTube**
+### **DSS-CU08: Recibir Recomendación de Video de YouTube**
 
 <a id="figura-6"></a>
-**Figura 6**  
+*Figura 6*  
 *DSS-CU08: Flujo de Recomendación de Videos de YouTube*
 
 ```mermaid
@@ -1254,8 +1298,8 @@ sequenceDiagram
 
 ### **DSS-CU09: Registrar Visualización de Video de YouTube**
 
-<a id="figura-13"></a>
-**Figura 13**  
+<a id="figura-7"></a>
+*Figura 7*  
 *DSS-CU09: Flujo de Registro de Visualización de YouTube*
 
 ```mermaid
@@ -1270,6 +1314,73 @@ sequenceDiagram
     
     Practicante->>Sistema: registrarVisualizacionConfirmada(videoId)
     Sistema-->>Practicante: actualizarHistorialVisualizacion(estadoGuardado)
+```
+
+### **DSS-CU10: Calibrar Inferencia Local y Failover Proxy**
+
+<a id="figura-8"></a>
+*Figura 8*  
+*DSS-CU10: Flujo de Calibración de Inferencia y Conmutación de Failover*
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Sistema as API Gateway / Proxy
+    participant ChromaDB as ChromaDB (Vector Store)
+    participant Gemini as Google Gemini (Primario)
+    participant OpenAI as OpenAI (Secundario)
+    participant Fallback as Emergency Local (Capa 3)
+
+    Sistema->>ChromaDB: consultarVectores(tecnicaId)
+    alt ChromaDB Inaccesible
+        ChromaDB-->>Sistema: Error de Conexión
+        Note over Sistema: Activa Modo Fallback Baseline (HTTP 207)
+    else ChromaDB Disponible
+        ChromaDB-->>Sistema: Chunks Semánticos
+    end
+
+    Sistema->>Gemini: inferenciaMultimodal(prompt)
+    alt Gemini Activo (200 OK)
+        Gemini-->>Sistema: Reporte JSON
+    else Gemini Falla (429 / 503 / Timeout)
+        Sistema->>OpenAI: conmutarFailover(prompt)
+        alt OpenAI Activo
+            OpenAI-->>Sistema: Reporte JSON
+        else Colapso Total Cloud
+            Sistema->>Fallback: generarDiagnosticoLocal(metricas)
+            Fallback-->>Sistema: Reporte Determinista Local
+        end
+    end
+```
+
+### **DSS-CU11: Generar Telemetría y Alertas de Deserción**
+
+<a id="figura-9"></a>
+*Figura 9*  
+*DSS-CU11: Flujo de Telemetría Analítica y Cálculo de EVI*
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Practicante
+    participant Sistema as Servidor Local (Express)
+    participant PostgreSQL as Base de Datos (PostgreSQL)
+    actor Instructor
+
+    Practicante->>Sistema: ejecutarAccion(inicioSesion / analisis / leccion)
+    Sistema->>PostgreSQL: INSERT INTO RegistroActividad (evento, fecha, usuarioId)
+    PostgreSQL-->>Sistema: Evento Registrado
+
+    Note over Sistema: Proceso Periódico Cron: calcularEVI(dojoId, 7)
+    Sistema->>PostgreSQL: SELECT COUNT(*) GROUP BY fecha (Últimos 7 días)
+    PostgreSQL-->>Sistema: Conteo Agregado Temporal
+
+    alt Tasa de Análisis decrece > 50% (EVI < 0.50)
+        Sistema->>Sistema: conmutarEstadoDojo("BAJO_COMPROMISO")
+        Sistema-->>Instructor: notificarAlertaDeserción(dojoId, métricas)
+    else Tasa Estable o Creciente (EVI >= 0.50)
+        Sistema->>Sistema: mantenerEstadoDojo("NORMAL")
+    end
 ```
 
 ---
@@ -1325,6 +1436,29 @@ sequenceDiagram
 *   **Postcondiciones:**
     *   Se modificó la instancia de `Usuario` asociada al `usuarioId`.
     *   `Usuario.altura` y `Usuario.peso` se guardaron con los nuevos valores numéricos provistos en `datos`.
+
+---
+
+### **Contrato CO10: `calibrarInferenciaFailover`**
+*   **Operación:** `calibrarInferenciaFailover(promptJSON: String): AnalisisReporte`
+*   **Referencias Cruzadas:** Caso de Uso CU10 (Calibrar Inferencia Local y Failover Proxy).
+*   **Precondiciones:**
+    *   `LLMRedirectionProxy` se encuentra inicializado con adaptadores primario (`GeminiServiceAdapter`) y secundario (`ChatGPTServiceAdapter`).
+*   **Postcondiciones:**
+    *   Se ejecutó la inferencia y se retornó una estructura válida conforme al contrato `AnalisisReporte`.
+    *   Si el proveedor primario arrojó excepción de cuota o indisponibilidad, se conmutó en caliente al proveedor secundario sin lanzar error HTTP 500 al cliente.
+    *   Si ambos proveedores fallaron, se sirvió el diagnóstico determinista local de Capa 3.
+
+---
+
+### **Contrato CO11: `registrarEventoTelemetria`**
+*   **Operación:** `registrarEventoTelemetria(usuarioId: UUID, tipoEvento: String, metadata: JSON): void`
+*   **Referencias Cruzadas:** Caso de Uso CU11 (Generar Telemetría y Alertas de Deserción).
+*   **Precondiciones:**
+    *   El `usuarioId` corresponde a un registro persistido en la base de datos relacional.
+*   **Postcondiciones:**
+    *   Se creó e insertó una nueva fila en la tabla `RegistroActividad` con `tipoEvento`, fecha timestamp actual y `usuarioId`.
+    *   Los datos quedaron disponibles para consultas no procedurales de agregación temporal del dojo.
 
 ---
 
@@ -1386,8 +1520,8 @@ La realización de los casos de uso demuestra cómo interactúan las clases de d
 
 El siguiente diagrama detalla cómo se comunican las clases de diseño para el análisis biomecánico en el CU01:
 
-<a id="figura-7"></a>
-**Figura 7**  
+<a id="figura-10"></a>
+*Figura 10*  
 *Diagrama de Secuencia de Diseño (Realización de CU01)*
 
 ```mermaid
@@ -1473,7 +1607,7 @@ sequenceDiagram
 El siguiente diagrama ilustra la colaboración entre clases para la validación, segmentación e indexación de nuevas fuentes de conocimiento en el motor RAG:
 
 <a id="figura-11"></a>
-**Figura 11**  
+*Figura 11*  
 *Diagrama de Secuencia de Diseño (Realización de CU02)*
 
 ```mermaid
@@ -1526,7 +1660,7 @@ sequenceDiagram
 El siguiente diagrama detalla la interacción dinámica para analizar el rendimiento del alumno, evaluar la persistencia de fallos cinemáticos y recalibrar adaptativamente su plan pedagógico:
 
 <a id="figura-12"></a>
-**Figura 12**  
+*Figura 12*  
 *Diagrama de Secuencia de Diseño (Realización de CU03)*
 
 ```mermaid
@@ -1535,7 +1669,7 @@ sequenceDiagram
     participant UI as DojoDashboard
     participant SEC as SesionEntrenamientoController
     participant ADC as AdaptationController
-    participant CPA as CentralDBPersistenceAdapter
+    participant CPA as PersistenceFacade
     participant RAC as RetrievalAugmentedController
     participant VDB as CentralVectorDBAdapter
     participant API as API Gateway (Servidor Local)
@@ -1548,7 +1682,7 @@ sequenceDiagram
     Note over ADC: Patrón Experto:<br/>ADC posee el control del PerfilCompetencia e historial de fallos.
     ADC->>CPA: cargarPerfil(usuarioId)
     Note over CPA: Patrón Bajo Acoplamiento:<br/>Interacción blindada mediante interfaz IPersistenceService.
-    CPA->>API: GET /api/profile/:usuarioId
+    CPA->>API: GET /api/usuario/perfil
     API-->>CPA: perfilCompetenciaJSON
     CPA-->>ADC: perfilCompetencia (incluye HistorialVisualizacion)
     
@@ -1565,7 +1699,7 @@ sequenceDiagram
         ADC->>ADC: conmutarEstrategiaDidactica(perfilCompetencia, error)
         
         ADC->>CPA: registrarVisualizacion(visualizacion)
-        CPA->>API: POST /api/profile/visualization
+        CPA->>API: POST /api/sesion/visualizacion
         API-->>CPA: confirmacionGuardado
         CPA-->>ADC: guardado
     end
@@ -1582,16 +1716,16 @@ sequenceDiagram
 La asignación de responsabilidades del diseño dinámico expuesto se fundamenta en los patrones GRASP de Craig Larman:
 
 <a id="tabla-4"></a>
-**Tabla 4**  
+*Tabla 4*  
 *Justificación de Decisiones de Diseño Basadas en Patrones GRASP*
 
 | Patrón GRASP | Componente / Decisión de Diseño | Justificación Académica (Larman) |
 | :--- | :--- | :--- |
-| **Controlador** | `SesionEntrenamientoController` | Es un objeto que no maneja la interfaz gráfica directa, encargado de recibir los eventos del sistema y coordinar el flujo biomecánico y de IA. |
+| **Controlador** | `SesionEntrenamientoController`, `UsuarioController`, `TelemetryController` | Objetos que no manejan la interfaz gráfica directa, encargados de recibir los eventos del sistema y coordinar el flujo biomecánico, identidades y telemetría analítica. |
 | **Experto en Información** | `AdaptationController` | Posee el acceso directo a las entidades de `PerfilCompetencia` e `HistorialVisualizacion`, resultando idóneo para estimar los fallos recurrentes y readaptar la ruta de estudio. |
-| **Fabricación Pura** | `MediaPipePoseAdapter`, `DynamicPromptBuilder` | Clases construidas artificialmente para aislar al dominio de detalles de bajo nivel (cálculo de pose en WebAssembly y parseo del prompt de Gemini) maximizando la cohesión. |
-| **Bajo Acoplamiento** | Inyección de interfaces (`IPoseEstimator`, `IVectorStore`) | Los controladores de dominio interactúan con interfaces abstractas y no con implementaciones concretas, blindando el sistema ante cambios tecnológicos de las APIs. |
-| **Variaciones Protegidas** | `GeminiServiceAdapter` | Protege al núcleo de dominio de las variaciones de la API externa de Gemini, encapsulando las peticiones serializadas en formato JSON que se envían de forma segura a través del API Gateway del Servidor Local. |
+| **Fabricación Pura** | `MediaPipePoseAdapter`, `DynamicPromptBuilder`, `LLMRedirectionProxy` | Clases construidas artificialmente para aislar al dominio de detalles de bajo nivel (cálculo de pose en WebAssembly, parseo de prompts y resiliencia de failover multiproveedor) maximizando la cohesión. |
+| **Bajo Acoplamiento** | Inyección de interfaces (`IPoseEstimator`, `IVectorStore`, `IPersistenceService`) | Los controladores de dominio interactúan con interfaces abstractas y no con implementaciones concretas, blindando el sistema ante cambios tecnológicos de las APIs. |
+| **Variaciones Protegidas** | `GeminiServiceAdapter`, `ChatGPTServiceAdapter` | Protegen al núcleo de dominio de las variaciones de las APIs externas de Gemini y OpenAI, encapsulando las peticiones serializadas en formato JSON estructurado. |
 
 ---
 
@@ -1599,8 +1733,8 @@ La asignación de responsabilidades del diseño dinámico expuesto se fundamenta
 
 La máquina de estados del objeto `SesionEntrenamientoController` coordina el ciclo de vida del análisis y el motor pedagógico cuando se identifican desviaciones técnicas:
 
-<a id="figura-8"></a>
-**Figura 8**  
+<a id="figura-13"></a>
+*Figura 13*  
 *Máquina de Estados de SesionEntrenamientoController*
 
 ```mermaid
@@ -1638,8 +1772,8 @@ stateDiagram-v2
 
 El diagrama de clases estático detalla los tipos de datos, visibilidad de atributos y la inyección de dependencias para aislar el núcleo del software:
 
-<a id="figura-9"></a>
-**Figura 9**  
+<a id="figura-14"></a>
+*Figura 14*  
 *Diagrama de Clases de Diseño (DCD)*
 
 ```mermaid
@@ -1647,9 +1781,11 @@ classDiagram
     IPoseEstimator <|.. MediaPipePoseAdapter
     IVectorStore <|.. CentralVectorDBAdapter
     ILLMProvider <|.. GeminiServiceAdapter
+    ILLMProvider <|.. ChatGPTServiceAdapter
+    ILLMProvider <|.. LLMRedirectionProxy
     ITechniqueClassifier <|.. GeminiServiceAdapter
     IContentModerator <|.. GeminiServiceAdapter
-    IPersistenceService <|.. CentralDBPersistenceAdapter
+    IPersistenceService <|.. PersistenceFacade
     
     VectorDBUnavailableException <.. IVectorStore : lanza
     VectorDBUnavailableException <.. CentralVectorDBAdapter : lanza
@@ -1660,6 +1796,8 @@ classDiagram
     SesionEntrenamientoController --> ITechniqueClassifier
     SesionEntrenamientoController --> RetrievalAugmentedController
     SesionEntrenamientoController --> AdaptationController
+    
+    UsuarioController --> IPersistenceService
     TelemetryController --> IPersistenceService
     
     RetrievalAugmentedController --> IVectorStore
@@ -1670,6 +1808,9 @@ classDiagram
     AdaptationController ..> RutaAprendizaje
     AdaptationController ..> PerfilCompetencia
     AdaptationController ..> ErrorBiomecanico
+    
+    LLMRedirectionProxy --> GeminiServiceAdapter : primario
+    LLMRedirectionProxy --> ChatGPTServiceAdapter : secundario
     
     class IPoseEstimator {
         <<interface>>
@@ -1699,6 +1840,8 @@ classDiagram
         +registrarVisualizacion(usuarioId: String, videoId: String) boolean
         +obtenerHistorialAnalisis(usuarioId: String) List~HistorialItem~
         +eliminarAnalisis(usuarioId: String, analisisId: String) boolean
+        +registrarEvento(usuarioId: String, tipoEvento: String) boolean
+        +calcularEVI(dojoId: String, dias: number) number
     }
     
     class MediaPipePoseAdapter {
@@ -1716,10 +1859,21 @@ classDiagram
     class GeminiServiceAdapter {
         -apiKey: String
         -client: GeminiClient
-        -geminiModel: String (process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite')
+        -geminiModel: String
         +evaluarMovimiento(promptJSON: String) String
         +clasificarTecnicaVideo(keyframesSummary: KeyframesDataType) String
         +validarPertinenciaBJJ(texto: String) boolean
+    }
+    class ChatGPTServiceAdapter {
+        -apiKey: String
+        -openaiClient: OpenAI
+        +evaluarMovimiento(promptJSON: String) String
+    }
+    class LLMRedirectionProxy {
+        -primaryAdapter: GeminiServiceAdapter
+        -secondaryAdapter: ChatGPTServiceAdapter
+        +evaluarMovimiento(promptJSON: String) String
+        -generarDiagnosticoEmergencia(promptJSON: String) String
     }
     class PersistenceFacade {
         -prisma: PrismaClient
@@ -1729,6 +1883,8 @@ classDiagram
         +obtenerHistorialAnalisis(usuarioId: String) List~HistorialItem~
         +eliminarAnalisis(usuarioId: String, analisisId: String) boolean
         +obtenerFuentesConocimiento(usuarioId: String) List~FuenteConocimiento~
+        +registrarEvento(usuarioId: String, tipoEvento: String) boolean
+        +calcularEVI(dojoId: String, dias: number) number
     }
     
     class SesionEntrenamientoController {
@@ -1753,6 +1909,11 @@ classDiagram
         +evaluarRecurrenciaErrores(perfil: PerfilCompetencia) boolean
         +conmutarEstrategiaDidactica(perfil: PerfilCompetencia, error: ErrorBiomecanico) RutaAprendizaje
     }
+    class TelemetryController {
+        -persistence: IPersistenceService
+        +registrarEvento(usuarioId: String, tipoEvento: String) boolean
+        +calcularEVI(dojoId: String, ventanaDias: number) any
+    }
     class DynamicPromptBuilder {
         +compilarPromptRAG(metricas: List~MetricaCinematica~, chunks: List~ChunkText~) String
         +compilarPromptBaseline(metricas: List~MetricaCinematica~) String
@@ -1769,8 +1930,8 @@ classDiagram
 
 El despliegue del sistema sigue un modelo cliente-servidor centralizado híbrido. El procesamiento de video y cálculo cinemático 3D se ejecutan localmente en el dispositivo cliente para optimizar la latencia, mientras que la base de datos vectorial y los datos maestros se almacenan de manera centralizada en el Servidor Local, al cual los clientes acceden mediante una API segura.
 
-<a id="figura-10"></a>
-**Figura 10**  
+<a id="figura-15"></a>
+*Figura 15*  
 *Diagrama de Despliegue Físico de OpenBJJ*
 
 ```mermaid
@@ -1931,10 +2092,10 @@ El sistema OpenBJJ implementa una arquitectura rigurosa de control de costos y t
 
    > [!NOTE]
    > **Horarios de Reinicio Diario de RPD (Medianoche Hora del Pacífico / PT)**:
-   > - 🇧🇴 **La Paz / Bolivia (UTC-4)**: **03:00 AM**
-   > - 🇲🇽 **Ciudad de México (UTC-6)**: 01:00 AM / 02:00 AM (según horario estacional)
-   > - 🇨🇴 **Bogotá / Lima (UTC-5)**: 02:00 AM
-   > - 🇦🇷 **Buenos Aires / Santiago (UTC-3)**: 04:00 AM / 05:00 AM
+   > - **La Paz / Bolivia (UTC-4)**: **03:00 AM**
+   > - **Ciudad de México (UTC-6)**: 01:00 AM / 02:00 AM (según horario estacional)
+   > - **Bogotá / Lima (UTC-5)**: 02:00 AM
+   > - **Buenos Aires / Santiago (UTC-3)**: 04:00 AM / 05:00 AM
 
 4. **Estrategia de Resiliencia, Backoff y Failover Multimodelo**:
    Para evitar bloqueos de practicantes si la cuota por minuto de un modelo se satura temporalmente (código HTTP 429), el adaptador `GeminiServiceAdapter.ts` y el proxy `LLMRedirectionProxy.ts` implementan:
@@ -2016,14 +2177,14 @@ Para garantizar que las reglas de dominio del negocio (especialmente la regla cr
 
 ```mermaid
 graph LR
-    A["🔴 FASE RED\nEscribir prueba que falla\n(rag.test.ts)"] --> B["🟢 FASE GREEN\nCódigo mínimo de producción\n(HTTP 200 / 400)"]
-    B --> C["🔵 FASE REFACTOR\nPatrones GRASP\n(Alta Cohesión / Bajo Acoplamiento)"]
+    A["Fase Red: Escribir prueba que falla\n(rag.test.ts)"] --> B["Fase Green: Codigo minimo de produccion\n(HTTP 200 / 400)"]
+    B --> C["Fase Refactor: Patrones GRASP\n(Alta Cohesion / Bajo Acoplamiento)"]
     C --> A
 ```
 
-1. **🔴 Fase Roja (Red):** Se redactó la suite de pruebas en `server/src/tests/rag.test.ts` con **Vitest** y **Supertest** antes de finalizar los controladores. La prueba certificó el fallo inicial estrepitoso al no existir los métodos ni validaciones requeridas.
-2. **🟢 Fase Verde (Green):** Se implementó el código de producción mínimo en `RetrievalAugmentedController.ts` y `GeminiServiceAdapter.ts` para que la llamada `POST /api/rag/ingestar` acepte contenido de BJJ legítimo (HTTP 200 OK con `fuenteId`) y bloquee contenido ajeno como recetas culinarias (HTTP 400 Bad Request con mensaje de rechazo).
-3. **🔵 Fase de Refactorización (Refactor):** Se limpió y desacopló la lógica de extracción oEmbed, normalización de textos y consultas a la base de datos relacional y vectorial mediante los patrones GRASP **Information Expert** y **Fabricación Pura**.
+1. **Fase Roja (Red):** Se redactó la suite de pruebas en `server/src/tests/rag.test.ts` con **Vitest** y **Supertest** antes de finalizar los controladores. La prueba certificó el fallo inicial estrepitoso al no existir los métodos ni validaciones requeridas.
+2. **Fase Verde (Green):** Se implementó el código de producción mínimo en `RetrievalAugmentedController.ts` y `GeminiServiceAdapter.ts` para que la llamada `POST /api/rag/ingestar` acepte contenido de BJJ legítimo (HTTP 200 OK con `fuenteId`) y bloquee contenido ajeno como recetas culinarias (HTTP 400 Bad Request con mensaje de rechazo).
+3. **Fase de Refactorización (Refactor):** Se limpió y desacopló la lógica de extracción oEmbed, normalización de textos y consultas a la base de datos relacional y vectorial mediante los patrones GRASP **Information Expert** y **Fabricación Pura**.
 
 ## **8.2 Pruebas de funcionalidad**
 A continuación se presentan las especificaciones de los casos de prueba diseñados para los 5 Casos de Uso principales de OpenBJJ bajo las normas del formato APA 7ma Edición:
