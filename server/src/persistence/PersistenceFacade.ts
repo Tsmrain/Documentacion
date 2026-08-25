@@ -163,6 +163,14 @@ export class PersistenceFacade implements IPersistenceService {
       }
       if (datos.peso !== undefined) updateData.peso = datos.peso;
 
+      if ((datos as any).password || (datos as any).pin) {
+        const pass = (datos as any).password || (datos as any).pin;
+        if (typeof pass === "string" && pass.trim().length >= 4) {
+          const salt = await bcrypt.genSalt(10);
+          updateData.pinHash = await bcrypt.hash(pass.trim(), salt);
+        }
+      }
+
       const dbUser = await prisma.usuario.update({
         where: { id: normalizedId },
         data: updateData

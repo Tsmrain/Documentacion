@@ -12,8 +12,16 @@ interface PerfilViewProps {
   onProfileUpdated: (profile: any) => void;
 }
 
+const CINTURON_COLOR: Record<string, { bg: string; text: string; border: string }> = {
+  BLANCO: { bg: "rgba(255,255,255,0.1)", text: "#f8fafc", border: "#e2e8f0" },
+  AZUL: { bg: "rgba(59,130,246,0.15)", text: "#60a5fa", border: "#3b82f6" },
+  MORADO: { bg: "rgba(139,92,246,0.15)", text: "#a78bfa", border: "#8b5cf6" },
+  MARRON: { bg: "rgba(146,64,14,0.2)", text: "#fbbf24", border: "#b45309" },
+  NEGRO: { bg: "rgba(220,38,38,0.2)", text: "#f87171", border: "#dc2626" }
+};
+
 export function PerfilView({ usuarioId, userProfile, onProfileUpdated }: PerfilViewProps) {
-  const [nombre, setNombre] = useState(userProfile.nombre || "Practicante Kiosco");
+  const [nombre, setNombre] = useState(userProfile.nombre || "Practicante");
   const [cinturon, setCinturon] = useState(userProfile.cinturon || "BLANCO");
   
   // Manejo de inputs como string para evitar glitches de 0 al borrar
@@ -22,6 +30,10 @@ export function PerfilView({ usuarioId, userProfile, onProfileUpdated }: PerfilV
   
   const [alturaInput, setAlturaInput] = useState<string>(initAltura);
   const [pesoInput, setPesoInput] = useState<string>(initPeso);
+
+  // Campos de cambio de contraseña
+  const [nuevaPassword, setNuevaPassword] = useState("");
+  const [confirmarPassword, setConfirmarPassword] = useState("");
   
   const [submitting, setSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -58,6 +70,19 @@ export function PerfilView({ usuarioId, userProfile, onProfileUpdated }: PerfilV
     setSubmitting(true);
     setStatusMessage(null);
 
+    if (nuevaPassword.trim()) {
+      if (nuevaPassword.trim().length < 4) {
+        setStatusMessage({ type: "error", text: "La nueva contraseña debe tener al menos 4 caracteres." });
+        setSubmitting(false);
+        return;
+      }
+      if (nuevaPassword !== confirmarPassword) {
+        setStatusMessage({ type: "error", text: "Las contraseñas no coinciden. Por favor verifícalas." });
+        setSubmitting(false);
+        return;
+      }
+    }
+
     // Parser inteligente
     let parsedAltura = 1.75;
     if (alturaInput) {
@@ -75,13 +100,17 @@ export function PerfilView({ usuarioId, userProfile, onProfileUpdated }: PerfilV
       }
     }
 
-    const profilePayload = {
+    const profilePayload: any = {
       usuarioId,
       nombre,
       cinturon,
       altura: parsedAltura,
       peso: parsedPeso
     };
+
+    if (nuevaPassword.trim()) {
+      profilePayload.password = nuevaPassword.trim();
+    }
 
     const token = localStorage.getItem("openbjj_jwt");
 
@@ -109,7 +138,14 @@ export function PerfilView({ usuarioId, userProfile, onProfileUpdated }: PerfilV
       }
 
       onProfileUpdated(updated);
-      setStatusMessage({ type: "success", text: "Perfil del Practicante actualizado correctamente." });
+      setNuevaPassword("");
+      setConfirmarPassword("");
+      setStatusMessage({ 
+        type: "success", 
+        text: nuevaPassword.trim() 
+          ? "¡Perfil y contraseña actualizados con éxito!" 
+          : "Perfil biométrico actualizado correctamente." 
+      });
     } catch (err: any) {
       setStatusMessage({ type: "error", text: err.message || "Error al actualizar perfil." });
     } finally {
@@ -117,93 +153,237 @@ export function PerfilView({ usuarioId, userProfile, onProfileUpdated }: PerfilV
     }
   };
 
+  const currentBeltStyle = CINTURON_COLOR[cinturon] || CINTURON_COLOR.BLANCO;
+
   const commonStyle = {
-    input: { width: '100%', padding: '10px 14px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.3)', color: '#ffffff' },
-    label: { display: 'block', marginBottom: '6px', fontSize: '0.85rem', color: '#cbd5e1', fontWeight: 600 }
+    input: {
+      width: '100%',
+      padding: '12px 14px',
+      borderRadius: '10px',
+      border: '1px solid rgba(255,255,255,0.12)',
+      background: 'rgba(10, 10, 14, 0.7)',
+      color: '#ffffff',
+      fontSize: '0.95rem',
+      outline: 'none',
+      boxSizing: 'border-box' as const
+    },
+    label: {
+      display: 'block',
+      marginBottom: '6px',
+      fontSize: '0.82rem',
+      color: '#cbd5e1',
+      fontWeight: 700
+    }
   };
 
   return (
-    <div className="glass-panel p-6 animate-fade-in mb-6" style={{ padding: '24px' }}>
-      <div style={{ marginBottom: '20px' }}>
-        <h2 style={{ margin: 0, color: '#818cf8', fontSize: '1.4rem' }}>Calibracion del Practicante (Kiosco)</h2>
+    <div className="glass-panel p-6 animate-fade-in mb-6" style={{ padding: '28px', maxWidth: '780px', margin: '0 auto' }}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderBottom: '1px solid rgba(220, 38, 38, 0.2)',
+        paddingBottom: '16px',
+        marginBottom: '20px'
+      }}>
+        <div>
+          <h2 style={{ margin: 0, color: '#f8fafc', fontSize: '1.4rem', fontWeight: 800 }}>
+            Perfil del Practicante & Calibración 3D
+          </h2>
+          <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '0.85rem' }}>
+            Academia Corpo e Mente — Ajustes biomecánicos y seguridad de la cuenta.
+          </p>
+        </div>
+
+        <div style={{
+          padding: '6px 14px',
+          borderRadius: '20px',
+          background: currentBeltStyle.bg,
+          border: `1px solid ${currentBeltStyle.border}`,
+          color: currentBeltStyle.text,
+          fontSize: '0.8rem',
+          fontWeight: 800,
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px'
+        }}>
+          🥋 Cinturón {cinturon}
+        </div>
       </div>
-      
-      <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '20px' }}>
-        Ajusta tus proporciones antropometricas para afinar la estimacion cinematica de MediaPipe. Los cambios se aplicaran en caliente.
-      </p>
 
       {statusMessage && (
-        <div style={{ padding: '12px', background: statusMessage.type === "success" ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', color: statusMessage.type === "success" ? '#34d399' : '#f87171', border: `1px solid ${statusMessage.type === "success" ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}`, borderRadius: '8px', marginBottom: '16px', fontSize: '0.9rem' }}>
+        <div style={{
+          padding: '12px 16px',
+          background: statusMessage.type === "success" ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+          color: statusMessage.type === "success" ? '#34d399' : '#f87171',
+          border: `1px solid ${statusMessage.type === "success" ? 'rgba(16,185,129,0.25)' : 'rgba(239,68,68,0.25)'}`,
+          borderRadius: '10px',
+          marginBottom: '20px',
+          fontSize: '0.9rem',
+          fontWeight: 600
+        }}>
           {statusMessage.text}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div>
-          <label style={commonStyle.label}>
-            Nombre o Identificador *
-          </label>
-          <input
-            type="text"
-            className="input-field"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            style={commonStyle.input}
-            required
-          />
-        </div>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* Sección: Información Básica */}
+        <div style={{
+          background: 'rgba(255,255,255,0.02)',
+          border: '1px solid rgba(255,255,255,0.06)',
+          borderRadius: '12px',
+          padding: '18px'
+        }}>
+          <h3 style={{ margin: '0 0 14px 0', fontSize: '0.95rem', color: '#e2e8f0', fontWeight: 700 }}>
+            🥋 Datos del Practicante
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div>
+              <label style={commonStyle.label}>
+                Nombre o Identificador *
+              </label>
+              <input
+                type="text"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                style={commonStyle.input}
+                required
+              />
+            </div>
 
-        <div>
-          <label style={commonStyle.label}>
-            Grado / Cinturon *
-          </label>
-          <select
-            value={cinturon}
-            onChange={(e) => setCinturon(e.target.value)}
-            style={{ width: '100%', padding: '10px 14px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(15, 23, 42, 0.9)', color: '#ffffff', fontWeight: 600 }}
-          >
-            <option value="BLANCO">Cinturon Blanco (Principiante)</option>
-            <option value="AZUL">Cinturon Azul (Intermedio)</option>
-            <option value="MORADO">Cinturon Morado (Avanzado)</option>
-            <option value="MARRON">Cinturon Marron (Avanzado Senior)</option>
-            <option value="NEGRO">Cinturon Negro (Maestro)</option>
-          </select>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-          <div>
-            <label style={commonStyle.label}>
-              Altura (cm o m) *
-            </label>
-            <input
-              type="text"
-              value={alturaInput}
-              onChange={(e) => setAlturaInput(e.target.value)}
-              style={commonStyle.input}
-              placeholder="Ej: 175 o 1.75"
-              required
-            />
-          </div>
-
-          <div>
-            <label style={commonStyle.label}>
-              Peso (kg) *
-            </label>
-            <input
-              type="text"
-              value={pesoInput}
-              onChange={(e) => setPesoInput(e.target.value)}
-              style={commonStyle.input}
-              placeholder="Ej: 75"
-              required
-            />
+            <div>
+              <label style={commonStyle.label}>
+                Grado / Cinturón *
+              </label>
+              <select
+                value={cinturon}
+                onChange={(e) => setCinturon(e.target.value)}
+                style={{
+                  ...commonStyle.input,
+                  background: 'rgba(15, 23, 42, 0.95)',
+                  fontWeight: 700
+                }}
+              >
+                <option value="BLANCO">Cinturón Blanco (Principiante)</option>
+                <option value="AZUL">Cinturón Azul (Intermedio)</option>
+                <option value="MORADO">Cinturón Morado (Avanzado)</option>
+                <option value="MARRON">Cinturón Marrón (Avanzado Senior)</option>
+                <option value="NEGRO">Cinturón Negro (Maestro)</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        <button type="submit" className="btn-primary" style={{ marginTop: '8px', padding: '12px', fontSize: '0.95rem' }} disabled={submitting}>
-          {submitting ? "Calibrando..." : "Calibrar Perfil Físico"}
+        {/* Sección: Calibración Antropométrica */}
+        <div style={{
+          background: 'rgba(255,255,255,0.02)',
+          border: '1px solid rgba(255,255,255,0.06)',
+          borderRadius: '12px',
+          padding: '18px'
+        }}>
+          <h3 style={{ margin: '0 0 4px 0', fontSize: '0.95rem', color: '#e2e8f0', fontWeight: 700 }}>
+            📏 Calibración Antropométrica 3D
+          </h3>
+          <p style={{ margin: '0 0 14px 0', color: '#71717a', fontSize: '0.8rem' }}>
+            Ajusta tu altura y peso para que los ángulos y vectores de MediaPipe se calibren a tu contextura.
+          </p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div>
+              <label style={commonStyle.label}>
+                Altura (cm o m) *
+              </label>
+              <input
+                type="text"
+                value={alturaInput}
+                onChange={(e) => setAlturaInput(e.target.value)}
+                style={commonStyle.input}
+                placeholder="Ej: 175 o 1.75"
+                required
+              />
+            </div>
+
+            <div>
+              <label style={commonStyle.label}>
+                Peso (kg) *
+              </label>
+              <input
+                type="text"
+                value={pesoInput}
+                onChange={(e) => setPesoInput(e.target.value)}
+                style={commonStyle.input}
+                placeholder="Ej: 75"
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Sección: Cambio de Contraseña */}
+        <div style={{
+          background: 'rgba(220,38,38,0.03)',
+          border: '1px solid rgba(220,38,38,0.15)',
+          borderRadius: '12px',
+          padding: '18px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <h3 style={{ margin: 0, fontSize: '0.95rem', color: '#f87171', fontWeight: 700 }}>
+              🔐 Seguridad & Contraseña Personal
+            </h3>
+            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+              Opcional
+            </span>
+          </div>
+          <p style={{ margin: '0 0 14px 0', color: '#71717a', fontSize: '0.8rem' }}>
+            Tu contraseña inicial es <strong>1234</strong>. Puedes cambiarla por tu propia clave privada aquí:
+          </p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div>
+              <label style={commonStyle.label}>
+                Nueva Contraseña
+              </label>
+              <input
+                type="password"
+                value={nuevaPassword}
+                onChange={(e) => setNuevaPassword(e.target.value)}
+                style={commonStyle.input}
+                placeholder="Dejar en blanco para mantener 1234"
+              />
+            </div>
+
+            <div>
+              <label style={commonStyle.label}>
+                Confirmar Nueva Contraseña
+              </label>
+              <input
+                type="password"
+                value={confirmarPassword}
+                onChange={(e) => setConfirmarPassword(e.target.value)}
+                style={commonStyle.input}
+                placeholder="Repite la nueva contraseña"
+              />
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          className="btn-primary"
+          style={{
+            padding: '14px',
+            borderRadius: '12px',
+            fontSize: '0.95rem',
+            fontWeight: 800,
+            background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+            boxShadow: '0 4px 18px rgba(220, 38, 38, 0.45)',
+            cursor: submitting ? 'wait' : 'pointer'
+          }}
+          disabled={submitting}
+        >
+          {submitting ? "Guardando Cambios..." : "Guardar Cambios del Perfil"}
         </button>
       </form>
     </div>
   );
 }
+
