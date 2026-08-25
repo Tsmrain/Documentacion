@@ -126,7 +126,7 @@ export class RetrievalAugmentedController {
     }
 
     const targetUserId = metadata.usuarioId || usuarioIdParam || "user-default";
-    const fuenteId = `fuente-${Date.now()}`;
+    const fuenteId = `fuente-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
 
     // Enriquecimiento semántico estructurado antes de la vectorización (Principio Mannino)
     let textoVectorizar = textoExtraido;

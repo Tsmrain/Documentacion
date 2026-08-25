@@ -60,7 +60,7 @@ async function runIngestaPlaylists() {
   const ragController = new RetrievalAugmentedController(vectorStore, promptBuilder, geminiAdapter);
   const persistenceFacade = new PersistenceFacade();
 
-  const usuarioId = "user-default";
+  const usuarioId = "0c11df27-87ba-40c3-a664-77dc2f18a496";
 
   // Consultar fuentes existentes para no duplicar
   let fuentesExistentes: any[] = [];
