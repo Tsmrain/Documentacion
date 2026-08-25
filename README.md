@@ -1,4 +1,4 @@
-# **OpenBJJ — Tutor Biomecánico Adaptativo 3D & Motor RAG para Jiu-Jitsu**
+# **Aplicación WEB Inteligente de Tutoría Adaptativa y Análisis Biomecánico para Brazilian Jiu-Jitsu**
 
 <div align="center">
 
