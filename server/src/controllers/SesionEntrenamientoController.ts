@@ -142,6 +142,7 @@ export class SesionEntrenamientoController {
 
     return {
       success: true,
+      rolPracticante,
       reporte: reporteParsed,
       planAdaptativo: planTutoriasYYouTubeUrl
     };

@@ -76,6 +76,8 @@ model SesionEntrenamiento {
   usuarioId          String
   usuario            Usuario             @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   analisis           AnalisisBiomecanico?
+
+  @@index([usuarioId, fecha(sort: Desc)])
 }
 
 model AnalisisBiomecanico {
@@ -86,6 +88,9 @@ model AnalisisBiomecanico {
   severidad            SeveridadError
   sugerenciaPedagogica String
   erroresDetectados    ErrorBiomecanico[]
+
+  @@index([tecnicaId])
+  @@index([severidad])
 }
 
 model ErrorBiomecanico {
@@ -125,6 +130,10 @@ model FuenteConocimiento {
   tipo             TipoFuente
   estadoValidacion EstadoValidacion @default(ACEPTADO)
   createdAt        DateTime         @default(now())
+
+  @@index([usuarioId])
+  @@index([estadoValidacion])
+  @@index([tipo])
 }
 
 model RegistroActividad {
@@ -135,4 +144,7 @@ model RegistroActividad {
   fechaEvento             DateTime   @default(now())
   duracionSesionSegundos  Decimal?   @db.Decimal(10, 2)
   detalles                Json?
+
+  @@index([usuarioId, fechaEvento(sort: Desc)])
 }
+

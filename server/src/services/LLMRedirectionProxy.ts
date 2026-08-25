@@ -49,12 +49,19 @@ export class LLMRedirectionProxy implements ILLMProvider {
         else if (desviacionGrados >= 16) severidad = "Moderado";
 
         const dynamicResponse = {
+          secuenciaTemporalAnalizada: [
+            "Frame 1 a N: Análisis biomecánico de emergencia generado localmente por fallo temporal de red."
+          ],
           tecnicaId,
+          posicionBase: "Tatami / Suelo",
+          fasesSecuencia: ["Inicio del Movimiento", "Transición Técnica", "Control de Posición"],
+          cinturon: "BLANCO",
           evaluacion: `Análisis para ${tecnicaId}. Tienes un ángulo incorrecto de ${desviacionGrados} grados en ${articulacion.replace("_", " ")}.`,
           desviacionArticular: articulacion,
           desviacionGrados,
           severidad,
-          sugerenciaPedagogica: `Corrige el ángulo de tu ${articulacion.replace("_", " ")} para tener buena base y no regalar la posición desde ${tecnicaId}.`
+          sugerenciaPedagogica: `1. Corrige el ángulo de tu ${articulacion.replace("_", " ")}. 2. Cierra los espacios libres. 3. Mantén una base sólida.`,
+          youtube_query: `Tutorial BJJ ${tecnicaId} detalles tecnicos`
         };
 
         return JSON.stringify(dynamicResponse);
