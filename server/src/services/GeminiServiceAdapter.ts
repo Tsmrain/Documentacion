@@ -212,16 +212,12 @@ export class GeminiServiceAdapter implements ILLMProvider, ITechniqueClassifier,
     const primaryModel = modelName || this.defaultModel;
     const selectedFrames = frames && frames.length > 0 ? frames.slice(0, 9) : [];
 
-    // Combinar catálogo base con la técnica objetivo si fue especificada
-    const catalogoCombinado = [...(catalogoTecnicas && catalogoTecnicas.length > 0 ? catalogoTecnicas : CATALOGO_TECNICAS_DEFAULT)];
-    if (tecnicaObjetivo && !catalogoCombinado.includes(tecnicaObjetivo)) {
-      catalogoCombinado.unshift(tecnicaObjetivo);
-    }
-
-    // Asegurar que "TECNICA_DESCONOCIDA_D" exista en el enum para habilitar Zero-Shot Discovery
-    const listaTecnicasValidas = Array.from(
-      new Set([...catalogoCombinado, "TECNICA_DESCONOCIDA_D"])
-    );
+    // Si el practicante especificó la técnica objetivo (Targeted Mode), acotar el catálogo al objetivo para ahorrar tokens
+    const listaTecnicasValidas = tecnicaObjetivo
+      ? [tecnicaObjetivo, "TECNICA_DESCONOCIDA_D"]
+      : Array.from(
+          new Set([...(catalogoTecnicas && catalogoTecnicas.length > 0 ? catalogoTecnicas : CATALOGO_TECNICAS_DEFAULT), "TECNICA_DESCONOCIDA_D"])
+        );
 
     console.log(`[Gemini Service] Inferencia estricta (${selectedFrames.length} keyframes). Catálogo: ${listaTecnicasValidas.length} técnicas.${tecnicaObjetivo ? ` Objetivo: '${tecnicaObjetivo}'` : ''} | Rol: ${rolPracticante} | Modelo Primario: ${primaryModel}`);
 
