@@ -154,7 +154,7 @@ export class RetrievalAugmentedController {
 
     const nuevaFuente = {
       id: fuenteId,
-      titulo: metadata.titulo || textoExtraido,
+      titulo: (textoExtraido && !textoExtraido.startsWith("http")) ? textoExtraido : (metadata.titulo && !metadata.titulo.startsWith("http") ? metadata.titulo : textoExtraido),
       tipo: metadata.url ? "youtube" : "archivo",
       url: metadata.url,
       fecha: new Date().toISOString(),

@@ -165,10 +165,10 @@ export class AdaptationController {
 
     try {
       let fuentes: any[] = [];
-      if (this.ragController && typeof this.ragController.obtenerFuentes === "function") {
+      if (this.persistence && typeof (this.persistence as any).obtenerFuentesConocimiento === "function") {
+        fuentes = await (this.persistence as any).obtenerFuentesConocimiento(usuarioId, false);
+      } else if (this.ragController && typeof this.ragController.obtenerFuentes === "function") {
         fuentes = await this.ragController.obtenerFuentes(usuarioId);
-      } else if (this.persistence && typeof (this.persistence as any).obtenerFuentesConocimiento === "function") {
-        fuentes = await (this.persistence as any).obtenerFuentesConocimiento(usuarioId);
       }
 
       const fuentesYouTube = fuentes.filter((f: any) =>
