@@ -185,7 +185,7 @@ export async function extractKineticAdaptiveKeyframes(
           finalFramesMeta.map((f, idx) => `Frame ${idx + 1}: ${f.time}s (${f.fase}) - ${f.descripcionFase}`)
         );
 
-        // 5. Extracción final de los 9 keyframes en alta fidelidad (480px, JPEG 65%)
+        // 5. Extracción final de los 9 keyframes optimizados para Gemini 1-Tile (360px, JPEG 55%)
         const hdCanvas = document.createElement("canvas");
         const hdCtx = hdCanvas.getContext("2d");
         if (!hdCtx) {
@@ -193,7 +193,7 @@ export async function extractKineticAdaptiveKeyframes(
           return reject(new Error("No se pudo inicializar el contexto 2D para renderizado HD"));
         }
 
-        const scale = Math.min(480 / videoWidth, 1);
+        const scale = Math.min(360 / videoWidth, 1);
         hdCanvas.width = videoWidth * scale;
         hdCanvas.height = videoHeight * scale;
 
@@ -202,7 +202,7 @@ export async function extractKineticAdaptiveKeyframes(
         for (const meta of finalFramesMeta) {
           await seekTo(meta.time);
           hdCtx.drawImage(video, 0, 0, hdCanvas.width, hdCanvas.height);
-          const dataUrl = hdCanvas.toDataURL("image/jpeg", 0.65);
+          const dataUrl = hdCanvas.toDataURL("image/jpeg", 0.55);
           const base64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
 
           resultKeyframes.push({
