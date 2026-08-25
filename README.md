@@ -1920,16 +1920,29 @@ El sistema OpenBJJ implementa una arquitectura rigurosa de control de costos y t
    - Transmitir un video de 10 a 15 segundos en streaming continuo de video bruto (a 30 FPS) a la API de visión consumiría más de **100.000 tokens**.
    - La extracción en el navegador de **9 fotogramas clave de alta fidelidad** y el cálculo local de ángulos 3D con 0 tokens de API reduce el consumo a ~2,700 tokens, generando un **ahorro de más del 97.3% de tokens y ancho de banda**.
 
-3. **Matriz de Cuotas y Límites Oficiales de Google AI Studio**:
-   | Modelo de IA | Categoría | RPM (Req/Min) | TPM (Tokens/Min) | RPD (Req/Día) | Estrategia de Uso |
-   | :--- | :--- | :--- | :--- | :--- | :--- |
-   | **Gemini 3.1 Flash Lite** | Visión Multimodal | 15 / 15 | 250.000 TPM | **500 RPD** | **Modelo Primario de Producción** (500 análisis/día) |
-   | **Gemini 3.5 Flash Lite** | Visión Multimodal | 15 / 15 | 250.000 TPM | **500 RPD** | **Failover Primario de Alta Capacidad** |
-   | **Gemini 2.5 Flash** | Visión Multimodal | 5 / 5 | 250.000 TPM | 20 RPD | Respaldo Secundario |
-   | **Gemini 3.7 Flash** | Visión Multimodal | 5 / 5 | 250.000 TPM | 20 RPD | Respaldo Avanzado |
-   | **OpenAI `gpt-4o-mini`** | Visión Multimodal | 500 RPM | 200.000 TPM | Ilimitado | Contingencia en Caliente Multiproveedor |
+3. **Matriz de Cuotas, Límites Oficiales y Ventanas de Reinicio de Google AI Studio**:
+   Las cuotas del nivel gratuito (*Free Tier*) de la API de Google Gemini se administran bajo tres ventanas temporales diferenciadas a nivel de proyecto (*Google Cloud Project*):
 
-4. **Monitoreo y Telemetría en Tiempo Real**:
+   | Métrica de Cuota | Ventana de Reinicio | Capacidad Gratuita (Flash Lite) | Comportamiento y Estrategia de Gestión en OpenBJJ |
+   | :--- | :--- | :--- | :--- |
+   | **RPM** (*Peticiones / Minuto*) | **Continua cada 60 segundos** (Ventana deslizante) | **15 RPM** | Si se alcanza el umbral de 15 req/min, el middleware aplica pausa y reintento con *Exponential Backoff* tras 60 s. |
+   | **TPM** (*Tokens / Minuto*) | **Continua cada 60 segundos** | **250.000 TPM** | Con la compresión 1-Tile (360px), cada video consume solo ~3.400 tokens (1.3% del límite), permitiendo hasta 73 análisis/minuto. |
+   | **RPD** (*Peticiones / Día*) | **Diaria a medianoche PT** (03:00 AM La Paz, UTC-4) | **500 RPD** | Otorga 500 análisis biomecánicos completos diarios para la academia. Se reinicia todas las madrugadas automáticamente. |
+
+   > [!NOTE]
+   > **Horarios de Reinicio Diario de RPD (Medianoche Hora del Pacífico / PT)**:
+   > - 🇧🇴 **La Paz / Bolivia (UTC-4)**: **03:00 AM**
+   > - 🇲🇽 **Ciudad de México (UTC-6)**: 01:00 AM / 02:00 AM (según horario estacional)
+   > - 🇨🇴 **Bogotá / Lima (UTC-5)**: 02:00 AM
+   > - 🇦🇷 **Buenos Aires / Santiago (UTC-3)**: 04:00 AM / 05:00 AM
+
+4. **Estrategia de Resiliencia, Backoff y Failover Multimodelo**:
+   Para evitar bloqueos de practicantes si la cuota por minuto de un modelo se satura temporalmente (código HTTP 429), el adaptador `GeminiServiceAdapter.ts` y el proxy `LLMRedirectionProxy.ts` implementan:
+   - **Backoff Exponencial y Detección de Saturación**: Captura de estados 429 y 503 con reintento escalonado no bloqueante.
+   - **Conmutación en Cascada Multimodelo**: Despacho prioritario a `gemini-3.5-flash-lite`, failover automático a `gemini-3.1-flash-lite` (500 RPD independientes) y conmutación secundaria a `gemini-2.5-flash-lite`.
+   - **Degradación Graciosa a OpenAI**: En caso de indisponibilidad total de la nube de Google, el sistema redirige la inferencia a `gpt-4o-mini` sin interrumpir la sesión de entrenamiento del atleta en el tatami.
+
+5. **Monitoreo y Telemetría en Tiempo Real**:
    - A través del servicio [TokenMetricsService.ts](file:///home/santiago/Desktop/Documentacion/server/src/services/TokenMetricsService.ts) y la pantalla de administración [AdminDojoView.tsx](file:///home/santiago/Desktop/Documentacion/client/src/components/AdminDojoView.tsx), los profesores del dojo pueden auditar el consumo exacto de tokens de entrada, tokens de salida, ahorro porcentual, latencia en milisegundos y estado de cuotas de cada consulta realizada por los practicantes.
 
 ### **6.1.6 Soberanía Cognitiva, Multifuente y Multiproveedor**
@@ -2210,3 +2223,5 @@ Para garantizar la continuidad operativa en la academia Corpo & Mente de forma a
 10. Google Developers. (2024). *Safety Guidance and Ethical Considerations in Generative AI*. Google AI for Developers. https://ai.google.dev/gemini-api/docs/safety-guidance
 11. Google LLC. (2024). *Generative AI Additional Terms of Service & Prohibited Use Policy*. Google Policies. https://policies.google.com/terms/generative-ai/use-policy
 12. Google Developers. (2024). *Safety Settings and Harm Categories Configuration for the Gemini API*. Google AI for Developers. https://ai.google.dev/gemini-api/docs/safety-settings
+13. Google Developers. (2024). *Gemini API Rate Limits, Quota Tiers, and Usage Policies*. Google AI for Developers. https://ai.google.dev/gemini-api/docs/rate-limits
+14. Google Developers. (2024). *Best Practices for Handling API Rate Limits and Exponential Backoff*. Google Cloud Architecture Center. https://cloud.google.com/memorystore/docs/redis/exponential-backoff
