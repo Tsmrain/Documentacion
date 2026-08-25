@@ -1973,6 +1973,7 @@ La arquitectura de inferencia multimodal y procesamiento cognitivo de OpenBJJ im
 - **TypeScript 5+ / Node.js 20+**: Lenguaje de programación con tipado estricto utilizado tanto en el cliente PWA como en el servidor backend.
 - **SDKs de IA Multimodal (`@google/genai` v2.17.1 & `openai` v7.5.0)**: Librerías cliente para orquestación de inferencias primarias y secundarias con soporte de failover multiproveedor.
 - **Express 5**: Framework REST API Gateway para la exposición de endpoints y middlewares de degradación graciosa.
+- **Vitest v4.1+ & Supertest**: Frameworks de pruebas automatizadas de alto rendimiento para el ciclo TDD (Red-Green-Refactor) e integración HTTP REST en Node.js.
 - **Vite 8 / `vite-plugin-pwa` v1.3.0**: Empaquetador de producción con generación automática de Service Worker mediante Workbox (estrategias `CacheFirst` y `NetworkFirst`).
 - **`TelemetryController.ts`**: Fabricación Pura GRASP para el registro persistente de eventos de telemetría analítica (RF08/CU11) y el cálculo no procedural del Engagement Velocity Indicator (EVI) mediante consultas de agregación temporal en PostgreSQL.
 - **`AntropometriaParser.ts`**: Clase de utilidad síncrona pura para la normalización de datos antropométricos del cliente, con conversión de centímetros a metros y validación de rangos de dominio conforme al Diccionario de Datos (Tabla 5).
@@ -2004,10 +2005,25 @@ La disponibilidad e inmunidad ante fallos de APIs externas en el tatami se garan
 # **CAPÍTULO VIII: PRUEBAS**
 
 ## **8.1 Estrategia de pruebas**
-La verificación de la calidad del software abarca tres niveles de validación:
-1. **Pruebas Unitarias:** Verificación de métodos de cálculo angular, sanitización de datos cinemáticos y formateadores de prompts.
-2. **Pruebas de Integración REST:** Suite automatizada de verificación de controladores que valida el flujo transaccional completo entre Express, Prisma, la moderación RAG RD-03, las excepciones de degradación HTTP 207 y el aislamiento multiusuario.
-3. **Pruebas de Compilación y Aceptación:** Validación estática del compilador de TypeScript y empaquetado de producción cliente.
+La verificación de la calidad del software abarca cuatro niveles de validación:
+1. **Desarrollo Guiado por Pruebas (Test-Driven Development - TDD):** Aplicación estricta del ciclo cerrado *Red-Green-Refactor* para el diseño y construcción de endpoints críticos y reglas de dominio (RD-03).
+2. **Pruebas Unitarias y de Mocking:** Verificación aislada de métodos de cálculo angular, sanitización de datos cinemáticos, formateadores de prompts y mocks del SDK de Gemini.
+3. **Pruebas de Integración REST:** Suite automatizada de verificación de controladores con Supertest que valida el flujo transaccional completo entre Express, Prisma, la moderación RAG RD-03, las excepciones de degradación HTTP 207 y el aislamiento multiusuario.
+4. **Pruebas de Compilación y Aceptación:** Validación estática del compilador de TypeScript y empaquetado de producción cliente mediante Vite PWA.
+
+### **8.1.1 Metodología Test-Driven Development (TDD / Red-Green-Refactor)**
+Para garantizar que las reglas de dominio del negocio (especialmente la regla crítica **RD-03: Filtro Autónomo de Pertinencia**) se cumplan de manera contractual e incontrovertible, se adoptó la disciplina de ingeniería de software **TDD (Test-Driven Development)**:
+
+```mermaid
+graph LR
+    A["🔴 FASE RED\nEscribir prueba que falla\n(rag.test.ts)"] --> B["🟢 FASE GREEN\nCódigo mínimo de producción\n(HTTP 200 / 400)"]
+    B --> C["🔵 FASE REFACTOR\nPatrones GRASP\n(Alta Cohesión / Bajo Acoplamiento)"]
+    C --> A
+```
+
+1. **🔴 Fase Roja (Red):** Se redactó la suite de pruebas en `server/src/tests/rag.test.ts` con **Vitest** y **Supertest** antes de finalizar los controladores. La prueba certificó el fallo inicial estrepitoso al no existir los métodos ni validaciones requeridas.
+2. **🟢 Fase Verde (Green):** Se implementó el código de producción mínimo en `RetrievalAugmentedController.ts` y `GeminiServiceAdapter.ts` para que la llamada `POST /api/rag/ingestar` acepte contenido de BJJ legítimo (HTTP 200 OK con `fuenteId`) y bloquee contenido ajeno como recetas culinarias (HTTP 400 Bad Request con mensaje de rechazo).
+3. **🔵 Fase de Refactorización (Refactor):** Se limpió y desacopló la lógica de extracción oEmbed, normalización de textos y consultas a la base de datos relacional y vectorial mediante los patrones GRASP **Information Expert** y **Fabricación Pura**.
 
 ## **8.2 Pruebas de funcionalidad**
 A continuación se presentan las especificaciones de los casos de prueba diseñados para los 5 Casos de Uso principales de OpenBJJ bajo las normas del formato APA 7ma Edición:
@@ -2026,14 +2042,16 @@ A continuación se presentan las especificaciones de los casos de prueba diseña
 | Consultar Historial | CP-CU05-01 | Petición GET con usuarioId activo | Lista cronológica de análisis cinemáticos guardados | Respuesta HTTP 200 OK con arreglo de sesiones o [] si es nuevo |
 
 ## **8.3 Resultados de las pruebas de funcionalidad**
-La verificación del comportamiento transaccional del sistema se consolidó mediante la ejecución de una **Suite de Verificación y Certificación Estática**, validando el flujo completo de la lógica de negocio y garantizando la ausencia de regresiones:
+La verificación del comportamiento transaccional del sistema se consolidó mediante la ejecución de la suite automatizada con **Vitest**, validando el flujo completo de la lógica de negocio y garantizando la ausencia de regresiones:
 
 <a id="tabla-7"></a>
 *Tabla 7*  
-*Resultados de Ejecución de Pruebas de Integración REST y Compilación*
+*Resultados de Ejecución de Pruebas de Integración REST, TDD y Compilación*
 
 | Prueba / Suite | Módulo Evaluado | Estado HTTP / Salida | Resultado de Verificación |
 | --- | --- | --- | --- |
+| **Suite TDD (CU02 Caso Feliz)** | `POST /api/rag/ingestar` (Pasaje Knee Cut legítimo) | HTTP 200 OK | **Exitoso (Vitest 63ms):** Chunk indexado y fuente validada como Aceptada |
+| **Suite TDD (CU02 Filtro RD-03)** | `POST /api/rag/ingestar` (Receta de lasaña ajena a BJJ) | HTTP 400 Bad Request | **Exitoso (Vitest 3ms):** Rechazo seguro por moderación semántica autónoma |
 | Test 1: RAG Personalizado | POST /api/sesion/analizar (Descubrimiento Autónomo) | HTTP 200 OK | Exitoso (Técnica autodetectada y RAG activo) |
 | Test 1b: Auditoría Guiada | POST /api/sesion/analizar (Técnica Objetivo Declarada) | HTTP 200 OK | Exitoso (Inyección dinámica en catálogo y auditoría focalizada) |
 | Test 2: Low Confidence | POST /api/sesion/analizar (confianza < 0.5) | HTTP 400 Bad Request | Exitoso (Rechazo seguro por oclusión cinemática) |
@@ -2046,7 +2064,8 @@ La verificación del comportamiento transaccional del sistema se consolidó medi
 | Test 9: Perfil CU04 | POST /api/usuario/perfil | HTTP 200 OK | Exitoso (Actualización antropométrica persistida en DB) |
 | Test 10: Borrado en Cascada | Módulo de Persistencia y ORM | Certificación de Integridad Relacional | Exitoso (Eliminación física automática en PostgreSQL sobre el 100% de las 8 tablas de dominio sin registros huérfanos vía onDelete: Cascade) |
 | Test 11: Failover Multiprovedor y Inferencia de Capa 3 | POST /api/sesion/analizar (Gemini y OpenAI caídos) | HTTP 200 OK (Local Fallback JSON) | Exitoso (El proxy interceptó el error de Gemini y OpenAI, conmutando de forma asertiva al payload determinista de emergencia local sin interrumpir el flujo de la PWA) |
-| Empaquetado Frontend PWA | Módulo Cliente Web | Certificación de Compilación de Producción | Exitoso (Compilación en 163ms sin advertencias ni errores con generación de Service Worker) |
+| Empaquetado Frontend PWA | Módulo Cliente Web | Certificación de Compilación de Producción | Exitoso (Compilación en 121ms sin advertencias ni errores con generación de Service Worker) |
+
 
 ---
 
